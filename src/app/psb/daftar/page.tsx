@@ -3,17 +3,15 @@ import { Footer } from '@/components/layout/Footer'
 import { RegistrationForm } from '@/components/psb/RegistrationForm'
 import { Toaster } from 'sonner'
 import type { Metadata } from 'next'
+import prisma from '@/lib/prisma'
 
 export const metadata: Metadata = { title: "Formulir Pendaftaran — Ma'had Aly Syathiby" }
 
 async function getData() {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-  const [progRes, pekRes] = await Promise.all([
-    fetch(`${base}/api/program`, { cache: 'no-store' }),
-    fetch(`${base}/api/pekerjaan`, { cache: 'no-store' }),
+  const [programs, pekerjaans] = await Promise.all([
+    prisma.program.findMany({ where: { statusPsb: 'Buka' }, orderBy: { id: 'asc' } }),
+    prisma.pekerjaan.findMany({ orderBy: { id: 'asc' } }),
   ])
-  const programs = progRes.ok ? (await progRes.json()).data : []
-  const pekerjaans = pekRes.ok ? (await pekRes.json()).data : []
   return { programs, pekerjaans }
 }
 

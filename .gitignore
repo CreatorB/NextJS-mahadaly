@@ -19,6 +19,8 @@
 
 # production
 /build
+/deploy
+deploy.zip
 
 # misc
 .DS_Store

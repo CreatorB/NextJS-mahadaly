@@ -2,6 +2,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { PsbStatusBanner } from '@/components/psb/PsbStatusBanner'
 import type { Metadata } from 'next'
+import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,14 +12,34 @@ export const metadata: Metadata = {
 }
 
 async function getPsbData() {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-  const [infoRes, quotaRes] = await Promise.all([
-    fetch(`${base}/api/psb/info`, { cache: 'no-store' }),
-    fetch(`${base}/api/psb/quota`, { cache: 'no-store' }),
+  const info = await prisma.infoPsb.findFirst({ orderBy: { tahunAjaran: 'desc' } })
+  if (!info) return { info: null, quota: null }
+
+  const [ikhwan, akhwat] = await Promise.all([
+    prisma.santri.count({ where: { tahunPsb: info.tahunAjaran, jk: 'Laki-Laki' } }),
+    prisma.santri.count({ where: { tahunPsb: info.tahunAjaran, jk: 'Perempuan' } }),
   ])
-  const info = infoRes.ok ? (await infoRes.json()).data : null
-  const quota = quotaRes.ok ? (await quotaRes.json()).data : { sisaIkhwan: null, sisaAkhwat: null, terdaftarIkhwan: 0, terdaftarAkhwat: 0, quotaIkhwan: null, quotaAkhwat: null }
-  return { info, quota }
+
+  const quota = {
+    tahunAjaran: info.tahunAjaran,
+    quotaIkhwan: info.quotaIkhwan,
+    quotaAkhwat: info.quotaAkhwat,
+    terdaftarIkhwan: ikhwan,
+    terdaftarAkhwat: akhwat,
+    sisaIkhwan: info.quotaIkhwan != null ? Math.max(0, info.quotaIkhwan - ikhwan) : null,
+    sisaAkhwat: info.quotaAkhwat != null ? Math.max(0, info.quotaAkhwat - akhwat) : null,
+  }
+
+  const infoForComponent = {
+    statusPsb: info.statusPsb,
+    datetimeOpen: info.datetimeOpen?.toISOString() ?? null,
+    datetimeClosed: info.datetimeClosed?.toISOString() ?? null,
+    biayaPendaftaran: info.biayaPendaftaran,
+    quotaIkhwan: info.quotaIkhwan,
+    quotaAkhwat: info.quotaAkhwat,
+  }
+
+  return { info: infoForComponent, quota }
 }
 
 export default async function PsbPage() {

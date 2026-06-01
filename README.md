@@ -17,6 +17,7 @@ Program Studi: Hukum Keluarga Islam (HKI) / Ahwal Syakhsiyyah S1.
 6. [Deploy ke Production](#deploy-ke-production)
 7. [Checklist Go-Live](#checklist-go-live)
 8. [Scripts](#scripts)
+9. [Deployment ke Shared Hosting](#deployment-ke-shared-hosting)
 
 ---
 
@@ -399,7 +400,111 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ---
 
-### Alur Update Rutin Setelah Ada Perubahan Kode/DB
+### Opsi D — Shared Hosting cPanel (Node.js Selector)
+
+Tanpa Git, tanpa SSH — deploy manual dari lokal.
+
+#### Langkah 1: Build Aplikasi di Lokal
+
+```bash
+cd apps/mahadaly
+npm run build
+```
+
+Hasil build di folder `.next/`.
+
+#### Langkah 2: Persiapan File untuk Upload
+
+**Yang WAJIB di-upload:**
+```
+apps/mahadaly/
+├── .next/              # Hasil build
+├── src/                # Source code
+├── prisma/             # Schema & migrations
+├── public/             # Static assets
+├── node_modules/       # Dependencies
+├── package.json        # Package manifest
+├── next.config.ts      # Next.js config
+├── prisma.config.ts    # Prisma config
+└── .env.example        # Template env
+```
+
+**Yang DI-SKIP (jangan upload):**
+```
+❌ .env                  # Buat manual di server
+❌ uploads/              # Folder upload user — HANYA buat di server
+❌ .next/cache/          # Cache hasil build — tidak perlu
+❌ *.log files           # Log files
+```
+
+**Catatan:** Folder `uploads/` kosong di lokal — jangan di-zip, cukup buat folder kosong dengan nama sama di server nanti.
+
+#### Langkah 3: Upload ke cPanel
+
+1. **Login cPanel** → **File Manager**
+2. Navigate ke folder Node.js app (misal `/public_html/mahadaly` atau `/html/mahadaly`)
+3. Jika folder sudah ada (deployment sebelumnya):
+   - **Rename** folder `uploads/` → `uploads-backup/` (backup data lama!)
+4. Upload semua file melalui **Upload** button di File Manager
+5. Extract ZIP jika perlu
+
+#### Langkah 4: Buat Folder `uploads/` di Server
+
+1. Di cPanel File Manager, pilih folder aplikasi
+2. Klik **+ Folder** → buat folder bernama `uploads`
+3. Set permission: `755` (klik kanan folder → Permissions → 0755)
+
+#### Langkah 5: Setup Environment Variables
+
+Tanpa SSH, semua env vars diset via Node.js Selector UI:
+
+1. **cPanel** → **Node.js Selector**
+2. Klik **Edit** (atau nama aplikasi Anda)
+3. Scroll ke **Environment Variables** → klik **Add Variable**
+4. Tambah satu per satu:
+
+| Variable | Value Contoh |
+|----------|-------------|
+| `DATABASE_URL` | `mysql://dbuser:dbpassword@localhost:3306/mahadaly_db` |
+| `JWT_SECRET` | `[random-string-min-32-chars]` |
+| `JWT_EXPIRES_IN` | `7d` |
+| `NEXT_PUBLIC_APP_URL` | `https://mahadaly.syathiby.id` |
+| `UPLOAD_DIR` | `/home/username/public_html/mahadaly/uploads` |
+| `NODE_ENV` | `production` |
+| `ADMIN_EMAIL` | `superadmin@mahadaly.syathiby.id` |
+| `ADMIN_PASSWORD` | `[strong-password]` |
+
+> **Tips:** Buat MySQL database dulu via **MySQL Databases** di cPanel sebelum setup env vars.
+
+#### Langkah 6: Setup Database di Server
+
+1. **cPanel** → **MySQL Databases**
+2. Buat database: `mahadaly_db`
+3. Buat user + grant ALL PRIVILEGES
+4. Di aplikasi folder, buka **phpMyAdmin** → import migration (atau jalankan via Node.js app startup)
+
+#### Langkah 7: Jalankan Migration & Seed
+
+Tanpa SSH, Anda perlu build pertama kali via Node.js Selector:
+
+1. **Node.js Selector** → klik nama aplikasi
+2. Klik **Restart** atau **Start**
+3. Cek logs untuk error: klik **Logs**
+
+Jika ada error migration, bisa bantu via cPanel **Terminal** (jika tersedia) atau minta hosting support.
+
+#### Langkah 8: Verifikasi Deployment
+
+| Checklist | Cara Cek |
+|-----------|----------|
+| App running | Buka `https://mahadaly.syathiby.id` — harus tampil landing page |
+| Login SuperAdmin | Akses `/login` → gunakan `ADMIN_EMAIL` + `ADMIN_PASSWORD` dari env |
+| Upload works | Upload foto di form PSB → cek folder `uploads/` di File Manager |
+| Data persist | Cek `uploads/` masih ada file setelah restart/redeploy |
+
+---
+
+### Alur Update Rutin (Git-based: VPS / Railway)
 
 ```
 LOKAL                                PRODUCTION
@@ -409,12 +514,32 @@ LOKAL                                PRODUCTION
    (hanya jika ada perubahan schema)
 3. Test di lokal
 4. git add + git commit + git push
-                                     5. git pull
-                                     6. npx prisma migrate deploy
-                                        (hanya jika ada migration baru)
-                                     7. npm run build
-                                     8. pm2 restart mahadaly
-                                        (atau Restart di cPanel)
+                                      5. git pull
+                                      6. npx prisma migrate deploy
+                                         (hanya jika ada migration baru)
+                                      7. npm run build
+                                      8. pm2 restart mahadaly
+                                         (atau Restart di cPanel)
+```
+
+### Alur Update Rutin (cPanel Manual - Tanpa Git)
+
+```
+LOKAL                                PRODUCTION
+─────                                ──────────
+1. Edit kode / schema
+2. npm run build (jika ada perubahan kode)
+   npx prisma migrate dev (jika ada perubahan schema)
+3. Test di lokal
+4. ZIP file yang sudah di-build
+   (exclude: .env, uploads/, cache/)
+5. Login cPanel → File Manager
+6. Rename uploads/ → uploads-back/ (jika ada data)
+7. Upload & extract ZIP
+8. Buat folder uploads/ baru (jika belum ada)
+9. Set permission uploads/ → 0755
+10. Restart app via Node.js Selector
+11. Test manually
 ```
 
 ---
@@ -449,3 +574,218 @@ npm run db:migrate   # Buat & terapkan migration baru (LOKAL SAJA)
 npm run db:seed      # Isi data awal
 npm run db:studio    # Buka Prisma Studio GUI (http://localhost:5555)
 ```
+
+---
+
+## Deployment ke Shared Hosting
+
+### Database Setup & Migration
+
+#### Environment Variables Setup
+
+**Untuk koneksi ke production database dari lokal:**
+
+```powershell
+# PowerShell (Windows)
+$env:DATABASE_URL="mysql://[DB_USER]:[DB_PASSWORD]@[DB_HOST]:3306/[DB_NAME]"
+$env:ADMIN_EMAIL="[ADMIN_EMAIL]"
+$env:ADMIN_PASSWORD="[ADMIN_PASSWORD]"
+
+# Linux/Mac (bash)
+export DATABASE_URL="mysql://[DB_USER]:[DB_PASSWORD]@[DB_HOST]:3306/[DB_NAME]"
+export ADMIN_EMAIL="[ADMIN_EMAIL]"
+export ADMIN_PASSWORD="[ADMIN_PASSWORD]"
+```
+
+#### Seed Database (Pertama Kali)
+
+**Prerequisites:**
+```bash
+npm install -D tsx
+```
+
+**Jalankan seed:**
+```bash
+cd apps/mahadaly
+npx tsx prisma/seed.ts
+```
+
+**Output yang diharapkan:**
+```
+✓ Roles seeded
+✓ Program seeded
+✓ Pekerjaan seeded
+✓ InfoPsb seeded
+✓ SuperAdmin seeded
+✓ Admin seeded
+✅ Seed complete.
+```
+
+#### Reset Database (Drop + Recreate)
+
+**Hati-hati: Ini akan menghapus SEMUA data!**
+
+```bash
+cd apps/mahadaly
+
+# Setup env vars
+$env:DATABASE_URL="mysql://[DB_USER]:[DB_PASSWORD]@[DB_HOST]:3306/[DB_NAME]"
+
+# Reset database (drop semua tables + recreate)
+npx prisma migrate reset
+
+# Seed ulang
+npx tsx prisma/seed.ts
+```
+
+---
+
+### Schema Changes Workflow
+
+#### Opsi A: Prisma Migrate Deploy (Recommended)
+
+**Untuk development (lokal):**
+```bash
+# 1. Edit prisma/schema.prisma
+# 2. Generate migration
+npx prisma migrate dev --name add_no_whatsapp_ayah
+
+# 3. Test di lokal
+npm run dev
+
+# 4. Commit & push
+git add prisma/migrations/
+git commit -m "feat: add no_whatsapp_ayah field"
+git push
+```
+
+**Untuk production (server):**
+```bash
+cd apps/mahadaly
+# Setup env vars (lihat di atas)
+npx prisma migrate deploy
+```
+
+#### Opsi B: Manual SQL via phpMyAdmin (Tanpa Prisma CLI di Server)
+
+**Step 1: Generate SQL di Lokal**
+```bash
+cd apps/mahadaly
+npx prisma migrate dev --create-only --name add_no_whatsapp_ayah
+```
+
+**Step 2: Copy SQL File**
+File akan ada di: `prisma/migrations/xxxxxx_add_no_whatsapp_ayah/migration.sql`
+
+**Step 3: Upload SQL via phpMyAdmin**
+1. Login cPanel → phpMyAdmin
+2. Pilih database `[DB_NAME]`
+3. Tab **SQL** → paste isi file migration.sql
+4. Klik **Go**
+
+**Step 4: Generate Prisma Client (setelah DB update)**
+```bash
+cd apps/mahadaly
+npx prisma generate
+npm run build
+```
+
+---
+
+### Production Build & Deploy
+
+#### Step 1: Build di Lokal
+
+```bash
+cd apps/mahadaly
+
+# Install dependencies
+npm install
+
+# Build production
+npm run build
+
+# Prepare deploy folder
+rm -rf deploy
+mkdir -p deploy
+
+# Copy standalone output
+cp -r .next/standalone/* deploy/
+cp -r .next/static deploy/.next/static
+cp -r public deploy/public
+```
+
+#### Step 2: Setup Node.js Selector di cPanel
+
+**Di Setup Node.js App:**
+
+| Setting | Value |
+|---------|-------|
+| Node.js version | 22 |
+| Application mode | Production |
+| Application root | `/home/syathiby/nodes/mahadaly` |
+| Application startup file | `server.js` |
+
+**Langkah:**
+1. Login cPanel → **Node.js Selector**
+2. Klik **Create Application**
+3. Isi sesuai tabel di atas
+4. Klik **Create**
+5. Klik **Run NPM Install**
+6. Set **Environment Variables** satu per satu
+
+#### Step 3: Upload ke Server
+
+**Via cPanel File Manager:**
+
+1. ZIP folder `deploy/` → `deploy.zip`
+2. Upload ke `/home/syathiby/nodes/mahadaly/`
+3. Extract (replace yang lama)
+4. **Jangan overwrite:** `.env` (buat manual di Node.js Selector)
+
+**Via FTP/SCP:**
+```bash
+# Upload folder deploy ke server
+scp -r deploy/* user@server:/home/syathiby/nodes/mahadaly/
+```
+
+#### Step 4: Server Setup
+
+**Environment Variables (Node.js Selector UI):**
+
+| Variable | Value |
+|----------|-------|
+| `DATABASE_URL` | `mysql://[DB_USER]:[DB_PASSWORD]@localhost:3306/[DB_NAME]` |
+| `JWT_SECRET` | `[JWT_SECRET]` |
+| `JWT_EXPIRES_IN` | `7d` |
+| `NEXT_PUBLIC_APP_URL` | `https://mahadaly.syathiby.id` |
+| `NODE_ENV` | `production` |
+| `ADMIN_EMAIL` | `[ADMIN_EMAIL]` |
+| `ADMIN_PASSWORD` | `[ADMIN_PASSWORD]` |
+| `UPLOAD_DIR` | `/home/syathiby/public_html/mahadaly.syathiby.id/uploads` |
+
+#### Step 5: Restart App
+
+1. Node.js Selector → klik app `mahadaly.syathiby.id`
+2. Klik **Restart**
+
+#### Step 6: Verify Deployment
+
+| Checklist | URL | Expected |
+|-----------|-----|----------|
+| Landing page | `/` | Halaman utama tampil |
+| PSB info | `/psb` | Info PSB + quota tampil |
+| Login | `/login` | Form login muncul |
+| Admin dashboard | `/admin` | Redirect ke login jika belum auth |
+
+---
+
+### Troubleshooting
+
+| Error | Solution |
+|-------|----------|
+| `P1001: Can't reach database server` | Pastikan firewall MySQL buka untuk IP lokal / whitelist IP |
+| `ECONNREFUSED` di fetch | Jangan fetch ke `NEXT_PUBLIC_APP_URL` — pakai direct Prisma call di server component |
+| `Failed to parse URL` | Next.js 16 tidak support relative URL di `fetch()` — call function langsung |
+| `Cannot find module '/npm'` | Startup file di Node.js Selector salah — set ke `npm start` |
+| `BrokenPipeError` | Restart app di Node.js Selector |

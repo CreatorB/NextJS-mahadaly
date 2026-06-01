@@ -8,12 +8,12 @@ export function Footer() {
         <div className="flex flex-col md:flex-row gap-8 md:gap-6 lg:gap-8">
           {/* Logo + Info Section */}
           <div className="flex flex-row items-center gap-4 md:w-1/3">
-            <div className="relative h-24 w-36 sm:h-28 sm:w-44 lg:h-32 lg:w-48 shrink-0">
+            <div className="relative h-28 w-28 sm:h-32 sm:w-32 lg:h-36 lg:w-36 shrink-0">
               <Image
-                src="/images/logo-white.png"
+                src="/images/mahadalysyathiby-logo-white-trim.png"
                 alt="Logo Ma'had Aly"
                 fill
-                sizes="(max-width: 640px) 144px, (max-width: 1024px) 176px, 192px"
+                sizes="(max-width: 640px) 112px, (max-width: 1024px) 128px, 144px"
                 className="object-contain"
               />
             </div>
@@ -49,7 +49,13 @@ export function Footer() {
         </div>
       </div>
       <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-blue-800 text-center text-xs text-blue-300">
-        © {new Date().getFullYear()} Ma'had Aly Al-Imam Asy-Syathiby. Hak cipta dilindungi.
+        Made with <span className="text-red-400">&hearts;</span> by{' '}
+        <a href="https://syathiby.github.io" target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:text-white font-medium">IT Syathiby</a>
+        {' '}2024{' '}
+        <span className="mx-2">|</span>
+        <a href="https://github.com/CreatorB/NextJS-mahadaly" target="_blank" rel="noopener noreferrer" className="hover:text-white">
+          Open Source <i className="fab fa-github ml-1" />
+        </a>
       </div>
     </footer>
   )

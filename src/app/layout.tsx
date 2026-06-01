@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "Ma'had Aly Al-Imam Asy-Syathiby",
   description: "Program Studi Hukum Keluarga Islam (HKI) / Ahwal Syakhsiyyah S1",
   icons: {
-    icon: '/images/logo-color.png',
+    icon: '/images/mahadalysyathiby-logo-color.png',
   },
 }
 

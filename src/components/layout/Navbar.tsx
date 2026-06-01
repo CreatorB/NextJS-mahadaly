@@ -20,7 +20,7 @@ return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 lg:h-24 flex items-center">
         <Link href="/" className="shrink-0 flex h-full py-1.5 leading-[0]">
           <Image
-            src="/images/logo-landscape-name-white-trim.png"
+            src="/images/mahadalysyathiby-logo-landscape-name-white-trim.png"
             alt="Ma'had Aly Al-Imam Asy-Syathiby"
             width={4361}
             height={1496}

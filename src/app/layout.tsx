@@ -7,6 +7,9 @@ const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
 export const metadata: Metadata = {
   title: "Ma'had Aly Al-Imam Asy-Syathiby",
   description: "Program Studi Hukum Keluarga Islam (HKI) / Ahwal Syakhsiyyah S1",
+  icons: {
+    icon: '/images/logo-color.png',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

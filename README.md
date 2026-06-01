@@ -1,5 +1,7 @@
 # Ma'had Aly Al-Imam Asy-Syathiby — Sistem PSB
 
+[MAHADALY.SYATHIBY.ID](https://mahadaly.syathiby.id)
+
 Sistem Penerimaan Mahasiswa/i Baru (PSB) untuk Ma'had Aly Al-Imam Asy-Syathiby.  
 Program Studi: Hukum Keluarga Islam (HKI) / Ahwal Syakhsiyyah S1.
 

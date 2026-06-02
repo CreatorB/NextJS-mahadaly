@@ -27,7 +27,7 @@ export function Footer() {
           <div className="md:w-1/3">
             <h4 className="font-semibold mb-3">Kontak</h4>
             <div className="flex flex-col gap-2 text-sm text-blue-200">
-              <a href="tel:08111516756" className="flex items-center gap-2 hover:text-white">
+              <a href="https://api.whatsapp.com/send?phone=628111516756" className="flex items-center gap-2 hover:text-white">
                 <Phone className="h-4 w-4" /> 0811-1516-756
               </a>
               <a href="https://www.mahadaly.syathiby.id" className="flex items-center gap-2 hover:text-white">

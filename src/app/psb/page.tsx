@@ -62,7 +62,7 @@ export default async function PsbPage() {
     { icon: CalendarX, label: 'Pendaftaran Ditutup', value: '19 Agustus 2026', tint: 'bg-brand-secondary/10', color: 'text-brand-secondary' },
     { icon: ClipboardCheck, label: 'Tes Masuk', value: 'Sabtu, 22 Agustus 2026', tint: 'bg-brand-light/15', color: 'text-brand-light' },
     { icon: Wallet, label: 'Biaya Pendaftaran', value: 'Rp 150.000', tint: 'bg-brand-primary/10', color: 'text-brand-primary' },
-    { icon: Phone, label: 'Narahubung', value: '0811-1516-756', tint: 'bg-brand-secondary/10', color: 'text-brand-secondary' },
+    { icon: Phone, label: 'Narahubung', value: '0811-1516-756', tint: 'bg-brand-secondary/10', color: 'text-brand-secondary', href: 'https://api.whatsapp.com/send?phone=628111516756' },
   ]
 
   return (
@@ -94,12 +94,8 @@ export default async function PsbPage() {
 
             <span className="inline-flex items-center gap-2 rounded-full border border-brand-primary/15 bg-white/70 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.25em] text-brand-secondary shadow-sm backdrop-blur">
               <span className="h-1.5 w-1.5 rounded-full bg-brand-light" />
-              Penerimaan Mahasiswa Baru
+              Penerimaan Mahasiswa/Mahasiswi Baru
             </span>
-
-            <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-brand-primary sm:text-5xl lg:text-6xl">
-              Mahasiswa/i Baru
-            </h1>
 
             {/* diamond divider */}
             <div className="mt-4 flex items-center justify-center gap-3">
@@ -129,7 +125,7 @@ export default async function PsbPage() {
             <PsbStatusBanner info={info} quota={quota} />
           ) : (
             <div className="rounded-2xl border border-gray-100 bg-white py-10 text-center text-gray-500 shadow-sm">
-              <p>Informasi PSB belum tersedia. Hubungi panitia di 0811-1516-756.</p>
+              <p>Informasi PSB belum tersedia. Hubungi panitia di <a href="https://api.whatsapp.com/send?phone=628111516756" className="text-brand-secondary font-medium hover:underline" target="_blank" rel="noopener noreferrer">0811-1516-756</a>.</p>
             </div>
           )}
 
@@ -145,8 +141,8 @@ export default async function PsbPage() {
               </div>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {infoItems.map(({ icon: Icon, label, value, tint, color }) => (
-                <div key={label} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-brand-surface/60 px-4 py-3 transition-colors hover:border-brand-primary/20">
+              {infoItems.map(({ icon: Icon, label, value, tint, color, href }) => (
+                <a key={label} href={href || '#'} target={href ? '_blank' : undefined} rel={href ? 'noopener noreferrer' : undefined} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-brand-surface/60 px-4 py-3 transition-colors hover:border-brand-primary/20 hover:bg-brand-surface/80">
                   <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${tint}`}>
                     <Icon className={`h-4 w-4 ${color}`} />
                   </span>
@@ -154,7 +150,7 @@ export default async function PsbPage() {
                     <div className="text-[11px] uppercase tracking-wide text-gray-400">{label}</div>
                     <div className="text-sm font-semibold leading-tight text-gray-800">{value}</div>
                   </div>
-                </div>
+                </a>
               ))}
             </div>
           </div>

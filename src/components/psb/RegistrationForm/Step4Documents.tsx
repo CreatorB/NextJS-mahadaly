@@ -128,7 +128,7 @@ export function Step4Documents({ form, onFilesChange, fileErrors }: Props) {
           required
           placeholder="150000"
         />
-        <p className="text-xs text-gray-500">Transfer ke rekening panitia: <strong>0811-1516-756</strong> (hubungi panitia untuk konfirmasi nomor rekening)</p>
+        <p className="text-xs text-gray-500">Transfer ke rekening panitia: <a href="https://api.whatsapp.com/send?phone=628111516756" target="_blank" rel="noopener noreferrer" className="text-brand-secondary font-medium hover:underline">0811-1516-756</a> (hubungi panitia untuk konfirmasi nomor rekening)</p>
       </div>
 
       <FileUpload

@@ -62,7 +62,7 @@ export function JadwalPsbSection() {
 
         <div className="text-center">
           <Link href="/psb" className="inline-block bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold px-10 py-4 rounded-xl text-lg hover:opacity-90 transition-opacity shadow-lg">
-            Daftar Sekarang di /psb
+            Daftar Sekarang
           </Link>
         </div>
       </div>

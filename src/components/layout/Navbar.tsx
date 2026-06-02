@@ -8,11 +8,11 @@ export function Navbar() {
   const [open, setOpen] = useState(false)
 
   const links = [
-    { href: '#program', label: 'Program' },
-    { href: '#pengajar', label: 'Pengajar' },
-    { href: '#kurikulum', label: 'Kurikulum' },
-    { href: '#jadwal', label: 'Jadwal PMB' },
-    { href: '#kontak', label: 'Kontak' },
+    { href: '/#program', label: 'Program' },
+    { href: '/#pengajar', label: 'Pengajar' },
+    { href: '/#kurikulum', label: 'Kurikulum' },
+    { href: '/#jadwal', label: 'Jadwal PMB' },
+    { href: '/#kontak', label: 'Kontak' },
   ]
 
 return (

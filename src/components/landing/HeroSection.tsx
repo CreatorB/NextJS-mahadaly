@@ -56,7 +56,7 @@ export function HeroSection() {
                 <Users className="h-6 w-6 text-brand-accent" />
                 <span className="font-semibold">Kontak</span>
               </div>
-              <p className="text-blue-100 text-sm">📞 0811-1516-756</p>
+              <a href="https://api.whatsapp.com/send?phone=628111516756" className="text-blue-100 text-sm">📞 0811-1516-756</a>
               <p className="text-blue-100 text-sm">🌐 www.mahadaly.syathiby.id</p>
             </div>
           </div>

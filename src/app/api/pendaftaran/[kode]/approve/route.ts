@@ -11,8 +11,8 @@ export async function POST(
   if (!session || session.roleId > 2) return Response.json(fail('Unauthorized'), { status: 401 })
 
   const { kode } = await params
-  const santri = await prisma.santri.findUnique({ where: { kodeRegistrasi: kode } })
-  if (!santri) return Response.json(fail('Data tidak ditemukan'), { status: 404 })
+  const siswa = await prisma.santri.findUnique({ where: { kodeRegistrasi: kode } })
+  if (!siswa) return Response.json(fail('Data tidak ditemukan'), { status: 404 })
 
   await prisma.$transaction(async (tx) => {
     await tx.santri.update({
@@ -21,10 +21,10 @@ export async function POST(
     })
     await tx.notification.create({
       data: {
-        santriId: santri.id,
+        siswaId: siswa.id,
         type: 'approved',
         title: 'Pendaftaran Diterima',
-        message: `Selamat ${santri.nama}, pendaftaran Anda telah diterima. Silakan ikuti langkah selanjutnya.`,
+        message: `Selamat ${siswa.nama}, pendaftaran Anda telah diterima. Silakan ikuti langkah selanjutnya.`,
       },
     })
   })

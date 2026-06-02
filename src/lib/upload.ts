@@ -60,9 +60,18 @@ export async function deleteDirectory(tahunPsb: string, kode: string): Promise<v
   }
 }
 
+export function getFilePath(publicUrl: string): string {
+  const relative = publicUrl.replace(/^\/uploads\//, '')
+  return path.join(UPLOAD_BASE, relative)
+}
+
 export function getPublicUrl(filePath: string): string {
   const normalized = filePath.replace(/\\/g, '/')
-  const parts = normalized.split('/uploads/')
-  if (parts.length > 1) return `/berkas/${parts[1]}`
-  return `/berkas/${filePath}`
+  // Find last '/uploads/' segment — handles both absolute paths (production)
+  // and relative paths (localhost). Takes everything after that segment.
+  const marker = '/uploads/'
+  const idx = normalized.lastIndexOf(marker)
+  if (idx !== -1) return `/uploads/${normalized.slice(idx + marker.length)}`
+  // Fallback: bare 'uploads/...' with no leading slash (e.g. Windows relative)
+  return `/uploads/${normalized.replace(/^\.?\/?uploads\//, '')}`
 }

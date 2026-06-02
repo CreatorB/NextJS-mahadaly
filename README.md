@@ -372,8 +372,10 @@ server {
     }
 
     # Serve file upload langsung via Nginx (lebih efisien)
-    location /berkas/ {
-        alias /home/username/mahadaly/uploads/;
+    location /uploads/ {
+        alias /home/syathiby/public_html/mahadaly.syathiby.id/uploads/;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
     }
 }
 ```

@@ -26,7 +26,7 @@ async function main() {
       id: 1,
       namaProgram: 'Hukum Keluarga Islam (HKI) / Ahwal Syakhsiyyah S1',
       statusPsb: 'Buka',
-      keterangan: 'Program Sarjana S1, 8 semester (4 tahun), 156 SKS, syarat hafalan 10 juz',
+      keterangan: 'Program Sarjana S1, 8 semester (4 tahun), 156 SKS',
     },
   })
   console.log('✓ Program seeded')

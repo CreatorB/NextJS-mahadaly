@@ -10,9 +10,9 @@ export function ContactSection() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { icon: Phone, label: 'Telepon / WA', value: '0811-1516-756', href: 'tel:08111516756' },
+            { icon: Phone, label: 'Telepon / WA', value: '0811-1516-756', href: 'https://api.whatsapp.com/send?phone=628111516756' },
             { icon: Globe, label: 'Website', value: 'www.mahadaly.syathiby.id', href: 'https://www.mahadaly.syathiby.id' },
-            { icon: AtSign, label: 'Instagram', value: '@mahadalysyathiby', href: '#' },
+            { icon: AtSign, label: 'Instagram', value: '@mahadalysyathiby', href: 'https://www.instagram.com/mahadalysyathiby' },
             { icon: MapPin, label: 'Alamat', value: 'Kp. Tengah, Cileungsi, Bogor 16820', href: '#' },
           ].map((c, i) => (
             <a key={i} href={c.href} className="bg-white/10 hover:bg-white/20 rounded-xl p-5 transition-colors border border-white/20">

@@ -17,65 +17,78 @@ export async function POST(
   const body = await req.json().catch(() => ({}))
   const { statusPendaftaran, statusTransfer, alasanPendaftaran, alasanTransfer } = body
 
-  const updates: Record<string, string | null> = {}
-  const notifications: { siswaId: string; type: string; title: string; message: string }[] = []
+  const updateData: Record<string, string | Date | null> = {}
+  let notifyPendaftaran = false
+  let notifyTransfer = false
 
   if (statusPendaftaran !== undefined) {
-    updates.statusPendaftaran = statusPendaftaran
-    updates.alasanPendaftaran = statusPendaftaran === 'rejected' ? (alasanPendaftaran || null) : null
-    if (statusPendaftaran === 'approved') {
-      updates.tglVerifikasi = new Date()
-      notifications.push({
-        siswaId: siswa.id,
-        type: 'approved',
-        title: 'Pendaftaran Diterima',
-        message: `Selamat ${siswa.nama}, pendaftaran Anda telah diterima. Silakan ikuti langkah selanjutnya.`,
-      })
-    } else if (statusPendaftaran === 'rejected') {
-      updates.tglVerifikasi = new Date()
-      notifications.push({
-        siswaId: siswa.id,
-        type: 'rejected',
-        title: 'Pendaftaran Ditolak',
-        message: alasanPendaftaran
-          ? `Pendaftaran Anda ditolak. Alasan: ${alasanPendaftaran}. Jika ada berkas yang perlu diperbaiki, silakan kunjungi menu Dokumen Saya.`
-          : 'Pendaftaran Anda ditolak oleh panitia. Jika ada berkas yang perlu diperbaiki, silakan kunjungi menu Dokumen Saya.',
-      })
+    updateData.statusPendaftaran = statusPendaftaran
+    updateData.alasanPendaftaran = statusPendaftaran === 'rejected' ? (alasanPendaftaran || null) : null
+    if (statusPendaftaran === 'approved' || statusPendaftaran === 'rejected') {
+      updateData.tglVerifikasi = new Date()
+      notifyPendaftaran = statusPendaftaran === 'rejected'
     }
   }
 
   if (statusTransfer !== undefined) {
-    updates.statusTransfer = statusTransfer
-    updates.alasanTransfer = statusTransfer === 'rejected' ? (alasanTransfer || null) : null
-    if (statusTransfer === 'approved') {
-      updates.tglVerifikasi = new Date()
-      notifications.push({
-        siswaId: siswa.id,
-        type: 'info',
-        title: 'Pembayaran Dikonfirmasi',
-        message: 'Pembayaran Anda telah dikonfirmasi. Link grup WhatsApp kini tersedia di dashboard Anda.',
-      })
-    } else if (statusTransfer === 'rejected') {
-      notifications.push({
-        siswaId: siswa.id,
-        type: 'rejected',
-        title: 'Pembayaran Ditolak',
-        message: `Bukti pembayaran Anda ditolak. Alasan: ${alasanTransfer}. Silakan upload ulang bukti transfer yang benar melalui menu Dokumen Saya.`,
-      })
+    updateData.statusTransfer = statusTransfer
+    updateData.alasanTransfer = statusTransfer === 'rejected' ? (alasanTransfer || null) : null
+    if (statusTransfer === 'approved' || statusTransfer === 'rejected') {
+      updateData.tglVerifikasi = new Date()
+      notifyTransfer = statusTransfer === 'rejected'
     }
   }
 
-  if (Object.keys(updates).length === 0) {
+  if (Object.keys(updateData).length === 0) {
     return Response.json(fail('Tidak ada status yang diubah'), { status: 400 })
   }
 
   await prisma.$transaction(async (tx) => {
     await tx.santri.update({
       where: { kodeRegistrasi: kode },
-      data: updates,
+      data: updateData,
     })
-    for (const notif of notifications) {
-      await tx.notification.create({ data: notif })
+
+    if (statusPendaftaran === 'approved') {
+      await tx.notification.create({
+        data: {
+          siswaId: siswa.id,
+          type: 'approved',
+          title: 'Pendaftaran Diterima',
+          message: `Selamat ${siswa.nama}, pendaftaran Anda telah diterima. Silakan ikuti langkah selanjutnya.`,
+        },
+      })
+    } else if (notifyPendaftaran) {
+      await tx.notification.create({
+        data: {
+          siswaId: siswa.id,
+          type: 'rejected',
+          title: 'Pendaftaran Ditolak',
+          message: alasanPendaftaran
+            ? `Pendaftaran Anda ditolak. Alasan: ${alasanPendaftaran}. Jika ada berkas yang perlu diperbaiki, silakan kunjungi menu Dokumen Saya.`
+            : 'Pendaftaran Anda ditolak oleh panitia. Jika ada berkas yang perlu diperbaiki, silakan kunjungi menu Dokumen Saya.',
+        },
+      })
+    }
+
+    if (statusTransfer === 'approved') {
+      await tx.notification.create({
+        data: {
+          siswaId: siswa.id,
+          type: 'info',
+          title: 'Pembayaran Dikonfirmasi',
+          message: 'Pembayaran Anda telah dikonfirmasi. Link grup WhatsApp kini tersedia di dashboard Anda.',
+        },
+      })
+    } else if (notifyTransfer) {
+      await tx.notification.create({
+        data: {
+          siswaId: siswa.id,
+          type: 'rejected',
+          title: 'Pembayaran Ditolak',
+          message: `Bukti pembayaran Anda ditolak. Alasan: ${alasanTransfer}. Silakan upload ulang bukti transfer yang benar melalui menu Dokumen Saya.`,
+        },
+      })
     }
   })
 

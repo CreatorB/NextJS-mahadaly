@@ -86,6 +86,7 @@ export function AdminActions({ kode, statusPendaftaran, statusTransfer, nama, hp
   const [showRejectModal, setShowRejectModal] = useState(false)
   const [rejectType, setRejectType] = useState<'pendaftaran' | 'transfer' | null>(null)
   const [showDelete, setShowDelete] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   const handleStatusChange = async (field: 'statusPendaftaran' | 'statusTransfer', newValue: string) => {
     if (newValue === 'rejected') {
@@ -142,7 +143,7 @@ export function AdminActions({ kode, statusPendaftaran, statusTransfer, nama, hp
   }
 
   const call = async (url: string, body?: object) => {
-    setLoading(url)
+    setDeleteLoading(true)
     try {
       const res = await fetch(url, { method: url.includes('delete') ? 'DELETE' : 'POST', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
       const json = await res.json()
@@ -155,7 +156,7 @@ export function AdminActions({ kode, statusPendaftaran, statusTransfer, nama, hp
     } catch {
       toast.error('Terjadi kesalahan')
     } finally {
-      setLoading(null)
+      setDeleteLoading(false)
       setShowDelete(false)
     }
   }
@@ -210,7 +211,7 @@ export function AdminActions({ kode, statusPendaftaran, statusTransfer, nama, hp
           <div className="space-y-2">
             <p className="text-sm text-red-600">Yakin ingin menghapus data ini? Tindakan tidak bisa dibatalkan.</p>
             <div className="flex gap-2">
-              <Button size="sm" variant="danger" loading={loading === `/api/pendaftaran/${kode}/delete`} onClick={() => { call(`/api/pendaftaran/${kode}/delete`).then(() => router.push('/admin/pendaftaran')) }}>Hapus</Button>
+              <Button size="sm" variant="danger" loading={deleteLoading} onClick={() => { call(`/api/pendaftaran/${kode}/delete`).then(() => router.push('/admin/pendaftaran')) }}>Hapus</Button>
               <Button size="sm" variant="ghost" onClick={() => setShowDelete(false)}>Batal</Button>
             </div>
           </div>

@@ -3,7 +3,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { CheckCircle, XCircle, Trash2 } from 'lucide-react'
+import { StatusDropdown } from './StatusDropdown'
+import { RejectModal } from './RejectModal'
+import { Trash2 } from 'lucide-react'
 
 interface Props {
   kode: string
@@ -72,14 +74,72 @@ function WhatsAppButton({ href }: { href: string }) {
   )
 }
 
+const STATUS_OPTIONS = [
+  { value: 'pending', label: 'Menunggu' },
+  { value: 'approved', label: 'Diterima' },
+  { value: 'rejected', label: 'Ditolak' },
+]
+
 export function AdminActions({ kode, statusPendaftaran, statusTransfer, nama, hp, email }: Props) {
   const router = useRouter()
-  const [loading, setLoading] = useState<string | null>(null)
-  const [showRejectTransfer, setShowRejectTransfer] = useState(false)
-  const [showRejectPendaftaran, setShowRejectPendaftaran] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [showRejectModal, setShowRejectModal] = useState(false)
+  const [rejectType, setRejectType] = useState<'pendaftaran' | 'transfer' | null>(null)
   const [showDelete, setShowDelete] = useState(false)
-  const [alasanTransfer, setAlasanTransfer] = useState('')
-  const [alasanPendaftaran, setAlasanPendaftaran] = useState('')
+
+  const handleStatusChange = async (field: 'statusPendaftaran' | 'statusTransfer', newValue: string) => {
+    if (newValue === 'rejected') {
+      setRejectType(field === 'statusPendaftaran' ? 'pendaftaran' : 'transfer')
+      setShowRejectModal(true)
+      return
+    }
+
+    setLoading(true)
+    try {
+      const body: Record<string, string> = { [field]: newValue }
+      const res = await fetch(`/api/pendaftaran/${kode}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const json = await res.json()
+      if (json.success) {
+        toast.success(json.message)
+        router.refresh()
+      } else {
+        toast.error(json.message)
+      }
+    } catch {
+      toast.error('Terjadi kesalahan')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRejectConfirm = async (alasan: string) => {
+    const field = rejectType === 'pendaftaran' ? 'statusPendaftaran' : 'statusTransfer'
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/pendaftaran/${kode}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: 'rejected', [`alasan${rejectType === 'pendaftaran' ? 'Pendaftaran' : 'Transfer'}`]: alasan }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        toast.success(json.message)
+        router.refresh()
+      } else {
+        toast.error(json.message)
+      }
+    } catch {
+      toast.error('Terjadi kesalahan')
+    } finally {
+      setLoading(false)
+      setShowRejectModal(false)
+      setRejectType(null)
+    }
+  }
 
   const call = async (url: string, body?: object) => {
     setLoading(url)
@@ -96,8 +156,6 @@ export function AdminActions({ kode, statusPendaftaran, statusTransfer, nama, hp
       toast.error('Terjadi kesalahan')
     } finally {
       setLoading(null)
-      setShowRejectTransfer(false)
-      setShowRejectPendaftaran(false)
       setShowDelete(false)
     }
   }
@@ -106,57 +164,43 @@ export function AdminActions({ kode, statusPendaftaran, statusTransfer, nama, hp
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-4">
       <h3 className="font-semibold text-brand-primary text-sm">Aksi Admin</h3>
 
-      {/* Transfer Actions */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs text-gray-500 font-medium">Verifikasi Pembayaran</p>
+      <div className="flex flex-wrap gap-6">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 font-medium">Verifikasi Pembayaran:</span>
+            <StatusDropdown
+              label=""
+              value={statusTransfer}
+              onChange={(val) => handleStatusChange('statusTransfer', val)}
+              disabled={loading}
+              options={STATUS_OPTIONS}
+            />
+          </div>
           <WhatsAppButton href={waLink(hp, templateTransfer(nama, kode, email))} />
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="primary" disabled={statusTransfer === 'approved'} loading={loading === `/api/pendaftaran/${kode}/approve-transfer`} onClick={() => call(`/api/pendaftaran/${kode}/approve-transfer`)}>
-            <CheckCircle className="h-3 w-3" /> Konfirmasi Transfer
-          </Button>
-          <Button size="sm" variant="danger" disabled={statusTransfer === 'rejected'} onClick={() => setShowRejectTransfer(true)}>
-            <XCircle className="h-3 w-3" /> Tolak Transfer
-          </Button>
-        </div>
-        {showRejectTransfer && (
-          <div className="mt-3 space-y-2">
-            <textarea value={alasanTransfer} onChange={(e) => setAlasanTransfer(e.target.value)} rows={2} placeholder="Alasan penolakan transfer (wajib)" className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
-            <div className="flex gap-2">
-              <Button size="sm" variant="danger" loading={loading === `/api/pendaftaran/${kode}/reject-transfer`} onClick={() => call(`/api/pendaftaran/${kode}/reject-transfer`, { alasan: alasanTransfer })}>Kirim</Button>
-              <Button size="sm" variant="ghost" onClick={() => setShowRejectTransfer(false)}>Batal</Button>
-            </div>
-          </div>
-        )}
-      </div>
 
-      {/* Pendaftaran Actions */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs text-gray-500 font-medium">Status Pendaftaran</p>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 font-medium">Status Pendaftaran:</span>
+            <StatusDropdown
+              label=""
+              value={statusPendaftaran}
+              onChange={(val) => handleStatusChange('statusPendaftaran', val)}
+              disabled={loading}
+              options={STATUS_OPTIONS}
+            />
+          </div>
           <WhatsAppButton href={waLink(hp, templatePendaftaran(nama, kode, email))} />
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="primary" disabled={statusPendaftaran === 'approved'} loading={loading === `/api/pendaftaran/${kode}/approve`} onClick={() => call(`/api/pendaftaran/${kode}/approve`)}>
-            <CheckCircle className="h-3 w-3" /> Terima Pendaftaran
-          </Button>
-          <Button size="sm" variant="danger" disabled={statusPendaftaran === 'rejected'} onClick={() => setShowRejectPendaftaran(true)}>
-            <XCircle className="h-3 w-3" /> Tolak Pendaftaran
-          </Button>
-        </div>
-        {showRejectPendaftaran && (
-          <div className="mt-3 space-y-2">
-            <textarea value={alasanPendaftaran} onChange={(e) => setAlasanPendaftaran(e.target.value)} rows={2} placeholder="Alasan penolakan (opsional)" className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
-            <div className="flex gap-2">
-              <Button size="sm" variant="danger" loading={loading === `/api/pendaftaran/${kode}/reject`} onClick={() => call(`/api/pendaftaran/${kode}/reject`, { alasan: alasanPendaftaran })}>Kirim</Button>
-              <Button size="sm" variant="ghost" onClick={() => setShowRejectPendaftaran(false)}>Batal</Button>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Delete */}
+      <RejectModal
+        open={showRejectModal}
+        title={rejectType === 'pendaftaran' ? 'Tolak Pendaftaran' : 'Tolak Transfer'}
+        onConfirm={handleRejectConfirm}
+        onCancel={() => { setShowRejectModal(false); setRejectType(null) }}
+      />
+
       <div className="pt-2 border-t border-gray-100">
         {!showDelete ? (
           <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700" onClick={() => setShowDelete(true)}>

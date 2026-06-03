@@ -27,8 +27,8 @@ export default async function DokumenPage() {
     {
       key: 'photo' as const,
       label: 'Pas Foto',
-      accept: 'image/jpeg,image/jpg,image/png',
-      hint: 'JPG/PNG, maks. 1 MB',
+      accept: 'image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,image/bmp,image/tiff,image/avif',
+      hint: 'Gambar (JPG, PNG, WEBP, HEIC, dll.), maks. 1 MB',
       path: siswa.photo,
       locked: isFullyApproved,
       lockedReason: 'Pendaftaran sudah diverifikasi',
@@ -36,8 +36,8 @@ export default async function DokumenPage() {
     {
       key: 'ktp' as const,
       label: 'KTP / Kartu Identitas',
-      accept: 'image/jpeg,image/jpg,image/png',
-      hint: 'JPG/PNG, maks. 1 MB',
+      accept: 'image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,image/bmp,image/tiff,image/avif',
+      hint: 'Gambar (JPG, PNG, WEBP, HEIC, dll.), maks. 1 MB',
       path: siswa.ktp,
       locked: isFullyApproved,
       lockedReason: 'Pendaftaran sudah diverifikasi',
@@ -45,8 +45,8 @@ export default async function DokumenPage() {
     {
       key: 'transfer' as const,
       label: 'Bukti Transfer',
-      accept: 'image/jpeg,image/jpg,image/png',
-      hint: 'JPG/PNG, maks. 1 MB',
+      accept: 'image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,image/bmp,image/tiff,image/avif',
+      hint: 'Gambar (JPG, PNG, WEBP, HEIC, dll.), maks. 1 MB',
       path: siswa.transfer,
       locked: isFullyApproved || isTransferApproved,
       lockedReason: isTransferApproved ? 'Pembayaran sudah diverifikasi' : 'Pendaftaran sudah diverifikasi',
@@ -54,8 +54,8 @@ export default async function DokumenPage() {
     {
       key: 'ijazah' as const,
       label: 'Ijazah',
-      accept: 'image/jpeg,image/jpg,image/png,application/pdf',
-      hint: 'JPG/PNG/PDF, maks. 2 MB',
+      accept: 'image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,image/bmp,image/tiff,image/avif,application/pdf',
+      hint: 'Gambar atau PDF, maks. 2 MB',
       path: siswa.ijazah,
       locked: isFullyApproved,
       lockedReason: 'Pendaftaran sudah diverifikasi',

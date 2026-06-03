@@ -123,8 +123,18 @@ export function RegistrationForm({ programs, pekerjaans }: Props) {
       } else {
         toast.error(json.message ?? 'Pendaftaran gagal')
         if (json.errors) {
-          for (const [k, v] of Object.entries(json.errors)) {
-            form.setError(k as keyof RegistrationFormData, { message: (v as string[])[0] })
+          const fileKeys = ['photo', 'ktp', 'transfer', 'ijazah']
+          const fileErrs: Record<string, string> = {}
+          for (const [k, v] of Object.entries(json.errors as Record<string, string[]>)) {
+            if (fileKeys.includes(k)) {
+              fileErrs[k] = (v as string[])[0]
+            } else {
+              form.setError(k as keyof RegistrationFormData, { message: (v as string[])[0] })
+            }
+          }
+          if (Object.keys(fileErrs).length) {
+            setFileErrors(fileErrs)
+            setStep(4)
           }
         }
       }

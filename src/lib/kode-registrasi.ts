@@ -6,5 +6,6 @@ export async function generateKodeRegistrasi(tahunPsb: string): Promise<string> 
   const mm = String(now.getMonth() + 1).padStart(2, '0')
   const dd = String(now.getDate()).padStart(2, '0')
   const count = await prisma.santri.count({ where: { tahunPsb } })
-  return `${yy}${mm}${dd}${count + 1}`
+  const rand = String(Math.floor(Math.random() * 900) + 100) // 100–999, prevents concurrent collisions
+  return `${yy}${mm}${dd}${String(count + 1).padStart(3, '0')}${rand}`
 }

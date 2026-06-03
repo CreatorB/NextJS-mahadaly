@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import prisma from '@/lib/prisma'
 import { generateKodeRegistrasi } from '@/lib/kode-registrasi'
 import { isDuplicateApplicant } from '@/lib/duplicate-check'
-import { saveFile, validateImageFile, validateDocFile, getPublicUrl } from '@/lib/upload'
+import { saveFile, validateImageFile, validateDocFile, getPublicUrl, deleteFile } from '@/lib/upload'
 import { registrationSchema } from '@/lib/validations/registration'
 import { ok, fail } from '@/types/api'
 import bcrypt from 'bcryptjs'
@@ -10,6 +10,7 @@ import bcrypt from 'bcryptjs'
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
+  const savedPaths: string[] = []
   try {
     const formData = await req.formData()
 
@@ -84,11 +85,6 @@ export async function POST(req: NextRequest) {
     const kode = await generateKodeRegistrasi(infoPsb.tahunAjaran)
     const tahunPsb = infoPsb.tahunAjaran
 
-    const photoPath = await saveFile(photo!, tahunPsb, kode, 'photo')
-    const ktpPath = await saveFile(ktp!, tahunPsb, kode, 'ktp')
-    const transferPath = await saveFile(transfer!, tahunPsb, kode, 'transfer')
-    const ijazahPath = await saveFile(ijazah!, tahunPsb, kode, 'ijazah')
-
     // Normalize phone: strip +62 / 62 prefix / leading 0
     let rawNoHp = data.noHp.replace(/[\s\-\.]/g, '')
     if (rawNoHp.startsWith('+62')) rawNoHp = rawNoHp.slice(3)
@@ -96,7 +92,16 @@ export async function POST(req: NextRequest) {
     if (rawNoHp.startsWith('0')) rawNoHp = rawNoHp.slice(1)
     const normalizedNoHp = rawNoHp
     const hp = `${data.kodeNegara}${normalizedNoHp}`
-    const hashedPassword = await bcrypt.hash(kode, 10)
+
+    // Run file saves and bcrypt in parallel for performance
+    const [photoPath, ktpPath, transferPath, ijazahPath, hashedPassword] = await Promise.all([
+      saveFile(photo!, tahunPsb, kode, 'photo'),
+      saveFile(ktp!, tahunPsb, kode, 'ktp'),
+      saveFile(transfer!, tahunPsb, kode, 'transfer'),
+      saveFile(ijazah!, tahunPsb, kode, 'ijazah'),
+      bcrypt.hash(kode, 10),
+    ])
+    savedPaths.push(photoPath, ktpPath, transferPath, ijazahPath)
 
     const provinsiId = data.provinsiId ? parseInt(data.provinsiId) : null
     const kabupatenId = data.kabupatenId ? parseInt(data.kabupatenId) : null
@@ -151,6 +156,8 @@ export async function POST(req: NextRequest) {
 
     return Response.json(ok({ kodeRegistrasi: newSantri.kodeRegistrasi, nama: newSantri.nama }), { status: 201 })
   } catch (e) {
+    // Cleanup orphaned files if DB transaction failed after files were saved
+    if (savedPaths.length) await Promise.allSettled(savedPaths.map(p => deleteFile(p)))
     console.error(e)
     return Response.json(fail('Terjadi kesalahan server'), { status: 500 })
   }

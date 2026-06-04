@@ -1,9 +1,12 @@
 'use client'
 import { useState } from 'react'
-import { Upload, X, FileImage, FileText } from 'lucide-react'
+import { Upload, X, FileText, Loader2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { UseFormReturn } from 'react-hook-form'
 import type { RegistrationFormData } from '@/lib/validations/registration'
+import imageCompression from 'browser-image-compression'
+
+const MAX_SIZE_BYTES = 2 * 1024 * 1024
 
 interface FileUploadProps {
   label: string
@@ -18,27 +21,68 @@ function FileUpload({ label, accept, required, maxSize, onChange, error }: FileU
   const [preview, setPreview] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const [localError, setLocalError] = useState<string | null>(null)
+  const [isCompressing, setIsCompressing] = useState(false)
+  const [originalSize, setOriginalSize] = useState<number | null>(null)
+  const [compressedSize, setCompressedSize] = useState<number | null>(null)
 
-  const handleFile = (file: File | null) => {
-    if (file) {
-      const maxBytes = accept.includes('pdf') ? 2 * 1024 * 1024 : 1024 * 1024
-      if (file.size > maxBytes) {
-        setLocalError(`Ukuran file terlalu besar. Maksimal ${maxSize}`)
-        return
-      }
+  const handleFile = async (file: File | null) => {
+    if (!file) {
+      setLocalError(null)
+      onChange(null)
+      setFileName(null)
+      setPreview(null)
+      setOriginalSize(null)
+      setCompressedSize(null)
+      return
     }
-    setLocalError(null)
-    onChange(file)
-    if (file) {
+
+    const isPdf = accept.includes('pdf')
+    const maxBytes = isPdf ? 2 * 1024 * 1024 : MAX_SIZE_BYTES
+
+    if (file.size > maxBytes && file.type.startsWith('image/')) {
+      setIsCompressing(true)
+      setLocalError(null)
+      setOriginalSize(file.size)
+
+      try {
+        const options = {
+          maxSizeMB: 1.5,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+          fileType: file.type as imageCompression.FileType,
+        }
+        const compressed = await imageCompression(file, options)
+        setCompressedSize(compressed.size)
+        onChange(compressed)
+        setFileName(compressed.name)
+        if (!['image/heic', 'image/heif'].includes(file.type)) {
+          setPreview(URL.createObjectURL(compressed))
+        } else {
+          setPreview(null)
+        }
+      } catch {
+        setLocalError('Gagal memampatkan file. Coba pilih file lain.')
+        onChange(null)
+        setFileName(null)
+        setPreview(null)
+        setOriginalSize(null)
+      } finally {
+        setIsCompressing(false)
+      }
+    } else if (file.size > maxBytes) {
+      setLocalError(`Ukuran file terlalu besar. Maksimal ${maxSize}`)
+      return
+    } else {
+      setLocalError(null)
+      onChange(file)
       setFileName(file.name)
       if (file.type.startsWith('image/') && !['image/heic', 'image/heif'].includes(file.type)) {
         setPreview(URL.createObjectURL(file))
       } else {
         setPreview(null)
       }
-    } else {
-      setFileName(null)
-      setPreview(null)
+      setOriginalSize(null)
+      setCompressedSize(null)
     }
   }
 
@@ -48,7 +92,13 @@ function FileUpload({ label, accept, required, maxSize, onChange, error }: FileU
         {label} {required && <span className="text-red-500">*</span>}
         <span className="text-xs text-gray-400 ml-1">(Max {maxSize})</span>
       </label>
-      {!fileName ? (
+      {isCompressing ? (
+        <div className="border-2 border-dashed rounded-xl p-6 text-center border-blue-300 bg-blue-50">
+          <Loader2 className="h-8 w-8 text-blue-500 mx-auto mb-2 animate-spin" />
+          <p className="text-sm text-blue-600">Memampatkan file...</p>
+          <p className="text-xs text-gray-400 mt-1">Tunggu sebentar</p>
+        </div>
+      ) : !fileName ? (
         <label className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer hover:border-brand-primary transition-colors ${error ? 'border-red-400' : 'border-gray-300'}`}>
           <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
           <p className="text-sm text-gray-500">Klik untuk upload file</p>
@@ -73,7 +123,13 @@ function FileUpload({ label, accept, required, maxSize, onChange, error }: FileU
           )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-800 truncate">{fileName}</p>
-            <p className="text-xs text-green-600">File siap diupload</p>
+            {compressedSize !== null ? (
+              <p className="text-xs text-green-600">
+                Dimampatkan: {originalSize && Math.round(originalSize / 1024)} KB → {Math.round(compressedSize / 1024)} KB
+              </p>
+            ) : (
+              <p className="text-xs text-green-600">File siap diupload</p>
+            )}
           </div>
           <button type="button" onClick={() => handleFile(null)} className="text-red-500 hover:text-red-700">
             <X className="h-5 w-5" />
@@ -109,7 +165,7 @@ export function Step4Documents({ form, onFilesChange, fileErrors }: Props) {
         label="Pas Foto Terbaru"
         accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,image/bmp,image/tiff,image/avif"
         required
-        maxSize="1 MB"
+        maxSize="2 MB"
         onChange={updateFile('photo')}
         error={fileErrors.photo}
       />
@@ -118,7 +174,7 @@ export function Step4Documents({ form, onFilesChange, fileErrors }: Props) {
         label="KTP / Kartu Identitas"
         accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,image/bmp,image/tiff,image/avif"
         required
-        maxSize="1 MB"
+        maxSize="2 MB"
         onChange={updateFile('ktp')}
         error={fileErrors.ktp}
       />
@@ -128,7 +184,7 @@ export function Step4Documents({ form, onFilesChange, fileErrors }: Props) {
           label="Bukti Transfer Biaya Pendaftaran"
           accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,image/bmp,image/tiff,image/avif"
           required
-          maxSize="1 MB"
+          maxSize="2 MB"
           onChange={updateFile('transfer')}
           error={fileErrors.transfer}
         />

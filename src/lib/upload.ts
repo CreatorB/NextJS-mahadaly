@@ -28,7 +28,7 @@ export function getExtension(mimeType: string): string {
 
 export function validateImageFile(file: File): string | null {
   if (!IMAGE_TYPES.includes(file.type)) return 'Harus berupa gambar (JPG, PNG, WEBP, HEIC, dll.)'
-  if (file.size > 1024 * 1024) return 'Ukuran maksimal 1 MB'
+  if (file.size > 2 * 1024 * 1024) return 'Ukuran maksimal 2 MB'
   return null
 }
 

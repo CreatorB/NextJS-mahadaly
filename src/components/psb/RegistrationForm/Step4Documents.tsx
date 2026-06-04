@@ -49,7 +49,6 @@ function FileUpload({ label, accept, required, maxSize, onChange, error }: FileU
           maxSizeMB: 1.5,
           maxWidthOrHeight: 1920,
           useWebWorker: true,
-          fileType: file.type as imageCompression.FileType,
         }
         const compressed = await imageCompression(file, options)
         setCompressedSize(compressed.size)

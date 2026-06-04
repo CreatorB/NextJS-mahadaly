@@ -3,6 +3,7 @@ import { Badge, statusBadge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
 import Link from 'next/link'
+import { Users, Clock, CheckCircle, Banknote } from 'lucide-react'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
@@ -30,22 +31,50 @@ export default async function PendaftaranPage({ searchParams }: Props) {
   if (params.programId) where.programId = parseInt(params.programId)
   if (params.jk) where.jk = params.jk
 
-  const [total, santris, programs] = await Promise.all([
-    prisma.santri.count({ where }),
-    prisma.santri.findMany({ where, include: { program: true }, orderBy: { createdAt: 'desc' }, skip, take: limit }),
+  const [total, pendingCount, approvedCount, rejected, cash, pendingTransfer, santris, programs] = await Promise.all([
+    prisma.santri.count(),
+    prisma.santri.count({ where: { statusPendaftaran: 'pending' } }),
+    prisma.santri.count({ where: { statusPendaftaran: 'approved' } }),
+    prisma.santri.count({ where: { statusPendaftaran: 'rejected' } }),
+    prisma.santri.aggregate({ _sum: { nominalTransfer: true }, where: { statusTransfer: 'approved' } }),
+    prisma.santri.count({ where: { statusTransfer: 'pending' } }),
+    prisma.santri.findMany({ where: { ...where }, include: { program: true }, orderBy: { createdAt: 'desc' }, skip, take: limit }),
     prisma.program.findMany(),
   ])
+
+  const totalCash = cash._sum.nominalTransfer ? Number(cash._sum.nominalTransfer) : 0
 
   const totalPages = Math.ceil(total / limit)
 
   return (
-    <div className="p-6 sm:p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-6 sm:p-8 space-y-6">
+      <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-brand-primary">Data Pendaftaran</h1>
-        <span className="text-sm text-gray-500">Total: {total}</span>
       </div>
 
-      {/* Filters */}
+      <div className="bg-brand-primary rounded-xl p-4 flex flex-wrap gap-4 sm:gap-8">
+        <div className="flex items-center gap-2 text-white">
+          <Banknote className="h-4 w-4" />
+          <span className="text-sm">Cash</span>
+          <span className="text-xl font-bold">Rp {totalCash.toLocaleString('id-ID')}</span>
+        </div>
+        <div className="flex items-center gap-2 text-white">
+          <Users className="h-4 w-4" />
+          <span className="text-sm">Total</span>
+          <span className="text-xl font-bold">{total}</span>
+        </div>
+        <div className="flex items-center gap-2 text-yellow-300">
+          <Clock className="h-4 w-4" />
+          <span className="text-sm">Pending</span>
+          <span className="text-xl font-bold">{pendingTransfer}</span>
+        </div>
+        <div className="flex items-center gap-2 text-green-300">
+          <CheckCircle className="h-4 w-4" />
+          <span className="text-sm">Diterima</span>
+          <span className="text-xl font-bold">{approvedCount}</span>
+        </div>
+      </div>
+
       <form className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm mb-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
         <input name="search" defaultValue={params.search} placeholder="Cari nama/kode..." className="col-span-2 sm:col-span-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary" />
         <select name="statusPendaftaran" defaultValue={params.statusPendaftaran} className="border border-gray-300 rounded-lg px-3 py-2 text-sm">

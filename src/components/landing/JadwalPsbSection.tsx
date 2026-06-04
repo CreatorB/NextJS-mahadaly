@@ -1,26 +1,31 @@
 import Link from 'next/link'
 import { Calendar, DollarSign } from 'lucide-react'
+import prisma from '@/lib/prisma'
 
-const jadwal = [
-  { kegiatan: 'Pendaftaran Dibuka', tanggal: '25 Mei 2026' },
-  { kegiatan: 'Pendaftaran Ditutup', tanggal: '19 Agustus 2026' },
-  { kegiatan: 'Tes Masuk', tanggal: 'Sabtu, 22 Agustus 2026' },
-]
+export async function JadwalPsbSection() {
+  const info = await prisma.infoPsb.findFirst({ orderBy: { tahunAjaran: 'desc' } })
 
-const biaya = [
-  { item: 'Uang Pendaftaran', nominal: 'Rp 150.000' },
-  { item: 'Uang Pangkal', nominal: 'Rp 5.250.000' },
-  { item: 'Biaya Kuliah/Semester', nominal: 'Rp 3.000.000' },
-  { item: 'Cicilan/Bulan', nominal: 'Rp 500.000' },
-]
+  const jadwal = [
+    { kegiatan: 'Pendaftaran Dibuka', tanggal: info?.datetimeOpen ? new Date(info.datetimeOpen).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-' },
+    { kegiatan: 'Pendaftaran Ditutup', tanggal: info?.datetimeClosed ? new Date(info.datetimeClosed).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-' },
+    { kegiatan: 'Tes Masuk', tanggal: 'Sabtu, 22 Agustus 2026' },
+  ]
 
-export function JadwalPsbSection() {
+  const biaya = [
+    { item: 'Uang Pendaftaran', nominal: info?.biayaPendaftaran ? `Rp ${Number(info.biayaPendaftaran).toLocaleString('id-ID')}` : 'Rp 150.000' },
+    { item: 'Uang Pangkal', nominal: info?.biayaPangkal ? `Rp ${Number(info.biayaPangkal).toLocaleString('id-ID')}` : 'Rp 5.250.000' },
+    { item: 'Biaya Kuliah/Semester', nominal: info?.biayaKuliahSemester ? `Rp ${Number(info.biayaKuliahSemester).toLocaleString('id-ID')}` : 'Rp 3.000.000' },
+    { item: 'Cicilan/Bulan', nominal: info?.biayaCicilanBulanan ? `Rp ${Number(info.biayaCicilanBulanan).toLocaleString('id-ID')}` : 'Rp 500.000' },
+  ]
+
+  const cicilan = info?.biayaCicilanBulanan ?? 500000
+
   return (
     <section id="jadwal" className="py-16 px-4 bg-white">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-brand-primary mb-3">Jadwal & Biaya PMB 2026</h2>
-          <p className="text-gray-600">Tahun Ajaran 2026/2027</p>
+          <h2 className="text-3xl font-bold text-brand-primary mb-3">Jadwal & Biaya PMB {info?.tahunAjaran ?? '2026'}</h2>
+          <p className="text-gray-600">Tahun Ajaran {info?.tahunAjaran ? `${info.tahunAjaran}/${Number(info.tahunAjaran) + 1}` : '2026/2027'}</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
@@ -56,7 +61,7 @@ export function JadwalPsbSection() {
                 ))}
               </tbody>
             </table>
-            <p className="text-xs text-gray-500 mt-3">*Biaya kuliah bisa dicicil Rp 500.000/bulan</p>
+            <p className="text-xs text-gray-500 mt-3">*Biaya kuliah bisa dicicil Rp {cicilan.toLocaleString('id-ID')}/bulan</p>
           </div>
         </div>
 

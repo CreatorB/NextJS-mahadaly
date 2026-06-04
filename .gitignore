@@ -21,6 +21,7 @@
 /build
 /deploy
 deploy.zip
+/uploads
 
 # misc
 .DS_Store

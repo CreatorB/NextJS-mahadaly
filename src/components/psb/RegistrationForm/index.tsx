@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
@@ -25,11 +25,48 @@ export function RegistrationForm({ programs, pekerjaans }: Props) {
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const [provinsiOptions, setProvinsiOptions] = useState<{ value: string; label: string }[]>([])
+  const [kabupatenOptions, setKabupatenOptions] = useState<{ value: string; label: string }[]>([])
+  const [kecamatanOptions, setKecamatanOptions] = useState<{ value: string; label: string }[]>([])
+  const [loadingWilayah, setLoadingWilayah] = useState(true)
+
+  const [familyError, setFamilyError] = useState(false)
+
   const form = useForm<RegistrationFormData>({
     resolver: zodResolver(registrationSchema),
     defaultValues: { kodeNegara: '62', nominalTransfer: '150000' },
     mode: 'onChange',
   })
+
+  useEffect(() => {
+    fetch('/api/wilayah/provinsi')
+      .then(r => r.json())
+      .then(data => {
+        setProvinsiOptions(data.map((p: { id: number; nama: string }) => ({ value: String(p.id), label: p.nama })))
+        setLoadingWilayah(false)
+      })
+      .catch(() => setLoadingWilayah(false))
+  }, [])
+
+  const onProvinsiChange = async (id: string) => {
+    setKabupatenOptions([])
+    setKecamatanOptions([])
+    if (!id) return
+    const r = await fetch(`/api/wilayah/kabupaten?provinsiId=${id}`)
+    const data = await r.json()
+    setKabupatenOptions(data.map((k: { id: number; nama: string }) => ({ value: String(k.id), label: k.nama })))
+  }
+
+  const onKabupatenChange = async (id: string) => {
+    setKecamatanOptions([])
+    if (!id) return
+    const r = await fetch(`/api/wilayah/kecamatan?kabupatenId=${id}`)
+    const data = await r.json()
+    setKecamatanOptions(data.map((k: { id: number; nama: string }) => ({ value: String(k.id), label: k.nama })))
+  }
+
+  const onKecamatanChange = async (_id: string) => {
+  }
 
   const validateFiles = () => {
     const errs: Record<string, string> = {}
@@ -41,9 +78,20 @@ export function RegistrationForm({ programs, pekerjaans }: Props) {
     return Object.keys(errs).length === 0
   }
 
+  const validateFamily = () => {
+    const d = form.getValues()
+    const hasAyah = !!(d.namaAyah || d.noHpAyah)
+    const hasIbu = !!(d.namaIbu || d.noHpIbu)
+    const hasWali = !!(d.namaWali || d.noHpWali)
+    const valid = hasAyah || hasIbu || hasWali
+    setFamilyError(!valid)
+    return valid
+  }
+
   const nextStep = async () => {
     const fields: (keyof RegistrationFormData)[] = []
-    if (step === 1) fields.push('nama', 'jk', 'tmpLahir', 'tglLahir', 'alamat')
+    if (step === 1) fields.push('nik', 'nama', 'jk', 'tmpLahir', 'tglLahir', 'alamat', 'provinsiId', 'kabupatenId', 'kecamatanId')
+    if (step === 2 && !validateFamily()) return
     if (step === 3) fields.push('programId', 'pendidikan', 'pekerjaanId', 'email', 'noHp')
     if (step === 4 && !validateFiles()) return
 
@@ -70,12 +118,23 @@ export function RegistrationForm({ programs, pekerjaans }: Props) {
       const res = await fetch('/api/psb/register', { method: 'POST', body: fd })
       const json = await res.json()
       if (json.success) {
-        router.push(`/psb/daftar/sukses?kode=${json.data.kodeRegistrasi}&nama=${encodeURIComponent(json.data.nama)}`)
+        const email = encodeURIComponent(data.email)
+        router.push(`/psb/daftar/sukses?kode=${json.data.kodeRegistrasi}&nama=${encodeURIComponent(json.data.nama)}&email=${email}`)
       } else {
         toast.error(json.message ?? 'Pendaftaran gagal')
         if (json.errors) {
-          for (const [k, v] of Object.entries(json.errors)) {
-            form.setError(k as keyof RegistrationFormData, { message: (v as string[])[0] })
+          const fileKeys = ['photo', 'ktp', 'transfer', 'ijazah']
+          const fileErrs: Record<string, string> = {}
+          for (const [k, v] of Object.entries(json.errors as Record<string, string[]>)) {
+            if (fileKeys.includes(k)) {
+              fileErrs[k] = (v as string[])[0]
+            } else {
+              form.setError(k as keyof RegistrationFormData, { message: (v as string[])[0] })
+            }
+          }
+          if (Object.keys(fileErrs).length) {
+            setFileErrors(fileErrs)
+            setStep(4)
           }
         }
       }
@@ -91,7 +150,17 @@ export function RegistrationForm({ programs, pekerjaans }: Props) {
       <StepIndicator current={step} />
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
-        {step === 1 && <Step1Personal form={form} />}
+        {step === 1 && !loadingWilayah && (
+          <Step1Personal
+            form={form}
+            provinsiOptions={provinsiOptions}
+            onProvinsiChange={onProvinsiChange}
+            kabupatenOptions={kabupatenOptions}
+            onKabupatenChange={onKabupatenChange}
+            kecamatanOptions={kecamatanOptions}
+            onKecamatanChange={onKecamatanChange}
+          />
+        )}
         {step === 2 && <Step2Family form={form} />}
         {step === 3 && <Step3Program form={form} programs={programs} pekerjaans={pekerjaans} />}
         {step === 4 && <Step4Documents form={form} onFilesChange={setFiles} fileErrors={fileErrors} />}

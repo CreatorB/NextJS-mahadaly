@@ -17,7 +17,7 @@ export function KurikulumSection() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-brand-primary mb-3">Kurikulum S1 HKI</h2>
-          <p className="text-gray-600">8 semester (4 tahun) · 156 SKS · Syarat hafalan 10 juz Al-Quran</p>
+          <p className="text-gray-600">8 semester (4 tahun) · 156 SKS</p>
         </div>
 
         <div className="overflow-x-auto">
@@ -46,11 +46,10 @@ export function KurikulumSection() {
           </table>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mt-8">
+        <div className="grid grid-cols-2 gap-4 mt-8 max-w-xl mx-auto">
           {[
             { label: 'Total SKS', value: '156' },
             { label: 'Min. Kelulusan', value: '146 SKS' },
-            { label: 'Hafalan Quran', value: '10 Juz' },
           ].map((s, i) => (
             <div key={i} className="bg-gradient-to-br from-brand-primary to-brand-secondary rounded-xl p-4 text-white text-center">
               <p className="text-2xl font-bold text-brand-accent">{s.value}</p>

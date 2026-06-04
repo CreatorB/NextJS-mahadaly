@@ -25,6 +25,7 @@ export function PsbSettingsForm({ info }: Props) {
     biayaCicilanBulanan: String(info.biayaCicilanBulanan ?? 500000),
     linkGroup: (info.linkGroup as string) ?? '',
     kontenPsb: (info.kontenPsb as string) ?? '',
+    linkPoster: (info.posterImages as string) ?? '',
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,6 +88,19 @@ export function PsbSettingsForm({ info }: Props) {
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 space-y-4">
         <h3 className="font-semibold text-brand-primary">Link Grup WhatsApp</h3>
         <Input label="Link Grup (ditampilkan setelah pembayaran diverifikasi)" value={form.linkGroup} onChange={set('linkGroup')} placeholder="https://chat.whatsapp.com/..." />
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 space-y-4">
+        <h3 className="font-semibold text-brand-primary">Poster PSB</h3>
+        <Input label="URL Poster (link gambar poster PSB)" type="url" value={form.linkPoster} onChange={set('linkPoster')} placeholder="https://..." />
+        {form.linkPoster && (
+          <div className="mt-2">
+            <p className="mb-2 text-xs text-gray-500">Preview:</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={form.linkPoster} alt="Preview poster" className="max-h-64 rounded-lg border border-gray-200 object-contain" />
+          </div>
+        )}
+        <p className="text-xs text-gray-400">Poster ditampilkan di halaman PSB dan dapat dilihat fullscreen oleh pendaftar.</p>
       </div>
 
       <Button type="submit" loading={loading} size="lg">

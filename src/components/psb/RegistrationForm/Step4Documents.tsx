@@ -17,12 +17,21 @@ interface FileUploadProps {
 function FileUpload({ label, accept, required, maxSize, onChange, error }: FileUploadProps) {
   const [preview, setPreview] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
+  const [localError, setLocalError] = useState<string | null>(null)
 
   const handleFile = (file: File | null) => {
+    if (file) {
+      const maxBytes = accept.includes('pdf') ? 2 * 1024 * 1024 : 1024 * 1024
+      if (file.size > maxBytes) {
+        setLocalError(`Ukuran file terlalu besar. Maksimal ${maxSize}`)
+        return
+      }
+    }
+    setLocalError(null)
     onChange(file)
     if (file) {
       setFileName(file.name)
-      if (file.type.startsWith('image/')) {
+      if (file.type.startsWith('image/') && !['image/heic', 'image/heif'].includes(file.type)) {
         setPreview(URL.createObjectURL(file))
       } else {
         setPreview(null)
@@ -43,7 +52,11 @@ function FileUpload({ label, accept, required, maxSize, onChange, error }: FileU
         <label className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer hover:border-brand-primary transition-colors ${error ? 'border-red-400' : 'border-gray-300'}`}>
           <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
           <p className="text-sm text-gray-500">Klik untuk upload file</p>
-          <p className="text-xs text-gray-400 mt-1">{accept.includes('pdf') ? 'JPG, PNG atau PDF' : 'JPG atau PNG'}</p>
+          <p className="text-xs text-gray-400 mt-1">
+            {accept.includes('pdf')
+              ? 'Gambar (JPG, PNG, WEBP, HEIC, dll.) atau PDF'
+              : 'Gambar (JPG, PNG, WEBP, HEIC, dll.)'}
+          </p>
           <input
             type="file"
             accept={accept}
@@ -67,7 +80,7 @@ function FileUpload({ label, accept, required, maxSize, onChange, error }: FileU
           </button>
         </div>
       )}
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {(error || localError) && <p className="text-xs text-red-500">{error ?? localError}</p>}
     </div>
   )
 }
@@ -94,7 +107,7 @@ export function Step4Documents({ form, onFilesChange, fileErrors }: Props) {
 
       <FileUpload
         label="Pas Foto Terbaru"
-        accept="image/jpeg,image/jpg,image/png"
+        accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,image/bmp,image/tiff,image/avif"
         required
         maxSize="1 MB"
         onChange={updateFile('photo')}
@@ -103,7 +116,7 @@ export function Step4Documents({ form, onFilesChange, fileErrors }: Props) {
 
       <FileUpload
         label="KTP / Kartu Identitas"
-        accept="image/jpeg,image/jpg,image/png"
+        accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,image/bmp,image/tiff,image/avif"
         required
         maxSize="1 MB"
         onChange={updateFile('ktp')}
@@ -113,7 +126,7 @@ export function Step4Documents({ form, onFilesChange, fileErrors }: Props) {
       <div className="space-y-4">
         <FileUpload
           label="Bukti Transfer Biaya Pendaftaran"
-          accept="image/jpeg,image/jpg,image/png"
+          accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,image/bmp,image/tiff,image/avif"
           required
           maxSize="1 MB"
           onChange={updateFile('transfer')}
@@ -133,7 +146,7 @@ export function Step4Documents({ form, onFilesChange, fileErrors }: Props) {
 
       <FileUpload
         label="Ijazah Terakhir"
-        accept="image/jpeg,image/jpg,image/png,application/pdf"
+        accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,image/bmp,image/tiff,image/avif,application/pdf"
         required
         maxSize="2 MB"
         onChange={updateFile('ijazah')}

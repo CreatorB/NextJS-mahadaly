@@ -9,21 +9,21 @@ export async function GET(req: NextRequest) {
   const session = await verifyTokenFromRequest(req)
   if (!session) return Response.json(fail('Unauthorized'), { status: 401 })
 
-  const user = await prisma.user.findUnique({
+const user = await prisma.user.findUnique({
     where: { id: session.userId },
     include: {
-      santri: {
+      siswa: {
         include: { program: true, pekerjaan: true, notifications: { orderBy: { createdAt: 'desc' }, take: 10 } },
       },
     },
   })
-  if (!user?.santri) return Response.json(fail('Data tidak ditemukan'), { status: 404 })
+  if (!user?.siswa) return Response.json(fail('Data tidak ditemukan'), { status: 404 })
 
-  const santri = user.santri
-  const infoPsb = await prisma.infoPsb.findFirst({ where: { tahunAjaran: santri.tahunPsb } })
+  const siswa = user.siswa
+  const infoPsb = await prisma.infoPsb.findFirst({ where: { tahunAjaran: siswa.tahunPsb } })
 
   return Response.json(ok({
-    ...santri,
-    linkGroup: santri.statusTransfer === 'approved' ? infoPsb?.linkGroup ?? null : null,
+    ...siswa,
+    linkGroup: siswa.statusTransfer === 'approved' ? infoPsb?.linkGroup ?? null : null,
   }))
 }

@@ -12,16 +12,16 @@ export async function DELETE(
   if (!session || session.roleId > 2) return Response.json(fail('Unauthorized'), { status: 401 })
 
   const { kode } = await params
-  const santri = await prisma.santri.findUnique({ where: { kodeRegistrasi: kode } })
-  if (!santri) return Response.json(fail('Data tidak ditemukan'), { status: 404 })
+  const siswa = await prisma.santri.findUnique({ where: { kodeRegistrasi: kode } })
+  if (!siswa) return Response.json(fail('Data tidak ditemukan'), { status: 404 })
 
   await prisma.$transaction(async (tx) => {
-    await tx.notification.deleteMany({ where: { santriId: santri.id } })
-    await tx.user.deleteMany({ where: { santriId: santri.id } })
+    await tx.notification.deleteMany({ where: { siswaId: siswa.id } })
+    await tx.user.deleteMany({ where: { siswaId: siswa.id } })
     await tx.santri.delete({ where: { kodeRegistrasi: kode } })
   })
 
-  await deleteDirectory(santri.tahunPsb, kode)
+  await deleteDirectory(siswa.tahunPsb, kode)
 
-  return Response.json(ok(null, 'Data berhasil dihapus'))
+  return Response.json(ok(null, 'Pendaftaran berhasil dihapus'))
 }

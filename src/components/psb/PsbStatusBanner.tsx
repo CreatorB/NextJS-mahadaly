@@ -1,7 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Clock, AlertCircle, CheckCircle, Users, CalendarX, Wallet, ArrowRight } from 'lucide-react'
+import {
+  Clock, AlertCircle, CheckCircle, Users, ArrowRight,
+  X, Share2, Wallet, Landmark, Copy,
+} from 'lucide-react'
 
 interface InfoPsb {
   statusPsb: string
@@ -10,6 +13,7 @@ interface InfoPsb {
   biayaPendaftaran: number
   quotaIkhwan?: number | null
   quotaAkhwat?: number | null
+  posterImages?: string | null
 }
 
 interface Quota {
@@ -58,14 +62,87 @@ function Countdown({ target }: { target: Date }) {
   )
 }
 
+function PosterSection({ src }: { src: string }) {
+  const [open, setOpen] = useState(false)
+
+  const handleShare = async () => {
+    const data = {
+      title: "PSB Ma'had Aly Al-Imam Asy-Syathiby",
+      text: "Pendaftaran Santri/Mahasiswa Baru — Ma'had Aly Al-Imam Asy-Syathiby",
+      url: typeof window !== 'undefined' ? window.location.href : '',
+    }
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try { await navigator.share(data) } catch { /* cancelled */ }
+    } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      await navigator.clipboard.writeText(data.url)
+    }
+  }
+
+  return (
+    <>
+      <div
+        className="mb-5 cursor-pointer overflow-hidden rounded-xl border border-gray-100 shadow-sm transition-transform hover:scale-[1.01] active:scale-100"
+        onClick={() => setOpen(true)}
+        title="Klik untuk lihat poster"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt="Poster PSB" className="w-full object-contain" />
+      </div>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="relative max-w-2xl w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt="Poster PSB"
+              className="max-h-[85vh] w-full rounded-xl object-contain shadow-2xl"
+            />
+            <div className="absolute top-3 right-3 flex gap-2">
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-1.5 rounded-lg bg-black/50 px-3 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+              >
+                <Share2 className="h-4 w-4" />
+                Bagikan
+              </button>
+              <button
+                onClick={() => setOpen(false)}
+                className="flex items-center justify-center rounded-lg bg-black/50 p-2 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+                aria-label="Tutup"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
 export function PsbStatusBanner({ info, quota }: Props) {
   const now = new Date()
   const open = info.datetimeOpen ? new Date(info.datetimeOpen) : null
   const closed = info.datetimeClosed ? new Date(info.datetimeClosed) : null
+  const [copied, setCopied] = useState(false)
 
   const isBeforeOpen = open && now < open
   const isAfterClose = closed && now > closed
-  const isOpen = info.statusPsb === 'Buka' && !isBeforeOpen && !isAfterClose
+
+  const copyNorek = () => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText('7562929007')
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2500)
+  }
 
   if (isAfterClose || info.statusPsb !== 'Buka') {
     return (
@@ -94,7 +171,12 @@ export function PsbStatusBanner({ info, quota }: Props) {
             <Clock className="h-7 w-7 text-brand-accent" />
           </span>
           <h2 className="mb-2 text-2xl font-bold">Pendaftaran Segera Dibuka</h2>
-          <p className="mb-6 text-blue-100">Dibuka pada: <strong className="text-white">{open.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</strong></p>
+          <p className="mb-6 text-blue-100">
+            Dibuka pada:{' '}
+            <strong className="text-white">
+              {open.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </strong>
+          </p>
           <Countdown target={open} />
         </div>
       </div>
@@ -119,25 +201,45 @@ export function PsbStatusBanner({ info, quota }: Props) {
 
       {/* body */}
       <div className="p-6 sm:p-8">
+        {/* Poster */}
+        {info.posterImages && <PosterSection src={info.posterImages} />}
+
+        {/* Cards: Biaya (kiri) | Transfer BSI (kanan) */}
         <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-brand-surface/60 px-4 py-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-secondary/10">
-              <CalendarX className="h-4 w-4 text-brand-secondary" />
-            </span>
-            <div className="min-w-0">
-              <div className="text-[11px] uppercase tracking-wide text-gray-400">Batas Pendaftaran</div>
-              <div className="text-sm font-semibold leading-tight text-gray-800">{closed ? closed.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '-'}</div>
-            </div>
-          </div>
+          {/* Biaya Pendaftaran */}
           <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-brand-surface/60 px-4 py-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-primary/10">
               <Wallet className="h-4 w-4 text-brand-primary" />
             </span>
             <div className="min-w-0">
               <div className="text-[11px] uppercase tracking-wide text-gray-400">Biaya Pendaftaran</div>
-              <div className="text-sm font-semibold leading-tight text-gray-800">Rp {info.biayaPendaftaran.toLocaleString('id-ID')}</div>
+              <div className="text-sm font-semibold leading-tight text-gray-800">
+                Rp {info.biayaPendaftaran.toLocaleString('id-ID')}
+              </div>
             </div>
           </div>
+
+          {/* Rekening BSI */}
+          <button
+            onClick={copyNorek}
+            className="flex items-start gap-3 rounded-xl border border-gray-100 bg-brand-surface/60 px-4 py-3 text-left transition-colors hover:border-emerald-200 hover:bg-emerald-50/40 w-full"
+          >
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50">
+              <Landmark className="h-4 w-4 text-emerald-600" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] uppercase tracking-wide text-gray-400">Transfer Pembayaran</div>
+              <div className="text-[11px] font-semibold text-emerald-700">Bank Syariah Indonesia (BSI)</div>
+              <div className="text-sm font-bold tracking-widest text-gray-800">756 2929 007</div>
+              <div className="text-[11px] text-gray-500">a.n. Yayasan Cahaya Sunnah</div>
+              <div className="mt-0.5 flex items-center gap-1">
+                <Copy className="h-3 w-3 text-gray-400" />
+                <span className={`text-[10px] transition-colors ${copied ? 'font-semibold text-emerald-600' : 'text-gray-400'}`}>
+                  {copied ? 'Nomor rekening telah disalin' : 'Klik untuk salin nomor rekening'}
+                </span>
+              </div>
+            </div>
+          </button>
         </div>
 
         {(quota.quotaIkhwan != null || quota.quotaAkhwat != null) && (
@@ -185,7 +287,10 @@ export function PsbStatusBanner({ info, quota }: Props) {
           </div>
         )}
 
-        <Link href="/psb/daftar" className="group inline-flex items-center gap-2 rounded-xl bg-[linear-gradient(135deg,#00367c,#00709f)] px-8 py-4 text-lg font-bold text-white shadow-lg shadow-brand-primary/25 transition-all hover:shadow-xl hover:shadow-brand-primary/30">
+        <Link
+          href="/psb/daftar"
+          className="group inline-flex items-center gap-2 rounded-xl bg-[linear-gradient(135deg,#00367c,#00709f)] px-8 py-4 text-lg font-bold text-white shadow-lg shadow-brand-primary/25 transition-all hover:shadow-xl hover:shadow-brand-primary/30"
+        >
           Mulai Pendaftaran
           <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
         </Link>

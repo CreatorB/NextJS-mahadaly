@@ -3,7 +3,11 @@ import path from 'path'
 
 const UPLOAD_BASE = process.env.UPLOAD_DIR ?? './uploads'
 
-const IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
+const IMAGE_TYPES = [
+  'image/jpeg', 'image/jpg', 'image/png',
+  'image/webp', 'image/heic', 'image/heif',
+  'image/bmp', 'image/tiff', 'image/avif',
+]
 const DOC_TYPES = [...IMAGE_TYPES, 'application/pdf']
 
 export function getUploadPath(tahunPsb: string, kode: string, field: string, ext: string): string {
@@ -14,22 +18,22 @@ export function getUploadPath(tahunPsb: string, kode: string, field: string, ext
 
 export function getExtension(mimeType: string): string {
   const map: Record<string, string> = {
-    'image/jpeg': 'jpg',
-    'image/jpg': 'jpg',
-    'image/png': 'png',
+    'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png',
+    'image/webp': 'webp', 'image/heic': 'heic', 'image/heif': 'heif',
+    'image/bmp': 'bmp', 'image/tiff': 'tiff', 'image/avif': 'avif',
     'application/pdf': 'pdf',
   }
   return map[mimeType] ?? 'bin'
 }
 
 export function validateImageFile(file: File): string | null {
-  if (!IMAGE_TYPES.includes(file.type)) return 'Harus berupa gambar (JPG, PNG)'
+  if (!IMAGE_TYPES.includes(file.type)) return 'Harus berupa gambar (JPG, PNG, WEBP, HEIC, dll.)'
   if (file.size > 1024 * 1024) return 'Ukuran maksimal 1 MB'
   return null
 }
 
 export function validateDocFile(file: File): string | null {
-  if (!DOC_TYPES.includes(file.type)) return 'Harus berupa gambar (JPG, PNG) atau PDF'
+  if (!DOC_TYPES.includes(file.type)) return 'Harus berupa gambar atau PDF'
   if (file.size > 2 * 1024 * 1024) return 'Ukuran maksimal 2 MB'
   return null
 }
@@ -60,9 +64,18 @@ export async function deleteDirectory(tahunPsb: string, kode: string): Promise<v
   }
 }
 
+export function getFilePath(publicUrl: string): string {
+  const relative = publicUrl.replace(/^\/uploads\//, '')
+  return path.join(UPLOAD_BASE, relative)
+}
+
 export function getPublicUrl(filePath: string): string {
   const normalized = filePath.replace(/\\/g, '/')
-  const parts = normalized.split('/uploads/')
-  if (parts.length > 1) return `/berkas/${parts[1]}`
-  return `/berkas/${filePath}`
+  // Find last '/uploads/' segment — handles both absolute paths (production)
+  // and relative paths (localhost). Takes everything after that segment.
+  const marker = '/uploads/'
+  const idx = normalized.lastIndexOf(marker)
+  if (idx !== -1) return `/uploads/${normalized.slice(idx + marker.length)}`
+  // Fallback: bare 'uploads/...' with no leading slash (e.g. Windows relative)
+  return `/uploads/${normalized.replace(/^\.?\/?uploads\//, '')}`
 }

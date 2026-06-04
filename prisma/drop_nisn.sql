@@ -1,0 +1,1 @@
+ALTER TABLE `santri` DROP COLUMN `nisn`;

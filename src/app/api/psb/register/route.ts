@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import prisma from '@/lib/prisma'
 import { generateKodeRegistrasi } from '@/lib/kode-registrasi'
 import { isDuplicateApplicant } from '@/lib/duplicate-check'
-import { saveFile, validateImageFile, validateDocFile, getPublicUrl } from '@/lib/upload'
+import { saveFile, validateImageFile, validateDocFile, getPublicUrl, deleteFile } from '@/lib/upload'
 import { registrationSchema } from '@/lib/validations/registration'
 import { ok, fail } from '@/types/api'
 import bcrypt from 'bcryptjs'
@@ -10,20 +10,18 @@ import bcrypt from 'bcryptjs'
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
+  const savedPaths: string[] = []
   try {
     const formData = await req.formData()
 
-    // Extract text fields
     const fields: Record<string, string> = {}
     for (const [key, value] of formData.entries()) {
       if (typeof value === 'string') fields[key] = value
     }
 
-    // Get active PSB
     const infoPsb = await prisma.infoPsb.findFirst({ orderBy: { tahunAjaran: 'desc' } })
     if (!infoPsb) return Response.json(fail('Data PSB tidak ditemukan'), { status: 400 })
 
-    // Check PSB open window
     const now = new Date()
     const isOpen =
       infoPsb.statusPsb === 'Buka' &&
@@ -32,7 +30,6 @@ export async function POST(req: NextRequest) {
 
     if (!isOpen) return Response.json(fail('Pendaftaran sudah ditutup'), { status: 400 })
 
-    // Validate text fields
     const parsed = registrationSchema.safeParse({ ...fields, tahunPsb: infoPsb.tahunAjaran })
     if (!parsed.success) {
       const errors: Record<string, string[]> = {}
@@ -44,7 +41,13 @@ export async function POST(req: NextRequest) {
     }
     const data = parsed.data
 
-    // Validate files
+    const hasAyah = !!(data.namaAyah || data.noHpAyah)
+    const hasIbu = !!(data.namaIbu || data.noHpIbu)
+    const hasWali = !!(data.namaWali || data.noHpWali)
+    if (!hasAyah && !hasIbu && !hasWali) {
+      return Response.json(fail('Minimal salah satu data orang tua/wali wajib diisi (nama + no. HP)'), { status: 400 })
+    }
+
     const photo = formData.get('photo') as File | null
     const ktp = formData.get('ktp') as File | null
     const transfer = formData.get('transfer') as File | null
@@ -64,7 +67,6 @@ export async function POST(req: NextRequest) {
       return Response.json(fail('File tidak valid', fileErrors), { status: 422 })
     }
 
-    // Check quota
     const jk = data.jk
     if (jk === 'Laki-Laki' && infoPsb.quotaIkhwan != null) {
       const count = await prisma.santri.count({ where: { tahunPsb: infoPsb.tahunAjaran, jk: 'Laki-Laki' } })
@@ -75,38 +77,49 @@ export async function POST(req: NextRequest) {
       if (count >= infoPsb.quotaAkhwat) return Response.json(fail('Kuota akhwat sudah penuh'), { status: 400 })
     }
 
-    // Check duplicate
     const noHp = data.noHp
     const programIdNum = parseInt(data.programId)
     const isDup = await isDuplicateApplicant({ nama: data.nama, noHp, tahunPsb: infoPsb.tahunAjaran, programId: programIdNum })
     if (isDup) return Response.json(fail('Anda sudah terdaftar pada program dan tahun ajaran ini'), { status: 400 })
 
-    // Generate kode
     const kode = await generateKodeRegistrasi(infoPsb.tahunAjaran)
     const tahunPsb = infoPsb.tahunAjaran
 
-    // Save files
-    const photoPath = await saveFile(photo!, tahunPsb, kode, 'photo')
-    const ktpPath = await saveFile(ktp!, tahunPsb, kode, 'ktp')
-    const transferPath = await saveFile(transfer!, tahunPsb, kode, 'transfer')
-    const ijazahPath = await saveFile(ijazah!, tahunPsb, kode, 'ijazah')
+    // Normalize phone: strip +62 / 62 prefix / leading 0
+    let rawNoHp = data.noHp.replace(/[\s\-\.]/g, '')
+    if (rawNoHp.startsWith('+62')) rawNoHp = rawNoHp.slice(3)
+    else if (rawNoHp.startsWith('62') && rawNoHp.length >= 11) rawNoHp = rawNoHp.slice(2)
+    if (rawNoHp.startsWith('0')) rawNoHp = rawNoHp.slice(1)
+    const normalizedNoHp = rawNoHp
+    const hp = `${data.kodeNegara}${normalizedNoHp}`
 
-    // Create santri + user in transaction
-    const hp = `${data.kodeNegara}${data.noHp}`
-    const hashedPassword = await bcrypt.hash(kode, 10)
+    // Run file saves and bcrypt in parallel for performance
+    const [photoPath, ktpPath, transferPath, ijazahPath, hashedPassword] = await Promise.all([
+      saveFile(photo!, tahunPsb, kode, 'photo'),
+      saveFile(ktp!, tahunPsb, kode, 'ktp'),
+      saveFile(transfer!, tahunPsb, kode, 'transfer'),
+      saveFile(ijazah!, tahunPsb, kode, 'ijazah'),
+      bcrypt.hash(kode, 10),
+    ])
+    savedPaths.push(photoPath, ktpPath, transferPath, ijazahPath)
 
-    const santri = await prisma.$transaction(async (tx) => {
+    const provinsiId = data.provinsiId ? parseInt(data.provinsiId) : null
+    const kabupatenId = data.kabupatenId ? parseInt(data.kabupatenId) : null
+    const kecamatanId = data.kecamatanId ? parseInt(data.kecamatanId) : null
+
+    const newSantri = await prisma.$transaction(async (tx) => {
       const s = await tx.santri.create({
         data: {
           kodeRegistrasi: kode,
-          noInduk: data.noInduk || null,
-          nik: data.nik || null,
-          nisn: data.nisn || null,
+          nik: data.nik,
           nama: data.nama,
           jk: data.jk,
           tmpLahir: data.tmpLahir,
           tglLahir: new Date(data.tglLahir),
           alamat: data.alamat,
+          provinsiId,
+          kabupatenId,
+          kecamatanId,
           namaAyah: data.namaAyah || null,
           noHpAyah: data.noHpAyah || null,
           namaIbu: data.namaIbu || null,
@@ -117,7 +130,7 @@ export async function POST(req: NextRequest) {
           pekerjaanId: parseInt(data.pekerjaanId),
           email: data.email,
           kodeNegara: data.kodeNegara,
-          noHp: data.noHp,
+          noHp: normalizedNoHp,
           hp,
           tahunPsb,
           programId: programIdNum,
@@ -135,14 +148,16 @@ export async function POST(req: NextRequest) {
           password: hashedPassword,
           roleId: 3,
           isActive: true,
-          santriId: s.id,
+          siswaId: s.id,
         },
       })
       return s
     })
 
-    return Response.json(ok({ kodeRegistrasi: santri.kodeRegistrasi, nama: santri.nama }), { status: 201 })
+    return Response.json(ok({ kodeRegistrasi: newSantri.kodeRegistrasi, nama: newSantri.nama }), { status: 201 })
   } catch (e) {
+    // Cleanup orphaned files if DB transaction failed after files were saved
+    if (savedPaths.length) await Promise.allSettled(savedPaths.map(p => deleteFile(p)))
     console.error(e)
     return Response.json(fail('Terjadi kesalahan server'), { status: 500 })
   }

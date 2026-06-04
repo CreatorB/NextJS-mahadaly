@@ -8,7 +8,6 @@ import {
   CalendarCheck,
   CalendarX,
   ClipboardCheck,
-  Wallet,
   Phone,
   Info,
   ArrowRight,
@@ -18,9 +17,13 @@ import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata: Metadata = {
-  title: "PSB 2026 — Ma'had Aly Al-Imam Asy-Syathiby",
-  description: 'Penerimaan Santri/Mahasiswa Baru Tahun Ajaran 2026/2027',
+export async function generateMetadata(): Promise<Metadata> {
+  const info = await prisma.infoPsb.findFirst({ orderBy: { tahunAjaran: 'desc' } })
+  const tahun = info?.tahunAjaran ?? '2026'
+  return {
+    title: `PSB ${tahun} — Ma'had Aly Al-Imam Asy-Syathiby`,
+    description: `Penerimaan Santri/Mahasiswa Baru Tahun Ajaran ${tahun}/${Number(tahun) + 1}`,
+  }
 }
 
 async function getPsbData() {
@@ -49,6 +52,7 @@ async function getPsbData() {
     biayaPendaftaran: info.biayaPendaftaran,
     quotaIkhwan: info.quotaIkhwan,
     quotaAkhwat: info.quotaAkhwat,
+    posterImages: info.posterImages ?? null,
   }
 
   return { info: infoForComponent, quota }
@@ -58,10 +62,9 @@ export default async function PsbPage() {
   const { info, quota } = await getPsbData()
 
   const infoItems = [
-    { icon: CalendarCheck, label: 'Pendaftaran Dibuka', value: '25 Mei 2026', tint: 'bg-brand-primary/10', color: 'text-brand-primary' },
-    { icon: CalendarX, label: 'Pendaftaran Ditutup', value: '19 Agustus 2026', tint: 'bg-brand-secondary/10', color: 'text-brand-secondary' },
+    { icon: CalendarCheck, label: 'Pendaftaran Dibuka', value: info?.datetimeOpen ? new Date(info.datetimeOpen).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-', tint: 'bg-brand-primary/10', color: 'text-brand-primary' },
+    { icon: CalendarX, label: 'Pendaftaran Ditutup', value: info?.datetimeClosed ? new Date(info.datetimeClosed).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-', tint: 'bg-brand-secondary/10', color: 'text-brand-secondary' },
     { icon: ClipboardCheck, label: 'Tes Masuk', value: 'Sabtu, 22 Agustus 2026', tint: 'bg-brand-light/15', color: 'text-brand-light' },
-    { icon: Wallet, label: 'Biaya Pendaftaran', value: 'Rp 150.000', tint: 'bg-brand-primary/10', color: 'text-brand-primary' },
     { icon: Phone, label: 'Narahubung', value: '0811-1516-756', tint: 'bg-brand-secondary/10', color: 'text-brand-secondary', href: 'https://api.whatsapp.com/send?phone=628111516756' },
   ]
 
@@ -110,7 +113,7 @@ export default async function PsbPage() {
 
             <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-brand-primary px-4 py-1.5 text-sm font-medium text-white shadow-md shadow-brand-primary/20">
               <CalendarDays className="h-4 w-4 text-brand-accent" />
-              Tahun Ajaran 2026 / 2027
+              {quota?.tahunAjaran ? `Tahun Ajaran ${quota.tahunAjaran}` : 'Tahun Ajaran 2026/2027'}
             </div>
           </div>
 

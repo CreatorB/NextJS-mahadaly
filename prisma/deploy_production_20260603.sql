@@ -1,0 +1,37 @@
+-- =============================================================
+-- PRODUCTION RELEASE - mahadaly
+-- Tanggal  : 2026-06-03
+-- Deskripsi: Poster PSB + Bank BSI Card + Sidebar Link Homepage
+--
+-- STATUS DB : ✅ TIDAK ADA PERUBAHAN SCHEMA
+-- Kolom poster_images sudah ada sejak init migration (20260531004415_init)
+--   → info_psb.poster_images TEXT NULL
+-- Tidak perlu ALTER TABLE apapun.
+--
+-- Yang berubah di release ini (HANYA KODE):
+--   1. AdminSidebar  : teks "Ma'had Aly Syathiby" jadi link ke homepage
+--   2. PsbSettingsForm : tambah input URL poster di Pengaturan PSB
+--   3. psb-settings API: menyimpan posterImages ke kolom poster_images
+--   4. PsbStatusBanner : tampil poster (fullscreen + share + close),
+--                        card Biaya Pendaftaran (kiri) + BSI norek (kanan),
+--                        salin norek 7562929007 dengan feedback teks
+--   5. /psb page      : hapus Biaya Pendaftaran dari "Informasi Penting"
+--
+-- LANGKAH DEPLOY:
+--   1. Tidak perlu jalankan SQL apapun di phpMyAdmin
+--   2. Upload build terbaru ke server
+--   3. Restart app di Node.js Selector
+-- =============================================================
+
+-- Verifikasi kolom sudah ada (opsional, hanya untuk cek):
+-- SELECT COLUMN_NAME, COLUMN_TYPE
+-- FROM INFORMATION_SCHEMA.COLUMNS
+-- WHERE TABLE_SCHEMA = 'syathiby_mahadaly'
+--   AND TABLE_NAME   = 'info_psb'
+--   AND COLUMN_NAME  = 'poster_images';
+-- Hasil yang diharapkan: 1 row → poster_images | text
+
+-- =============================================================
+-- TIDAK ADA SQL YANG PERLU DIJALANKAN UNTUK RELEASE INI
+-- Lanjut langsung ke build & upload.
+-- =============================================================

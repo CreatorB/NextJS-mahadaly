@@ -12,7 +12,7 @@ export default async function ProgramPage() {
   if (!session || session.roleId !== 1) redirect('/admin/dashboard')
 
   const programs = await prisma.program.findMany({
-    include: { _count: { select: { santri: true } } },
+    include: { _count: { select: { siswa: true } } },
     orderBy: { id: 'asc' },
   })
 
@@ -38,7 +38,7 @@ export default async function ProgramPage() {
                 <td className="px-4 py-3">
                   <Badge variant={p.statusPsb === 'Buka' ? 'approved' : 'rejected'}>{p.statusPsb}</Badge>
                 </td>
-                <td className="px-4 py-3 font-bold text-brand-primary">{p._count.santri}</td>
+                <td className="px-4 py-3 font-bold text-brand-primary">{p._count.siswa}</td>
                 <td className="px-4 py-3 text-xs text-gray-500 max-w-xs truncate">{p.keterangan ?? '-'}</td>
               </tr>
             ))}

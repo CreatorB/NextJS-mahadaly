@@ -26,12 +26,13 @@ export async function PUT(req: NextRequest) {
       datetimeClosed: body.datetimeClosed ? new Date(body.datetimeClosed) : info.datetimeClosed,
       quotaIkhwan: body.quotaIkhwan != null ? parseInt(body.quotaIkhwan) : info.quotaIkhwan,
       quotaAkhwat: body.quotaAkhwat != null ? parseInt(body.quotaAkhwat) : info.quotaAkhwat,
-      biayaPendaftaran: body.biayaPendaftaran ?? info.biayaPendaftaran,
-      biayaPangkal: body.biayaPangkal ?? info.biayaPangkal,
-      biayaKuliahSemester: body.biayaKuliahSemester ?? info.biayaKuliahSemester,
-      biayaCicilanBulanan: body.biayaCicilanBulanan ?? info.biayaCicilanBulanan,
+      biayaPendaftaran: body.biayaPendaftaran != null && body.biayaPendaftaran !== '' ? parseInt(body.biayaPendaftaran) : info.biayaPendaftaran,
+      biayaPangkal: body.biayaPangkal != null && body.biayaPangkal !== '' ? parseInt(body.biayaPangkal) : info.biayaPangkal,
+      biayaKuliahSemester: body.biayaKuliahSemester != null && body.biayaKuliahSemester !== '' ? parseInt(body.biayaKuliahSemester) : info.biayaKuliahSemester,
+      biayaCicilanBulanan: body.biayaCicilanBulanan != null && body.biayaCicilanBulanan !== '' ? parseInt(body.biayaCicilanBulanan) : info.biayaCicilanBulanan,
       linkGroup: body.linkGroup !== undefined ? body.linkGroup : info.linkGroup,
       kontenPsb: body.kontenPsb ?? info.kontenPsb,
+      posterImages: body.linkPoster !== undefined ? body.linkPoster : info.posterImages,
     },
   })
   return Response.json(ok(updated))

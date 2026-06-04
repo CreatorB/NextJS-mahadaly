@@ -23,8 +23,8 @@ model User {
   roleId    Int      @map("role_id")
   role      Role     @relation(fields: [roleId], references: [id])
   isActive  Boolean  @default(true) @map("is_active")
-  santriId  Int?     @unique @map("santri_id")
-  santri    Santri?  @relation(fields: [santriId], references: [id])
+  siswaId  Int?     @unique @map("santri_id")
+  siswa    Santri?  @relation(fields: [siswaId], references: [id])
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -36,7 +36,7 @@ model Program {
   namaProgram String   @map("nama_program")
   statusPsb   String   @default("Tutup") @map("status_psb")
   keterangan  String?  @db.Text
-  santri      Santri[]
+  siswa    Santri[]
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -46,7 +46,7 @@ model Program {
 model Pekerjaan {
   id        Int      @id @default(autoincrement())
   nama      String
-  santri    Santri[]
+  siswa    Santri[]
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -69,24 +69,73 @@ model InfoPsb {
   posterImages         String?   @db.Text @map("poster_images")
   linkGroup            String?   @map("link_group")
   manualPassword       String?   @map("manual_password")
-  santri               Santri[]
+  siswa            Santri[]
   createdAt            DateTime  @default(now()) @map("created_at")
   updatedAt            DateTime  @updatedAt @map("updated_at")
 
   @@map("info_psb")
 }
 
+model Provinsi {
+  id          Int             @id
+  nama        String
+  kabupaten   KabupatenKota[]
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  @@map("provinsi")
+}
+
+model KabupatenKota {
+  id          Int         @id
+  provinsiId  Int         @map("provinsi_id")
+  nama        String
+  provinsi    Provinsi    @relation(fields: [provinsiId], references: [id])
+  kecamatans  Kecamatan[]
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  @@map("kabupaten_kota")
+}
+
+model Kecamatan {
+  id          Int     @id
+  kabupatenId Int     @map("kabupaten_id")
+  nama        String
+  kabupaten   KabupatenKota @relation(fields: [kabupatenId], references: [id])
+  desas       Desa[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("kecamatan")
+}
+
+model Desa {
+  id          Int       @id
+  kecamatanId Int       @map("kecamatan_id")
+  nama        String
+  kodePos     String    @map("kode_pos")
+  kecamatan   Kecamatan  @relation(fields: [kecamatanId], references: [id])
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("desa")
+}
+
 model Santri {
   id                  Int       @id @default(autoincrement())
   kodeRegistrasi      String    @unique @map("kode_registrasi")
-  noInduk             String?   @map("no_induk")
-  nik                 String?
-  nisn                String?
+  nik                 String
   nama                String
   jk                  String
   tmpLahir            String    @map("tmp_lahir")
   tglLahir            DateTime  @map("tgl_lahir")
   alamat              String    @db.Text
+  provinsiId          Int?      @map("provinsi_id")
+  kabupatenId         Int?      @map("kabupaten_id")
+  kecamatanId         Int?      @map("kecamatan_id")
+  desaId              Int?      @map("desa_id")
+  kodePos             String?   @map("kode_pos")
   namaAyah            String?   @map("nama_ayah")
   noHpAyah            String?   @map("no_hp_ayah")
   namaIbu             String?   @map("nama_ibu")
@@ -95,7 +144,7 @@ model Santri {
   noHpWali            String?   @map("no_hp_wali")
   pendidikan          String
   pekerjaanId         Int       @map("pekerjaan_id")
-  pekerjaan           Pekerjaan @relation(fields: [pekerjaanId], references: [id])
+  pekerjaan           Pekerjaan  @relation(fields: [pekerjaanId], references: [id])
   email               String
   kodeNegara          String    @default("62") @map("kode_negara")
   noHp                String    @map("no_hp")
@@ -124,8 +173,8 @@ model Santri {
 
 model Notification {
   id        Int      @id @default(autoincrement())
-  santriId  Int      @map("santri_id")
-  santri    Santri   @relation(fields: [santriId], references: [id])
+  siswaId  Int      @map("santri_id")
+  siswa    Santri   @relation(fields: [siswaId], references: [id])
   type      String
   title     String
   message   String   @db.Text

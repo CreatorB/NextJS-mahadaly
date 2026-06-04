@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { clsx } from 'clsx'
-import { LayoutDashboard, Users, Settings, LogOut, Shield, BookOpen, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Users, Settings, LogOut, Shield, BookOpen, Menu, X, MapPin } from 'lucide-react'
 import { useState } from 'react'
 
 interface Props {
@@ -20,6 +20,7 @@ export function AdminSidebar({ nama, roleId }: Props) {
     { href: '/admin/pendaftaran', label: 'Pendaftaran', icon: Users },
     { href: '/admin/pengaturan-psb', label: 'Pengaturan PSB', icon: Settings },
     ...(roleId === 1 ? [
+      { href: '/admin/wilayah', label: 'Wilayah', icon: MapPin },
       { href: '/admin/superadmin/users', label: 'Kelola User', icon: Shield },
       { href: '/admin/superadmin/program', label: 'Kelola Program', icon: BookOpen },
     ] : []),
@@ -54,7 +55,14 @@ export function AdminSidebar({ nama, roleId }: Props) {
       )}>
         <div className="flex items-center justify-between p-4 lg:p-6 border-b border-white/20">
           <div>
-            <p className="font-bold text-brand-accent">Ma'had Aly Syathiby</p>
+            <a
+              href="https://mahadaly.syathiby.id"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-brand-accent hover:text-white transition-colors"
+            >
+              Ma&apos;had Aly Syathiby
+            </a>
             <p className="text-blue-200 text-sm mt-1">Panel {roleId === 1 ? 'Super Admin' : 'Admin'}</p>
             <p className="text-white text-xs mt-2 font-medium">{nama}</p>
           </div>
@@ -62,7 +70,8 @@ export function AdminSidebar({ nama, roleId }: Props) {
             <X className="h-5 w-5" />
           </button>
         </div>
-        <nav className="flex-1 p-4 space-y-1">
+
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => (
             <Link key={item.href} href={item.href} onClick={closeSidebar} className={clsx(
               'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
@@ -72,13 +81,17 @@ export function AdminSidebar({ nama, roleId }: Props) {
               {item.label}
             </Link>
           ))}
+
+          <div className="pt-2 border-t border-white/20 mt-2">
+            <button
+              onClick={logout}
+              className="flex items-center gap-3 px-3 py-2 w-full text-sm text-red-300 hover:bg-white/10 rounded-lg transition-colors"
+            >
+              <LogOut className="h-4 w-4 shrink-0" />
+              Logout
+            </button>
+          </div>
         </nav>
-        <div className="p-4 border-t border-white/20">
-          <button onClick={logout} className="flex items-center gap-3 px-3 py-2 w-full text-sm text-red-300 hover:bg-white/10 rounded-lg">
-            <LogOut className="h-4 w-4" />
-            Logout
-          </button>
-        </div>
       </aside>
     </>
   )

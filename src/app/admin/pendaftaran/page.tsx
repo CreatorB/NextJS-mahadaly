@@ -3,7 +3,7 @@ import { Badge, statusBadge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
 import Link from 'next/link'
-import { Users, Clock, CheckCircle, Banknote, FileSpreadsheet, FileText, Contact } from 'lucide-react'
+import { Users, Clock, CheckCircle, Banknote, FileSpreadsheet, FileText, Contact, UserPlus } from 'lucide-react'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
@@ -51,6 +51,14 @@ export default async function PendaftaranPage({ searchParams }: Props) {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-bold text-brand-primary">Data Pendaftaran</h1>
         <div className="flex items-center gap-2">
+          <a
+            href="/admin/pendaftaran/create"
+            className="inline-flex items-center gap-2 bg-brand-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-colors"
+            title="Tambah pendaftaran secara manual (untuk susulan / kuota dadakan) meskipun PSB sudah ditutup"
+          >
+            <UserPlus className="h-4 w-4" />
+            Tambah Pendaftaran
+          </a>
           <a
             href="/api/admin/santri/export/excel"
             className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"

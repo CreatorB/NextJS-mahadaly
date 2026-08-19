@@ -3,7 +3,7 @@ import { Badge, statusBadge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
 import Link from 'next/link'
-import { Users, Clock, CheckCircle, Banknote } from 'lucide-react'
+import { Users, Clock, CheckCircle, Banknote, FileSpreadsheet, FileText, Contact } from 'lucide-react'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
@@ -48,8 +48,34 @@ export default async function PendaftaranPage({ searchParams }: Props) {
 
   return (
     <div className="p-6 sm:p-8 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-bold text-brand-primary">Data Pendaftaran</h1>
+        <div className="flex items-center gap-2">
+          <a
+            href="/api/admin/santri/export/excel"
+            className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+            title="Download data lengkap dalam format Excel"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            Export Excel
+          </a>
+          <a
+            href="/api/admin/santri/export/csv"
+            className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+            title="Download data lengkap dalam format CSV"
+          >
+            <FileText className="h-4 w-4" />
+            Export CSV
+          </a>
+          <a
+            href="/api/admin/santri/export/vcf"
+            className="inline-flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
+            title="Download kontak semua Mahasantri (format vCard) untuk di-import ke HP admin"
+          >
+            <Contact className="h-4 w-4" />
+            Export Kontak (.vcf)
+          </a>
+        </div>
       </div>
 
       <div className="bg-brand-primary rounded-xl p-4 flex flex-wrap gap-4 sm:gap-8">

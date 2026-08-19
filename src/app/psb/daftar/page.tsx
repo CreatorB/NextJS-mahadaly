@@ -3,20 +3,35 @@ import { Footer } from '@/components/layout/Footer'
 import { RegistrationForm } from '@/components/psb/RegistrationForm'
 import { Toaster } from 'sonner'
 import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 import prisma from '@/lib/prisma'
+
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = { title: "Formulir Pendaftaran — Ma'had Aly Syathiby" }
 
 async function getData() {
-  const [programs, pekerjaans] = await Promise.all([
+  const [infoPsb, programs, pekerjaans] = await Promise.all([
+    prisma.infoPsb.findFirst({ orderBy: { tahunAjaran: 'desc' } }),
     prisma.program.findMany({ where: { statusPsb: 'Buka' }, orderBy: { id: 'asc' } }),
     prisma.pekerjaan.findMany({ orderBy: { id: 'asc' } }),
   ])
-  return { programs, pekerjaans }
+  return { infoPsb, programs, pekerjaans }
 }
 
 export default async function DaftarPage() {
-  const { programs, pekerjaans } = await getData()
+  const { infoPsb, programs, pekerjaans } = await getData()
+
+  const now = new Date()
+  const isOpen =
+    !!infoPsb &&
+    infoPsb.statusPsb === 'Buka' &&
+    (!infoPsb.datetimeOpen || infoPsb.datetimeOpen <= now) &&
+    (!infoPsb.datetimeClosed || infoPsb.datetimeClosed >= now)
+
+  if (!isOpen) {
+    redirect('/psb?closed=1')
+  }
 
   return (
     <>

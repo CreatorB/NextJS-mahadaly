@@ -13,31 +13,38 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [debug, setDebug] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setDebug('Mengirim...')
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       })
+      setDebug(`Status: ${res.status}`)
       const json = await res.json().catch(() => null)
+      setDebug(`Status: ${res.status}, JSON: ${JSON.stringify(json).slice(0, 200)}`)
 
       if (!json) {
         toast.error('Server tidak mengembalikan response valid')
+        setDebug('ERROR: json null')
         return
       }
 
       if (!res.ok) {
         toast.error(json.message ?? 'Login gagal')
+        setDebug(`HTTP ${res.status}: ${json.message}`)
         return
       }
 
       if (json.success && json.data) {
         const roleId = json.data.roleId
         toast.success(`Selamat datang, ${json.data.nama ?? 'User'}!`)
+        setDebug(`Success! roleId=${roleId}, redirect...`)
         if (roleId <= 2) {
           router.push('/admin/dashboard')
         } else {
@@ -45,9 +52,12 @@ export default function LoginPage() {
         }
       } else {
         toast.error(json.message ?? 'Login gagal')
+        setDebug(`Failed: ${json.message}`)
       }
     } catch (err) {
-      toast.error('Terjadi kesalahan')
+      const msg = err instanceof Error ? err.message : String(err)
+      toast.error('Terjadi kesalahan: ' + msg)
+      setDebug('Exception: ' + msg)
     } finally {
       setLoading(false)
     }
@@ -55,7 +65,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <Toaster richColors />
+      <Toaster richColors position="top-center" />
       <Navbar />
       <main className="min-h-screen bg-brand-surface flex items-center justify-center py-12 px-4">
         <div className="w-full max-w-md">
@@ -94,6 +104,12 @@ export default function LoginPage() {
                 Daftar PSB
               </Link>
             </div>
+
+            {debug && (
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs font-mono text-yellow-900 break-all">
+                <strong>Debug:</strong> {debug}
+              </div>
+            )}
           </div>
         </div>
       </main>

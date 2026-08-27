@@ -24,6 +24,7 @@ export default function LoginPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
+        credentials: 'same-origin',
       })
       setDebug(`Status: ${res.status}`)
       const json = await res.json().catch(() => null)
@@ -45,11 +46,13 @@ export default function LoginPage() {
         const roleId = json.data.roleId
         toast.success(`Selamat datang, ${json.data.nama ?? 'User'}!`)
         setDebug(`Success! roleId=${roleId}, redirect...`)
-        if (roleId <= 2) {
-          router.push('/admin/dashboard')
-        } else {
-          router.push('/dashboard')
-        }
+        // Force hard navigation to ensure cookie is sent with request
+        const target = roleId <= 2 ? '/admin/dashboard' : '/dashboard'
+        setDebug(`Redirecting to ${target} via window.location...`)
+        // Use window.location for full page reload (cookie is set, middleware will read it)
+        setTimeout(() => {
+          window.location.href = target
+        }, 300)
       } else {
         toast.error(json.message ?? 'Login gagal')
         setDebug(`Failed: ${json.message}`)

@@ -14,11 +14,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [debug, setDebug] = useState('')
+  const [successLink, setSuccessLink] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setDebug('Mengirim...')
+    setSuccessLink('')
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -28,7 +30,8 @@ export default function LoginPage() {
       })
       setDebug(`Status: ${res.status}`)
       const json = await res.json().catch(() => null)
-      setDebug(`Status: ${res.status}, JSON: ${JSON.stringify(json).slice(0, 200)}`)
+      const debugSnippet = json ? JSON.stringify(json).slice(0, 200) : 'null'
+      setDebug(`Status: ${res.status}, JSON: ${debugSnippet}`)
 
       if (!json) {
         toast.error('Server tidak mengembalikan response valid')
@@ -44,14 +47,19 @@ export default function LoginPage() {
 
       if (json.success && json.data) {
         const roleId = json.data.roleId
-        toast.success(`Selamat datang, ${json.data.nama ?? 'User'}!`)
-        setDebug(`Success! roleId=${roleId}, redirect...`)
-        // Force hard navigation to ensure cookie is sent with request
         const target = roleId <= 2 ? '/admin/dashboard' : '/dashboard'
-        setDebug(`Redirecting to ${target} via window.location...`)
-        // Use window.location for full page reload (cookie is set, middleware will read it)
+        toast.success(`Selamat datang, ${json.data.nama ?? 'User'}!`)
+        setDebug(`Success! roleId=${roleId}, target=${target}`)
+        // Show fallback link in case auto-redirect fails
+        setSuccessLink(target)
+        // Force hard navigation so cookie is sent with next request
         setTimeout(() => {
-          window.location.href = target
+          try {
+            window.location.href = target
+          } catch (e) {
+            setDebug(`window.location failed: ${e}, fallback router.push`)
+            router.push(target)
+          }
         }, 300)
       } else {
         toast.error(json.message ?? 'Login gagal')
@@ -107,6 +115,16 @@ export default function LoginPage() {
                 Daftar PSB
               </Link>
             </div>
+
+            {successLink && (
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded text-sm">
+                <p className="text-green-800 mb-1">Login berhasil! Mengalihkan...</p>
+                <p className="text-green-700 text-xs mb-1">Tidak dialihkan otomatis?</p>
+                <Link href={successLink} className="text-brand-primary font-medium underline text-sm">
+                  Klik di sini untuk masuk →
+                </Link>
+              </div>
+            )}
 
             {debug && (
               <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs font-mono text-yellow-900 break-all">

@@ -16,6 +16,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('[Login] Form submitted', { email })
     setLoading(true)
     try {
       const res = await fetch('/api/auth/login', {
@@ -23,16 +24,40 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       })
-      const json = await res.json()
-      if (json.success) {
-        const roleId = json.data.roleId
-        if (roleId <= 2) router.push('/admin/dashboard')
-        else router.push('/dashboard')
-      } else {
-        toast.error(json.message ?? 'Login gagal')
+      console.log('[Login] Response status', res.status)
+      const json = await res.json().catch((err) => {
+        console.error('[Login] JSON parse error', err)
+        return null
+      })
+      console.log('[Login] Response JSON', json)
+
+      if (!json) {
+        toast.error('Server tidak mengembalikan response valid')
+        return
       }
-    } catch {
-      toast.error('Terjadi kesalahan')
+
+      if (!res.ok) {
+        toast.error(`HTTP ${res.status}: ${json.message ?? 'Login gagal'}`)
+        console.error('[Login] HTTP error', res.status, json)
+        return
+      }
+
+      if (json.success && json.data) {
+        const roleId = json.data.roleId
+        console.log('[Login] Success, roleId', roleId)
+        toast.success(`Selamat datang, ${json.data.nama ?? 'User'}!`)
+        if (roleId <= 2) {
+          router.push('/admin/dashboard')
+        } else {
+          router.push('/dashboard')
+        }
+      } else {
+        toast.error(json.message ?? 'Login gagal - response tidak success')
+        console.error('[Login] Login gagal', json)
+      }
+    } catch (err) {
+      console.error('[Login] Exception', err)
+      toast.error('Terjadi kesalahan: ' + (err instanceof Error ? err.message : String(err)))
     } finally {
       setLoading(false)
     }
@@ -78,6 +103,13 @@ export default function LoginPage() {
               <Link href="/psb" className="text-brand-primary font-medium hover:underline">
                 Daftar PSB
               </Link>
+            </div>
+
+            <div className="mt-4 p-3 bg-gray-50 rounded text-xs text-gray-600">
+              <p className="font-semibold mb-1">Test credentials:</p>
+              <p>admin@mahadaly.syathiby.id / [REDACTED-ADMIN-PASSWORD]</p>
+              <p>superadmin@mahadaly.syathiby.id / [REDACTED-ADMIN-PASSWORD]</p>
+              <p>Buka DevTools (F12) → Console untuk lihat log error</p>
             </div>
           </div>
         </div>

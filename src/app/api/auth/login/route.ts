@@ -6,11 +6,14 @@ import { loginSchema } from '@/lib/validations/auth'
 import { ok, fail } from '@/types/api'
 
 export async function POST(req: NextRequest) {
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('[POST /api/auth/login] Request received')
-  }
   try {
-    const body = await req.json()
+    // Parse body — handle non-JSON gracefully
+    let body: unknown
+    try {
+      body = await req.json()
+    } catch {
+      return Response.json(fail('Data tidak valid - body harus JSON'), { status: 400 })
+    }
 
     const parsed = loginSchema.safeParse(body)
     if (!parsed.success) {
@@ -32,9 +35,12 @@ export async function POST(req: NextRequest) {
     await setSession({ userId: user.id, roleId: user.roleId, email: user.email, nama: user.nama })
     return Response.json(ok({ roleId: user.roleId, nama: user.nama, email: user.email }))
   } catch (e) {
+    // Log full error in dev, generic in production
     if (process.env.NODE_ENV !== 'production') {
-      console.error('[POST /api/auth/login] Error:', e)
+      console.error('[POST /api/auth/login]', e)
+      return Response.json(fail('Terjadi kesalahan server: ' + (e instanceof Error ? e.message : String(e))), { status: 500 })
     }
+    console.error('[POST /api/auth/login]', e?.message ?? e)
     return Response.json(fail('Terjadi kesalahan server'), { status: 500 })
   }
 }

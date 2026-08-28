@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
     })
     logToServer('🍪 Cookie set in JSON response', { name: COOKIE_NAME })
     const duration = Date.now() - startTime
-    logToServer('✅ LOGIN SUCCESS - JSON response sent', { duration: `${duration}ms`, roleId: user.roleId, nama: user Processing... })
+    logToServer('✅ LOGIN SUCCESS - JSON response sent', { duration: `${duration}ms`, roleId: user.roleId, nama: user.nama })
     return response
   }
 }

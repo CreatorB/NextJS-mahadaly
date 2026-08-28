@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
 const path = require('path')
 
-/** @type {import('next').NextConfig} */
-const path = require('path')
-
 const nextConfig = {
   output: 'standalone',
   turbopack: {
@@ -14,7 +11,5 @@ const nextConfig = {
     '/berkas/**': [path.join(__dirname, 'uploads')],
   },
 }
-
-module.exports = nextConfig
 
 module.exports = nextConfig

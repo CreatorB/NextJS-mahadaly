@@ -49,3 +49,6 @@ next-env.d.ts
 dev_out.log
 dev_err.log
 test_login_*.png
+
+# Server logs
+logs/

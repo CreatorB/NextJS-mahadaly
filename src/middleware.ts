@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { jwtVerify } from 'jose'
 
@@ -16,7 +16,7 @@ async function getRole(req: NextRequest): Promise<number | null> {
   }
 }
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const role = await getRole(request)
 
@@ -43,3 +43,4 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: ['/dashboard/:path*', '/admin/:path*', '/login'],
 }
+

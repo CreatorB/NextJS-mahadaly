@@ -18,58 +18,74 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    e.stopPropagation()
+    console.log('[LOGIN] Form submitted, preventing default')
     setLoading(true)
     setDebug('Mengirim...')
     setSuccessLink('')
     try {
+      console.log('[LOGIN] Fetching /api/auth/login...', { email, password: '***' })
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
         credentials: 'same-origin',
       })
+      console.log('[LOGIN] Response status:', res.status)
       setDebug(`Status: ${res.status}`)
-      const json = await res.json().catch(() => null)
+      const json = await res.json().catch((err) => {
+        console.error('[LOGIN] JSON parse error:', err)
+        return null
+      })
+      console.log('[LOGIN] Response JSON:', json)
       const debugSnippet = json ? JSON.stringify(json).slice(0, 200) : 'null'
       setDebug(`Status: ${res.status}, JSON: ${debugSnippet}`)
 
       if (!json) {
+        console.error('[LOGIN] No JSON response')
         toast.error('Server tidak mengembalikan response valid')
         setDebug('ERROR: json null')
+        setLoading(false)
         return
       }
 
       if (!res.ok) {
+        console.error('[LOGIN] HTTP error:', res.status, json.message)
         toast.error(json.message ?? 'Login gagal')
         setDebug(`HTTP ${res.status}: ${json.message}`)
+        setLoading(false)
         return
       }
 
       if (json.success && json.data) {
         const roleId = json.data.roleId
         const target = roleId <= 2 ? '/admin/dashboard' : '/dashboard'
+        console.log('[LOGIN] Success! Redirecting to:', target)
         toast.success(`Selamat datang, ${json.data.nama ?? 'User'}!`)
         setDebug(`Success! roleId=${roleId}, target=${target}`)
-        // Show fallback link in case auto-redirect fails
         setSuccessLink(target)
-        // Force hard navigation so cookie is sent with next request
+        // Force hard navigation - clear all state first
         setTimeout(() => {
           try {
+            console.log('[LOGIN] window.location.href =', target)
             window.location.href = target
           } catch (e) {
+            console.error('[LOGIN] window.location error:', e)
             setDebug(`window.location failed: ${e}, fallback router.push`)
             router.push(target)
           }
         }, 300)
       } else {
+        console.error('[LOGIN] Login failed:', json.message)
         toast.error(json.message ?? 'Login gagal')
         setDebug(`Failed: ${json.message}`)
+        setLoading(false)
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
+      console.error('[LOGIN] Exception:', err)
       toast.error('Terjadi kesalahan: ' + msg)
       setDebug('Exception: ' + msg)
-    } finally {
       setLoading(false)
     }
   }

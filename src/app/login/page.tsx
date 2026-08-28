@@ -96,7 +96,7 @@ export default function LoginPage() {
 
             {/* VERSION MARKER */}
             <div className="mt-4 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
-              <strong>Version:</strong> 20260828-login-fix-v3 | <strong>Build:</strong> {new Date().toISOString()}
+              <strong>Version:</strong> 20260828-login-fix-v4 | <strong>Build:</strong> {new Date().toISOString()}
               <br />
               Mode: <strong>Native form POST</strong> (no fetch, no React state issues)
             </div>

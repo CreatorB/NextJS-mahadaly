@@ -16,7 +16,7 @@ async function getRole(req: NextRequest): Promise<number | null> {
   }
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const role = await getRole(request)
 
@@ -43,4 +43,5 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: ['/dashboard/:path*', '/admin/:path*', '/login'],
 }
+
 

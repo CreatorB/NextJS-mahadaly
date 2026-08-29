@@ -16,17 +16,18 @@ model Role {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  nama      String
-  email     String   @unique
-  password  String
-  roleId    Int      @map("role_id")
-  role      Role     @relation(fields: [roleId], references: [id])
-  isActive  Boolean  @default(true) @map("is_active")
-  siswaId  Int?     @unique @map("santri_id")
-  siswa    Santri?  @relation(fields: [siswaId], references: [id])
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id           Int                @id @default(autoincrement())
+  nama         String
+  email        String             @unique
+  password     String
+  roleId       Int                @map("role_id")
+  role         Role               @relation(fields: [roleId], references: [id])
+  isActive     Boolean            @default(true) @map("is_active")
+  siswaId      Int?               @unique @map("santri_id")
+  siswa        Santri?            @relation(fields: [siswaId], references: [id])
+  createdLinks RegistrationLink[]
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
 
   @@map("users")
 }
@@ -36,7 +37,7 @@ model Program {
   namaProgram String   @map("nama_program")
   statusPsb   String   @default("Tutup") @map("status_psb")
   keterangan  String?  @db.Text
-  siswa    Santri[]
+  siswa       Santri[]
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -46,7 +47,7 @@ model Program {
 model Pekerjaan {
   id        Int      @id @default(autoincrement())
   nama      String
-  siswa    Santri[]
+  siswa     Santri[]
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -54,58 +55,58 @@ model Pekerjaan {
 }
 
 model InfoPsb {
-  id                   Int       @id @default(autoincrement())
-  tahunAjaran          String    @unique @map("tahun_ajaran")
-  statusPsb            String    @default("Tutup") @map("status_psb")
-  datetimeOpen         DateTime? @map("datetime_open")
-  datetimeClosed       DateTime? @map("datetime_closed")
-  quotaIkhwan          Int?      @map("quota_ikhwan")
-  quotaAkhwat          Int?      @map("quota_akhwat")
-  biayaPendaftaran     Int       @default(150000) @map("biaya_pendaftaran")
-  biayaPangkal         Int       @default(5250000) @map("biaya_pangkal")
-  biayaKuliahSemester  Int       @default(3000000) @map("biaya_kuliah_semester")
-  biayaCicilanBulanan  Int       @default(500000) @map("biaya_cicilan_bulanan")
-  kontenPsb            String?   @db.Text @map("konten_psb")
-  posterImages         String?   @db.Text @map("poster_images")
-  linkGroup            String?   @map("link_group")
-  manualPassword       String?   @map("manual_password")
-  siswa            Santri[]
-  createdAt            DateTime  @default(now()) @map("created_at")
-  updatedAt            DateTime  @updatedAt @map("updated_at")
+  id                  Int       @id @default(autoincrement())
+  tahunAjaran         String    @unique @map("tahun_ajaran")
+  statusPsb           String    @default("Tutup") @map("status_psb")
+  datetimeOpen        DateTime? @map("datetime_open")
+  datetimeClosed      DateTime? @map("datetime_closed")
+  quotaIkhwan         Int?      @map("quota_ikhwan")
+  quotaAkhwat         Int?      @map("quota_akhwat")
+  biayaPendaftaran    Int       @default(150000) @map("biaya_pendaftaran")
+  biayaPangkal        Int       @default(5250000) @map("biaya_pangkal")
+  biayaKuliahSemester Int       @default(3000000) @map("biaya_kuliah_semester")
+  biayaCicilanBulanan Int       @default(500000) @map("biaya_cicilan_bulanan")
+  kontenPsb           String?   @map("konten_psb") @db.Text
+  posterImages        String?   @map("poster_images") @db.Text
+  linkGroup           String?   @map("link_group")
+  manualPassword      String?   @map("manual_password")
+  siswa               Santri[]
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
 
   @@map("info_psb")
 }
 
 model Provinsi {
-  id          Int             @id
-  nama        String
-  kabupaten   KabupatenKota[]
-  createdAt   DateTime        @default(now()) @map("created_at")
-  updatedAt   DateTime        @updatedAt @map("updated_at")
+  id        Int             @id
+  nama      String
+  kabupaten KabupatenKota[]
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
 
   @@map("provinsi")
 }
 
 model KabupatenKota {
-  id          Int         @id
-  provinsiId  Int         @map("provinsi_id")
-  nama        String
-  provinsi    Provinsi    @relation(fields: [provinsiId], references: [id])
-  kecamatans  Kecamatan[]
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
+  id         Int         @id
+  provinsiId Int         @map("provinsi_id")
+  nama       String
+  provinsi   Provinsi    @relation(fields: [provinsiId], references: [id])
+  kecamatans Kecamatan[]
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
 
   @@map("kabupaten_kota")
 }
 
 model Kecamatan {
-  id          Int     @id
-  kabupatenId Int     @map("kabupaten_id")
+  id          Int           @id
+  kabupatenId Int           @map("kabupaten_id")
   nama        String
   kabupaten   KabupatenKota @relation(fields: [kabupatenId], references: [id])
   desas       Desa[]
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
 
   @@map("kecamatan")
 }
@@ -115,7 +116,7 @@ model Desa {
   kecamatanId Int       @map("kecamatan_id")
   nama        String
   kodePos     String    @map("kode_pos")
-  kecamatan   Kecamatan  @relation(fields: [kecamatanId], references: [id])
+  kecamatan   Kecamatan @relation(fields: [kecamatanId], references: [id])
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
@@ -123,58 +124,61 @@ model Desa {
 }
 
 model Santri {
-  id                  Int       @id @default(autoincrement())
-  kodeRegistrasi      String    @unique @map("kode_registrasi")
-  nik                 String
-  nama                String
-  jk                  String
-  tmpLahir            String    @map("tmp_lahir")
-  tglLahir            DateTime  @map("tgl_lahir")
-  alamat              String    @db.Text
-  provinsiId          Int?      @map("provinsi_id")
-  kabupatenId         Int?      @map("kabupaten_id")
-  kecamatanId         Int?      @map("kecamatan_id")
-  desaId              Int?      @map("desa_id")
-  kodePos             String?   @map("kode_pos")
-  namaAyah            String?   @map("nama_ayah")
-  noHpAyah            String?   @map("no_hp_ayah")
-  namaIbu             String?   @map("nama_ibu")
-  noHpIbu             String?   @map("no_hp_ibu")
-  namaWali            String?   @map("nama_wali")
-  noHpWali            String?   @map("no_hp_wali")
-  pendidikan          String
-  pekerjaanId         Int       @map("pekerjaan_id")
-  pekerjaan           Pekerjaan  @relation(fields: [pekerjaanId], references: [id])
-  email               String
-  kodeNegara          String    @default("62") @map("kode_negara")
-  noHp                String    @map("no_hp")
-  hp                  String
-  tahunPsb            String    @map("tahun_psb")
-  infoPsb             InfoPsb   @relation(fields: [tahunPsb], references: [tahunAjaran])
-  programId           Int       @map("program_id")
-  program             Program   @relation(fields: [programId], references: [id])
-  statusPendaftaran   String    @default("pending") @map("status_pendaftaran")
-  alasanPendaftaran   String?   @db.Text @map("alasan_pendaftaran")
-  statusTransfer      String    @default("pending") @map("status_transfer")
-  alasanTransfer      String?   @db.Text @map("alasan_transfer")
-  nominalTransfer     Decimal?  @map("nominal_transfer")
-  tglVerifikasi       DateTime? @map("tgl_verifikasi")
-  photo               String?
-  ktp                 String?
-  transfer            String?
-  ijazah              String?
-  user                User?
-  notifications       Notification[]
-  createdAt           DateTime  @default(now()) @map("created_at")
-  updatedAt           DateTime  @updatedAt @map("updated_at")
+  id                 Int               @id @default(autoincrement())
+  kodeRegistrasi     String            @unique @map("kode_registrasi")
+  nik                String
+  nama               String
+  jk                 String
+  tmpLahir           String            @map("tmp_lahir")
+  tglLahir           DateTime          @map("tgl_lahir")
+  alamat             String            @db.Text
+  provinsiId         Int?              @map("provinsi_id")
+  kabupatenId        Int?              @map("kabupaten_id")
+  kecamatanId        Int?              @map("kecamatan_id")
+  desaId             Int?              @map("desa_id")
+  kodePos            String?           @map("kode_pos")
+  namaAyah           String?           @map("nama_ayah")
+  noHpAyah           String?           @map("no_hp_ayah")
+  namaIbu            String?           @map("nama_ibu")
+  noHpIbu            String?           @map("no_hp_ibu")
+  namaWali           String?           @map("nama_wali")
+  noHpWali           String?           @map("no_hp_wali")
+  pendidikan         String
+  pekerjaanId        Int               @map("pekerjaan_id")
+  pekerjaan          Pekerjaan         @relation(fields: [pekerjaanId], references: [id])
+  email              String
+  kodeNegara         String            @default("62") @map("kode_negara")
+  noHp               String            @map("no_hp")
+  hp                 String
+  tahunPsb           String            @map("tahun_psb")
+  infoPsb            InfoPsb           @relation(fields: [tahunPsb], references: [tahunAjaran])
+  programId          Int               @map("program_id")
+  program            Program           @relation(fields: [programId], references: [id])
+  statusPendaftaran  String            @default("pending") @map("status_pendaftaran")
+  alasanPendaftaran  String?           @map("alasan_pendaftaran") @db.Text
+  statusTransfer     String            @default("pending") @map("status_transfer")
+  alasanTransfer     String?           @map("alasan_transfer") @db.Text
+  nominalTransfer    Decimal?          @map("nominal_transfer")
+  tglVerifikasi      DateTime?         @map("tgl_verifikasi")
+  photo              String?
+  ktp                String?
+  transfer           String?
+  ijazah             String?
+  registrationLinkId Int?              @map("registration_link_id")
+  registrationLink   RegistrationLink? @relation(fields: [registrationLinkId], references: [id])
+  user               User?
+  notifications      Notification[]
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
 
+  @@index([registrationLinkId])
   @@map("santri")
 }
 
 model Notification {
   id        Int      @id @default(autoincrement())
-  siswaId  Int      @map("santri_id")
-  siswa    Santri   @relation(fields: [siswaId], references: [id])
+  siswaId   Int      @map("santri_id")
+  siswa     Santri   @relation(fields: [siswaId], references: [id])
   type      String
   title     String
   message   String   @db.Text
@@ -183,4 +187,22 @@ model Notification {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("notifications")
+}
+
+model RegistrationLink {
+  id           Int       @id @default(autoincrement())
+  slug         String    @unique
+  label        String
+  quota        Int?
+  usedCount    Int       @default(0) @map("used_count")
+  expiresAt    DateTime? @map("expires_at")
+  isActive     Boolean   @default(true) @map("is_active")
+  createdById  Int       @map("created_by_id")
+  createdBy    User      @relation(fields: [createdById], references: [id])
+  pendaftarans Santri[]
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@index([isActive])
+  @@map("registration_links")
 }

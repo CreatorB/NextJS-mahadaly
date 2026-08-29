@@ -29,8 +29,9 @@ function NavLinks({ pathname, onNavigate, onLogout }: { pathname: string; onNavi
       ))}
       <div className="pt-2 border-t border-white/20 mt-2">
         <button
+          type="button"
           onClick={onLogout}
-          className="flex items-center gap-3 px-3 py-2 w-full text-sm text-red-300 hover:bg-white/10 rounded-lg transition-colors"
+          className="flex items-center gap-3 px-3 py-2 w-full text-sm text-red-300 hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
         >
           <LogOut className="h-4 w-4 shrink-0" />
           Logout
@@ -46,8 +47,17 @@ export function DashboardSidebar({ nama }: { nama: string }) {
   const [isOpen, setIsOpen] = useState(false)
 
   const logout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' })
-    router.push('/login')
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' })
+    } catch (e) {
+      console.error('[logout] API call failed', e)
+    }
+    // Pakai window.location.href untuk full-page navigation yang lebih reliable
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login'
+    } else {
+      router.push('/login')
+    }
   }
 
   return (

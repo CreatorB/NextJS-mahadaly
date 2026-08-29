@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { clsx } from 'clsx'
-import { LayoutDashboard, Users, Settings, LogOut, Shield, BookOpen, Menu, X, MapPin } from 'lucide-react'
+import { LayoutDashboard, Users, Settings, LogOut, Shield, BookOpen, Menu, X, MapPin, Link2 } from 'lucide-react'
 import { useState } from 'react'
 
 interface Props {
@@ -18,6 +18,7 @@ export function AdminSidebar({ nama, roleId }: Props) {
   const navItems = [
     { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/pendaftaran', label: 'Pendaftaran', icon: Users },
+    { href: '/admin/link-pendaftaran', label: 'Link Pendaftaran', icon: Link2 },
     { href: '/admin/pengaturan-psb', label: 'Pengaturan PSB', icon: Settings },
     ...(roleId === 1 ? [
       { href: '/admin/wilayah', label: 'Wilayah', icon: MapPin },
@@ -27,8 +28,18 @@ export function AdminSidebar({ nama, roleId }: Props) {
   ]
 
   const logout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' })
-    router.push('/login')
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' })
+    } catch (e) {
+      console.error('[logout] API call failed', e)
+    }
+    // Pakai window.location.href untuk full-page navigation yang lebih reliable
+    // (router.push di Next.js 16 kadang gagal di edge cases setelah async operation)
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login'
+    } else {
+      router.push('/login')
+    }
   }
 
   const closeSidebar = () => setSidebarOpen(false)
@@ -84,8 +95,9 @@ export function AdminSidebar({ nama, roleId }: Props) {
 
           <div className="pt-2 border-t border-white/20 mt-2">
             <button
+              type="button"
               onClick={logout}
-              className="flex items-center gap-3 px-3 py-2 w-full text-sm text-red-300 hover:bg-white/10 rounded-lg transition-colors"
+              className="flex items-center gap-3 px-3 py-2 w-full text-sm text-red-300 hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
             >
               <LogOut className="h-4 w-4 shrink-0" />
               Logout

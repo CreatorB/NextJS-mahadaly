@@ -16,9 +16,10 @@ import { registrationSchema, type RegistrationFormData } from '@/lib/validations
 interface Props {
   programs: { id: number; namaProgram: string }[]
   pekerjaans: { id: number; nama: string }[]
+  refSlug?: string | null
 }
 
-export function RegistrationForm({ programs, pekerjaans }: Props) {
+export function RegistrationForm({ programs, pekerjaans, refSlug }: Props) {
   const router = useRouter()
   const [step, setStep] = useState(1)
   const [files, setFiles] = useState<{ photo?: File; ktp?: File; transfer?: File; ijazah?: File }>({})
@@ -113,6 +114,7 @@ export function RegistrationForm({ programs, pekerjaans }: Props) {
     if (files.ktp) fd.append('ktp', files.ktp)
     if (files.transfer) fd.append('transfer', files.transfer)
     if (files.ijazah) fd.append('ijazah', files.ijazah)
+    if (refSlug) fd.append('ref', refSlug)
 
     try {
       const res = await fetch('/api/psb/register', { method: 'POST', body: fd })

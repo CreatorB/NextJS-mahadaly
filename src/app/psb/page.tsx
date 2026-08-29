@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { PsbStatusBanner } from '@/components/psb/PsbStatusBanner'
@@ -11,9 +12,11 @@ import {
   Phone,
   Info,
   ArrowRight,
+  Link2,
 } from 'lucide-react'
 import type { Metadata } from 'next'
 import prisma from '@/lib/prisma'
+import { validateRegistrationLink } from '@/lib/registration-link'
 
 export const dynamic = 'force-dynamic'
 
@@ -58,7 +61,19 @@ async function getPsbData() {
   return { info: infoForComponent, quota }
 }
 
-export default async function PsbPage() {
+export default async function PsbPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ id?: string }>
+}) {
+  const params = await searchParams
+  let specialLink: Awaited<ReturnType<typeof validateRegistrationLink>> | null = null
+  if (params.id) {
+    specialLink = await validateRegistrationLink(params.id)
+    if (!specialLink.ok) notFound()
+  }
+  const linkData = specialLink && specialLink.ok ? specialLink : null
+
   const { info, quota } = await getPsbData()
 
   const infoItems = [
@@ -124,6 +139,37 @@ export default async function PsbPage() {
 
         {/* ===== CONTENT ===== */}
         <div className="mx-auto max-w-3xl px-4 pb-12 pt-8">
+          {linkData && (
+            <div className="mb-6 rounded-2xl border-2 border-brand-accent/40 bg-gradient-to-br from-amber-50 to-white p-5 shadow-[0_12px_40px_-18px_rgba(0,54,124,0.35)]">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100">
+                  <Link2 className="h-5 w-5 text-amber-700" />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="font-bold text-amber-900">Pendaftaran Khusus</h2>
+                    {linkData.remainingQuota !== null && (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                        Sisa {linkData.remainingQuota}/{linkData.link.quota} kuota
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-sm text-amber-800">{linkData.link.label}</p>
+                  <p className="mt-1 text-xs text-amber-700/80">
+                    Anda mengakses pendaftaran melalui tautan khusus. Kuota &amp; masa berlaku tautan ini mengikuti
+                    kebijakan admin.
+                  </p>
+                  <Link
+                    href={`/psb/daftar?ref=${linkData.link.slug}`}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 transition-colors"
+                  >
+                    Daftar via Tautan Ini
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
           {info ? (
             <PsbStatusBanner info={info} quota={quota} />
           ) : (

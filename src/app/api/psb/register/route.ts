@@ -5,6 +5,7 @@ import { isDuplicateApplicant } from '@/lib/duplicate-check'
 import { saveFile, validateImageFile, validateDocFile, getPublicUrl, deleteFile } from '@/lib/upload'
 import { registrationSchema } from '@/lib/validations/registration'
 import { ok, fail } from '@/types/api'
+import { validateRegistrationLink, claimQuotaSlot } from '@/lib/registration-link'
 import bcrypt from 'bcryptjs'
 
 export const dynamic = 'force-dynamic'
@@ -22,13 +23,32 @@ export async function POST(req: NextRequest) {
     const infoPsb = await prisma.infoPsb.findFirst({ orderBy: { tahunAjaran: 'desc' } })
     if (!infoPsb) return Response.json(fail('Data PSB tidak ditemukan'), { status: 400 })
 
+    // Tautan khusus diizinkan walaupun PSB reguler sudah tutup (untuk pendaftar susulan)
+    const refSlug = fields.ref?.trim() || null
+    let specialLinkId: number | null = null
+    if (refSlug) {
+      const linkCheck = await validateRegistrationLink(refSlug)
+      if (!linkCheck.ok) {
+        const messages: Record<string, string> = {
+          not_found: 'Tautan pendaftaran tidak valid',
+          inactive: 'Tautan pendaftaran sudah dinonaktifkan',
+          expired: 'Tautan pendaftaran sudah kedaluwarsa',
+          full: 'Kuota tautan pendaftaran sudah penuh',
+        }
+        return Response.json(fail(messages[linkCheck.reason] ?? 'Tautan tidak valid'), { status: 410 })
+      }
+      specialLinkId = linkCheck.link.id
+    }
+
     const now = new Date()
     const isOpen =
       infoPsb.statusPsb === 'Buka' &&
       (!infoPsb.datetimeOpen || infoPsb.datetimeOpen <= now) &&
       (!infoPsb.datetimeClosed || infoPsb.datetimeClosed >= now)
 
-    if (!isOpen) return Response.json(fail('Pendaftaran sudah ditutup'), { status: 400 })
+    if (!isOpen && !specialLinkId) {
+      return Response.json(fail('Pendaftaran sudah ditutup'), { status: 400 })
+    }
 
     const parsed = registrationSchema.safeParse({ ...fields, tahunPsb: infoPsb.tahunAjaran })
     if (!parsed.success) {
@@ -108,6 +128,19 @@ export async function POST(req: NextRequest) {
     const kecamatanId = data.kecamatanId ? parseInt(data.kecamatanId) : null
 
     const newSantri = await prisma.$transaction(async (tx) => {
+      if (specialLinkId !== null) {
+        const claim = await claimQuotaSlot(tx, specialLinkId)
+        if (!claim.ok) {
+          const messages: Record<string, string> = {
+            inactive: 'Tautan pendaftaran sudah dinonaktifkan',
+            expired: 'Tautan pendaftaran sudah kedaluwarsa',
+            full: 'Kuota tautan pendaftaran sudah penuh',
+            race_lost: 'Kuota penuh, coba lagi nanti',
+          }
+          throw new Error(messages[claim.reason] ?? 'Tautan tidak valid')
+        }
+      }
+
       const s = await tx.santri.create({
         data: {
           kodeRegistrasi: kode,
@@ -139,6 +172,7 @@ export async function POST(req: NextRequest) {
           ktp: getPublicUrl(ktpPath),
           transfer: getPublicUrl(transferPath),
           ijazah: getPublicUrl(ijazahPath),
+          registrationLinkId: specialLinkId,
         },
       })
       await tx.user.create({
@@ -158,6 +192,12 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     // Cleanup orphaned files if DB transaction failed after files were saved
     if (savedPaths.length) await Promise.allSettled(savedPaths.map(p => deleteFile(p)))
+    const msg = e instanceof Error ? e.message : 'Terjadi kesalahan server'
+    // Pesan dari claimQuotaSlot = "Tautan tidak valid"; return 410 Gone
+    if (msg.startsWith('Tautan') || msg.startsWith('Kuota')) {
+      console.warn('[register]', msg)
+      return Response.json(fail(msg), { status: 410 })
+    }
     console.error(e)
     return Response.json(fail('Terjadi kesalahan server'), { status: 500 })
   }

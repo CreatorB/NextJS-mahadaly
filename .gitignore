@@ -52,3 +52,18 @@ test_login_*.png
 
 # Server logs
 logs/
+
+# ===========================================
+# SECURITY: Local-only files (NEVER commit)
+# ===========================================
+# Helper scripts with hardcoded creds must live in work/ only.
+# See AGENTS.md section "Security Rules - No Passwords in Git"
+/scripts
+/reset-password.*
+/aggressive_fix.ps1
+/fix_and_test.ps1
+/quickstart.ps1
+/test-login.mjs
+/test_login_localhost.mjs
+/test_*.mjs
+/login_*.mjs

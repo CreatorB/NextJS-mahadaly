@@ -5,7 +5,9 @@ import { Card } from '@/components/ui/card'
 import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
 import Link from 'next/link'
+import { Sparkles, CalendarCheck } from 'lucide-react'
 import { AdminActions } from '@/components/admin/AdminActions'
+import { KelulusanForm } from './KelulusanForm'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
@@ -112,7 +114,37 @@ export default async function PendaftaranDetailPage({ params }: { params: Promis
             {siswa.statusTransfer}
           </Badge>
         </div>
+        {siswa.kelulusan && (
+          <div className="flex items-center gap-2 bg-white rounded-xl px-4 py-2 border border-gray-100 shadow-sm">
+            <span className="text-sm text-gray-500">Kelulusan:</span>
+            <Badge variant={siswa.kelulusan === 'lulus' ? 'approved' : 'rejected'}>
+              {siswa.kelulusan === 'lulus' ? 'Lulus' : 'Tidak Lulus'}
+              {siswa.predikat ? ` · ${siswa.predikat}` : ''}
+            </Badge>
+          </div>
+        )}
       </div>
+
+      {/* Kelulusan */}
+      <Card>
+        <h3 className="font-semibold text-brand-primary mb-4 flex items-center gap-2">
+          <Sparkles className="h-4 w-4" /> Hasil Kelulusan
+        </h3>
+        <KelulusanForm
+          kode={kode}
+          initial={{
+            kelulusan: siswa.kelulusan,
+            predikat: siswa.predikat,
+            catatan: siswa.catatan,
+          }}
+        />
+        {siswa.kelulusanAt && (
+          <p className="mt-3 text-xs text-gray-500 flex items-center gap-1.5">
+            <CalendarCheck className="h-3 w-3" />
+            Disetel pada {format(siswa.kelulusanAt, 'dd MMM yyyy, HH:mm', { locale: id })}
+          </p>
+        )}
+      </Card>
 
       {/* Actions */}
       <AdminActions

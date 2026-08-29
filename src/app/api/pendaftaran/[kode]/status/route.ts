@@ -15,7 +15,15 @@ export async function POST(
   if (!siswa) return Response.json(fail('Data tidak ditemukan'), { status: 404 })
 
   const body = await req.json().catch(() => ({}))
-  const { statusPendaftaran, statusTransfer, alasanPendaftaran, alasanTransfer } = body
+  const {
+    statusPendaftaran,
+    statusTransfer,
+    alasanPendaftaran,
+    alasanTransfer,
+    kelulusan,
+    predikat,
+    catatan,
+  } = body
 
   const updateData: Record<string, string | Date | null> = {}
   let notifyPendaftaran = false
@@ -39,8 +47,21 @@ export async function POST(
     }
   }
 
+  if (kelulusan !== undefined) {
+    updateData.kelulusan = kelulusan || null
+    updateData.kelulusanAt = new Date()
+  }
+
+  if (predikat !== undefined) {
+    updateData.predikat = predikat || null
+  }
+
+  if (catatan !== undefined) {
+    updateData.catatan = catatan || null
+  }
+
   if (Object.keys(updateData).length === 0) {
-    return Response.json(fail('Tidak ada status yang diubah'), { status: 400 })
+    return Response.json(fail('Tidak ada data yang diubah'), { status: 400 })
   }
 
   await prisma.$transaction(async (tx) => {
@@ -87,6 +108,26 @@ export async function POST(
           type: 'rejected',
           title: 'Pembayaran Ditolak',
           message: `Bukti pembayaran Anda ditolak. Alasan: ${alasanTransfer}. Silakan upload ulang bukti transfer yang benar melalui menu Dokumen Saya.`,
+        },
+      })
+    }
+
+    if (kelulusan === 'lulus') {
+      await tx.notification.create({
+        data: {
+          siswaId: siswa.id,
+          type: 'approved',
+          title: 'Hasil Kelulusan',
+          message: `Alhamdulillah, ${siswa.nama}! Selamat Antum telah diterima di Ma'had Aly Imam Syathiby. Silakan login ke dashboard untuk melihat hasil selengkapnya.`,
+        },
+      })
+    } else if (kelulusan === 'tidak_lulus') {
+      await tx.notification.create({
+        data: {
+          siswaId: siswa.id,
+          type: 'info',
+          title: 'Hasil Kelulusan',
+          message: `Terima kasih atas partisipasi Antum. Silakan login ke dashboard untuk melihat hasil selengkapnya.`,
         },
       })
     }

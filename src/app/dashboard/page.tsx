@@ -3,7 +3,8 @@ import { getSession } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
-import { FileText, Bell, CheckCircle, XCircle, Clock, MessageCircle, AlertCircle } from 'lucide-react'
+import { FileText, Bell, CheckCircle, XCircle, Clock, MessageCircle, AlertCircle, Sparkles } from 'lucide-react'
+import { parseCatatan } from '@/lib/kelulusan-template'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
@@ -54,6 +55,7 @@ export default async function DashboardPage() {
   const siswa = user.siswa
   const infoPsb = await prisma.infoPsb.findFirst({ where: { tahunAjaran: siswa.tahunPsb } })
   const linkGroup = siswa.statusTransfer === 'approved' ? infoPsb?.linkGroup ?? null : null
+  const catatanBlocks = parseCatatan(siswa.catatan)
 
   return (
     <div className="p-6 sm:p-8 space-y-6">
@@ -121,6 +123,64 @@ export default async function DashboardPage() {
             </a>
           </div>
         </div>
+      )}
+
+      {/* Kelulusan */}
+      {siswa.kelulusan && (
+        <Card className="p-6 border-2 border-amber-200 bg-gradient-to-br from-amber-50/40 to-white">
+          <div className="flex items-start gap-3 mb-4">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100">
+              <Sparkles className="h-5 w-5 text-amber-700" />
+            </span>
+            <div>
+              <h2 className="text-lg font-bold text-brand-primary">Hasil Kelulusan</h2>
+              <p className="text-xs text-gray-500">Pengumuman kelulusan Ma'had Aly Imam Syathiby</p>
+            </div>
+          </div>
+
+          <div className="space-y-2 text-sm">
+            <p className="text-gray-800">
+              {siswa.kelulusan === 'lulus' ? (
+                <>Selamat, Antum telah diterima di <strong>Ma'had Aly Imam Syathiby</strong></>
+              ) : (
+                <>Terima kasih atas partisipasi Antum dalam seleksi masuk Ma'had Aly Imam Syathiby.</>
+              )}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 pt-1.5">
+              <div>
+                <p className="text-xs text-gray-500">Hasil Kelulusan</p>
+                <p className="font-semibold text-gray-900">
+                  {siswa.kelulusan === 'lulus' ? 'Lulus' : 'Tidak Lulus'}
+                </p>
+              </div>
+              {siswa.predikat && (
+                <div>
+                  <p className="text-xs text-gray-500">Predikat</p>
+                  <p className="font-semibold text-gray-900">{siswa.predikat}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-2">
+              <p className="text-xs text-gray-500 mb-1">Catatan :</p>
+              {catatanBlocks.length === 0 ? (
+                <p className="text-sm text-gray-700">-</p>
+              ) : (
+                <div className="space-y-1 text-sm text-gray-800">
+                  {catatanBlocks.map((b, i) =>
+                    b.type === 'paragraph' ? (
+                      <p key={i}>{b.text}</p>
+                    ) : (
+                      <ul key={i} className="list-disc list-inside pl-1 space-y-0.5">
+                        <li>{b.text}</li>
+                      </ul>
+                    ),
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </Card>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

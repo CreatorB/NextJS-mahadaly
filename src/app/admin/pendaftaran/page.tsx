@@ -1,10 +1,7 @@
 import prisma from '@/lib/prisma'
-import { Badge, statusBadge } from '@/components/ui/badge'
-import { format } from 'date-fns'
-import { id } from 'date-fns/locale'
-import Link from 'next/link'
 import { Users, Clock, CheckCircle, Banknote, FileSpreadsheet, FileText, Contact, UserPlus } from 'lucide-react'
 import type { Metadata } from 'next'
+import { PendaftaranTable, CsvUploadButton, DownloadKelulusanButton, type PendaftaranRow } from './PendaftaranTable'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Pendaftaran — Admin Ma\'had Aly Syathiby' }
@@ -13,6 +10,7 @@ interface Props {
   searchParams: Promise<{
     page?: string; search?: string; statusPendaftaran?: string
     statusTransfer?: string; programId?: string; jk?: string
+    kelulusan?: string
   }>
 }
 
@@ -30,12 +28,14 @@ export default async function PendaftaranPage({ searchParams }: Props) {
   if (params.statusTransfer) where.statusTransfer = params.statusTransfer
   if (params.programId) where.programId = parseInt(params.programId)
   if (params.jk) where.jk = params.jk
+  if (params.kelulusan) where.kelulusan = params.kelulusan
 
-  const [total, pendingCount, approvedCount, rejected, cash, pendingTransfer, santris, programs] = await Promise.all([
+  const [total, pendingCount, approvedCount, rejected, lulusCount, cash, pendingTransfer, santris, programs] = await Promise.all([
     prisma.santri.count(),
     prisma.santri.count({ where: { statusPendaftaran: 'pending' } }),
     prisma.santri.count({ where: { statusPendaftaran: 'approved' } }),
     prisma.santri.count({ where: { statusPendaftaran: 'rejected' } }),
+    prisma.santri.count({ where: { kelulusan: 'lulus' } }),
     prisma.santri.aggregate({ _sum: { nominalTransfer: true }, where: { statusTransfer: 'approved' } }),
     prisma.santri.count({ where: { statusTransfer: 'pending' } }),
     prisma.santri.findMany({ where: { ...where }, include: { program: true }, orderBy: { createdAt: 'desc' }, skip, take: limit }),
@@ -43,14 +43,26 @@ export default async function PendaftaranPage({ searchParams }: Props) {
   ])
 
   const totalCash = cash._sum.nominalTransfer ? Number(cash._sum.nominalTransfer) : 0
-
   const totalPages = Math.ceil(total / limit)
+
+  const rows: PendaftaranRow[] = santris.map((s) => ({
+    id: s.id,
+    kodeRegistrasi: s.kodeRegistrasi,
+    nama: s.nama,
+    jk: s.jk,
+    programNama: s.program.namaProgram,
+    statusPendaftaran: s.statusPendaftaran,
+    statusTransfer: s.statusTransfer,
+    kelulusan: s.kelulusan,
+    predikat: s.predikat,
+    createdAt: s.createdAt.toISOString(),
+  }))
 
   return (
     <div className="p-6 sm:p-8 space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-bold text-brand-primary">Data Pendaftaran</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <a
             href="/admin/pendaftaran/create"
             className="inline-flex items-center gap-2 bg-brand-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-colors"
@@ -59,6 +71,8 @@ export default async function PendaftaranPage({ searchParams }: Props) {
             <UserPlus className="h-4 w-4" />
             Tambah Pendaftaran
           </a>
+          <DownloadKelulusanButton />
+          <CsvUploadButton />
           <a
             href="/api/admin/santri/export/excel"
             className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
@@ -107,12 +121,17 @@ export default async function PendaftaranPage({ searchParams }: Props) {
           <span className="text-sm">Diterima</span>
           <span className="text-xl font-bold">{approvedCount}</span>
         </div>
+        <div className="flex items-center gap-2 text-amber-300">
+          <CheckCircle className="h-4 w-4" />
+          <span className="text-sm">Lulus</span>
+          <span className="text-xl font-bold">{lulusCount}</span>
+        </div>
       </div>
 
-      <form className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm mb-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <form className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm mb-6 grid grid-cols-2 sm:grid-cols-5 gap-3">
         <input name="search" defaultValue={params.search} placeholder="Cari nama/kode..." className="col-span-2 sm:col-span-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary" />
         <select name="statusPendaftaran" defaultValue={params.statusPendaftaran} className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
-          <option value="">Semua Status</option>
+          <option value="">Semua Pendaftaran</option>
           <option value="pending">Menunggu</option>
           <option value="approved">Diterima</option>
           <option value="rejected">Ditolak</option>
@@ -123,62 +142,27 @@ export default async function PendaftaranPage({ searchParams }: Props) {
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
         </select>
+        <select name="kelulusan" defaultValue={params.kelulusan} className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+          <option value="">Semua Kelulusan</option>
+          <option value="lulus">Lulus</option>
+          <option value="tidak_lulus">Tidak Lulus</option>
+        </select>
         <select name="jk" defaultValue={params.jk} className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
           <option value="">Semua JK</option>
           <option value="Laki-Laki">Ikhwan</option>
           <option value="Perempuan">Akhwat</option>
         </select>
-        <button type="submit" className="bg-brand-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-900">Filter</button>
+        <button type="submit" className="bg-brand-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-900 sm:col-span-1">Filter</button>
       </form>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-brand-surface border-b border-gray-200">
-            <tr>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">Kode</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">Nama</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">JK</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">Program</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">Pendaftaran</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">Transfer</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">Tanggal</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {santris.length === 0 && (
-              <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">Tidak ada data</td></tr>
-            )}
-            {santris.map((s) => (
-              <tr key={s.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3 font-mono font-medium text-brand-primary">{s.kodeRegistrasi}</td>
-                <td className="px-4 py-3 font-medium">{s.nama}</td>
-                <td className="px-4 py-3">
-                  <Badge variant={s.jk === 'Laki-Laki' ? 'info' : 'default'}>{s.jk === 'Laki-Laki' ? 'Ikhwan' : 'Akhwat'}</Badge>
-                </td>
-                <td className="px-4 py-3 text-xs text-gray-600 max-w-[150px] truncate">{s.program.namaProgram}</td>
-                <td className="px-4 py-3">{statusBadge(s.statusPendaftaran)}</td>
-                <td className="px-4 py-3">
-                  <Badge variant={s.statusTransfer === 'approved' ? 'approved' : s.statusTransfer === 'rejected' ? 'rejected' : 'pending'}>
-                    {s.statusTransfer}
-                  </Badge>
-                </td>
-                <td className="px-4 py-3 text-xs text-gray-500">{format(s.createdAt, 'dd/MM/yy')}</td>
-                <td className="px-4 py-3">
-                  <Link href={`/admin/pendaftaran/${s.kodeRegistrasi}`} className="text-brand-secondary hover:underline text-xs font-medium">Detail</Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <PendaftaranTable rows={rows} />
 
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center gap-2 mt-6">
           {Array.from({ length: totalPages }, (_, i) => (
-            <a key={i} href={`?page=${i + 1}&search=${params.search ?? ''}&statusPendaftaran=${params.statusPendaftaran ?? ''}&statusTransfer=${params.statusTransfer ?? ''}&jk=${params.jk ?? ''}`}
+            <a key={i} href={`?page=${i + 1}&search=${params.search ?? ''}&statusPendaftaran=${params.statusPendaftaran ?? ''}&statusTransfer=${params.statusTransfer ?? ''}&jk=${params.jk ?? ''}&kelulusan=${params.kelulusan ?? ''}`}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium ${page === i + 1 ? 'bg-brand-primary text-white' : 'bg-white text-gray-600 border border-gray-300 hover:border-brand-primary'}`}>
               {i + 1}
             </a>

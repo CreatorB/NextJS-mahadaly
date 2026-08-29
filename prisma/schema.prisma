@@ -160,6 +160,10 @@ model Santri {
   alasanTransfer     String?           @map("alasan_transfer") @db.Text
   nominalTransfer    Decimal?          @map("nominal_transfer")
   tglVerifikasi      DateTime?         @map("tgl_verifikasi")
+  kelulusan          String?           @map("kelulusan")
+  predikat           String?           @map("predikat")
+  catatan            String?           @map("catatan") @db.Text
+  kelulusanAt        DateTime?         @map("kelulusan_at")
   photo              String?
   ktp                String?
   transfer           String?

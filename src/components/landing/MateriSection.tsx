@@ -2,14 +2,24 @@ import { FileText, Download, ExternalLink, BookOpen, Calendar } from 'lucide-rea
 
 const materials = [
   {
+    id: 'buku-panduan',
+    title: 'Buku Panduan Akademik',
+    description:
+      'Buku panduan lengkap Mahasiswa Ma\'had Aly — visi misi, kurikulum, peraturan akademik, dan informasi penting lainnya.',
+    file: '/materials/buku-panduan-akademik-hki.pdf',
+    fileName: 'Buku-Panduan-Akademik-HKI.pdf',
+    icon: BookOpen,
+    accent: 'from-brand-primary to-brand-secondary',
+  },
+  {
     id: 'panduan-akademik',
     title: 'Panduan Akademik',
     description:
-      'Pedoman lengkap mahasiswa baru Ma\'had Aly — kurikulum, peraturan akademik, sistem pembelajaran, dan informasi penting lainnya.',
+      'Pedoman singkat mahasiswa baru Ma\'had Aly — ringkasan kurikulum, alur pendaftaran, dan kontak narahubung.',
     file: '/materials/panduan-akademik-hki.pdf',
     fileName: 'Panduan-Akademik-HKI.pdf',
     icon: BookOpen,
-    accent: 'from-brand-primary to-brand-secondary',
+    accent: 'from-brand-secondary to-brand-primary',
   },
   {
     id: 'kaldik',
@@ -19,7 +29,7 @@ const materials = [
     file: '/materials/kaldik-mahad-aly-2026-2027.pdf',
     fileName: 'KALDIK-MA-2026-2027.pdf',
     icon: Calendar,
-    accent: 'from-brand-secondary to-brand-primary',
+    accent: 'from-brand-light to-brand-secondary',
   },
 ]
 
@@ -40,7 +50,7 @@ export function MateriSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {materials.map((m) => {
             const Icon = m.icon
             return (

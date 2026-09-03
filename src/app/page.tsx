@@ -16,9 +16,13 @@ export const dynamic = 'force-dynamic'
 export async function generateMetadata(): Promise<Metadata> {
   const info = await prisma.infoPsb.findFirst({ orderBy: { tahunAjaran: 'desc' } })
   const tahun = info?.tahunAjaran ?? '2026'
+  const isStaging = process.env.NEXT_PUBLIC_APP_URL?.includes('tes') ?? false
   return {
     title: `Ma'had Aly Al-Imam Asy-Syathiby — PMB ${tahun}/${Number(tahun) + 1}`,
     description: "Penerimaan Mahasiswa/i Baru Program Studi Hukum Keluarga Islam (HKI) / Ahwal Syakhsiyyah S1. Belajar Selama 4 Tahun & Berijazah S1.",
+    robots: isStaging
+      ? { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } }
+      : { index: true, follow: true },
   }
 }
 

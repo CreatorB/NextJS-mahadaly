@@ -3,7 +3,6 @@ import { Footer } from '@/components/layout/Footer'
 import { HeroSection } from '@/components/landing/HeroSection'
 import { VisiMisiSection } from '@/components/landing/VisiMisiSection'
 import { PengajarSection } from '@/components/landing/PengajarSection'
-import { KurikulumSection } from '@/components/landing/KurikulumSection'
 import { MateriSection } from '@/components/landing/MateriSection'
 import { ProfilLulusanSection } from '@/components/landing/ProfilLulusanSection'
 import { JadwalPsbSection } from '@/components/landing/JadwalPsbSection'
@@ -34,7 +33,6 @@ export default async function Home() {
         <HeroSection />
         <VisiMisiSection />
         <PengajarSection />
-        <KurikulumSection />
         <MateriSection />
         <ProfilLulusanSection />
         <JadwalPsbSection />

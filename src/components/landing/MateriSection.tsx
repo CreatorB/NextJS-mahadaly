@@ -1,4 +1,8 @@
-import { FileText, Download, ExternalLink, BookOpen, Calendar } from 'lucide-react'
+import { FileText, Download, ExternalLink, BookOpen, Calendar, Clock } from 'lucide-react'
+
+const STAGING_KEY = 'bismillah'
+const isStaging = process.env.NEXT_PUBLIC_APP_URL?.includes('tes') ?? false
+const keySuffix = isStaging ? `?key=${STAGING_KEY}` : ''
 
 const materials = [
   {
@@ -31,6 +35,16 @@ const materials = [
     icon: Calendar,
     accent: 'from-brand-light to-brand-secondary',
   },
+  {
+    id: 'jadwal-pengajar',
+    title: 'Jadwal dan Pengajar',
+    description:
+      'Jadwal pelajaran Ma&apos;had Aly tahun ajaran 2026/2027 beserta daftar pengajar untuk masing-masing mata kuliah.',
+    file: '/materials/jadwal-pelajaran-pengajar-maisy-2026-2027.pdf',
+    fileName: 'Jadwal-Pelajaran-Pengajar-MAISy-2026-2027.pdf',
+    icon: Clock,
+    accent: 'from-brand-secondary to-brand-light',
+  },
 ]
 
 export function MateriSection() {
@@ -50,7 +64,7 @@ export function MateriSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {materials.map((m) => {
             const Icon = m.icon
             return (
@@ -77,7 +91,7 @@ export function MateriSection() {
 
                   <div className="rounded-lg overflow-hidden border border-gray-200 bg-white">
                     <iframe
-                      src={m.file}
+                      src={`${m.file}${keySuffix}`}
                       title={m.title}
                       className="w-full h-64 sm:h-80"
                       loading="lazy"
@@ -86,7 +100,7 @@ export function MateriSection() {
 
                   <div className="mt-4 flex flex-wrap gap-2">
                     <a
-                      href={m.file}
+                      href={`${m.file}${keySuffix}`}
                       download={m.fileName}
                       className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-secondary transition-colors shadow-sm"
                     >
@@ -94,7 +108,7 @@ export function MateriSection() {
                       Download
                     </a>
                     <a
-                      href={m.file}
+                      href={`${m.file}${keySuffix}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 rounded-lg border border-brand-primary/20 bg-white px-4 py-2 text-sm font-semibold text-brand-primary hover:bg-brand-primary/5 transition-colors"

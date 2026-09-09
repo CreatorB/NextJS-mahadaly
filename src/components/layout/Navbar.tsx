@@ -10,7 +10,7 @@ export function Navbar() {
   const links = [
     { href: '/#program', label: 'Program' },
     { href: '/#pengajar', label: 'Pengajar' },
-    { href: '/#kurikulum', label: 'Kurikulum' },
+    { href: '/#materi', label: 'Materi' },
     { href: '/#jadwal', label: 'Jadwal PMB' },
     { href: '/#kontak', label: 'Kontak' },
   ]

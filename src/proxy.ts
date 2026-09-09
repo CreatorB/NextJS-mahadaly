@@ -5,6 +5,10 @@ import { jwtVerify } from 'jose'
 const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
 const COOKIE = 'mahadaly_session'
 
+const STAGING_KEY = 'bismillah'
+const STAGING_COOKIE = 'staging_key'
+const isStaging = process.env.NEXT_PUBLIC_APP_URL?.includes('tes') ?? false
+
 async function getRole(req: NextRequest): Promise<number | null> {
   const token = req.cookies.get(COOKIE)?.value
   if (!token) return null
@@ -16,7 +20,32 @@ async function getRole(req: NextRequest): Promise<number | null> {
   }
 }
 
+function checkStagingKey(req: NextRequest): NextResponse | null {
+  if (!isStaging) return null
+  const key = req.nextUrl.searchParams.get('key')
+  const cookie = req.cookies.get(STAGING_COOKIE)?.value
+  if (key === STAGING_KEY || cookie === STAGING_KEY) {
+    if (key === STAGING_KEY) {
+      const response = NextResponse.next()
+      response.cookies.set(STAGING_COOKIE, STAGING_KEY, {
+        maxAge: 60 * 60 * 24 * 7,
+        sameSite: 'lax',
+        path: '/',
+      })
+      return response
+    }
+    return NextResponse.next()
+  }
+  return new NextResponse(
+    `Akses ditolak. Buka https://tesmahadaly.syathiby.id/?key=${STAGING_KEY}`,
+    { status: 401, headers: { 'Content-Type': 'text/plain' } }
+  )
+}
+
 export async function proxy(request: NextRequest) {
+  const keyGate = checkStagingKey(request)
+  if (keyGate) return keyGate
+
   const { pathname } = request.nextUrl
   const role = await getRole(request)
 
@@ -43,5 +72,3 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: ['/dashboard/:path*', '/admin/:path*', '/login'],
 }
-
-

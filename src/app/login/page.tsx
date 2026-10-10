@@ -1,3 +1,4 @@
+import { safeRedirectPath } from '@/lib/safe-redirect'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -12,9 +13,10 @@ const ERROR_MESSAGES: Record<string, string> = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string; next?: string }>
 }) {
-  const { error } = await searchParams
+  const { error, next } = await searchParams
+  const safeNext = safeRedirectPath(next)
   const errorMessage = error ? ERROR_MESSAGES[error] ?? 'Terjadi kesalahan. Silakan coba lagi.' : null
 
   return (
@@ -52,6 +54,7 @@ export default async function LoginPage({
             {/* PURE NATIVE HTML FORM - no JS, no fetch, no React state */}
             {/* Browser submits directly to API, API redirects with cookie */}
             <form method="POST" action="/api/auth/login" className="space-y-4">
+              {safeNext && <input type="hidden" name="next" value={safeNext} />}
               <Input
                 label="Email"
                 type="email"

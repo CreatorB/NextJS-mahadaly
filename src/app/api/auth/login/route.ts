@@ -1,3 +1,4 @@
+import { safeRedirectPath } from '@/lib/safe-redirect'
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import prisma from '@/lib/prisma'
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
       body = await req.json()
     } else {
       const formData = await req.formData()
-      body = { email: formData.get('email'), password: formData.get('password') }
+      body = { email: formData.get('email'), password: formData.get('password'), next: formData.get('next') }
     }
     logToServer('Body parsed', { isFormPost, email: body.email })
   } catch (e) {
@@ -87,7 +88,9 @@ export async function POST(req: NextRequest) {
   }
 
   const token = await signToken({ userId: user.id, roleId: user.roleId, email: user.email, nama: user.nama })
-  const targetPath = user.roleId <= 2 ? '/admin/dashboard' : '/dashboard'
+  // Kembali ke halaman asal (mis. halaman event) bila `next` adalah path internal yang aman.
+  const next = safeRedirectPath(body.next)
+  const targetPath = next ?? (user.roleId <= 2 ? '/admin/dashboard' : '/dashboard')
   logToServer('Login success', { roleId: user.roleId, target: targetPath, isFormPost })
 
   if (isFormPost) {

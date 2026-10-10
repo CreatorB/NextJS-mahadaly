@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 import path from 'path'
 
-const UPLOAD_BASE = process.env.UPLOAD_DIR ?? './uploads'
+import { UPLOAD_BASE } from '@/lib/storage'
 
 const IMAGE_TYPES = [
   'image/jpeg', 'image/jpg', 'image/png',
@@ -70,12 +70,6 @@ export function getFilePath(publicUrl: string): string {
 }
 
 export function getPublicUrl(filePath: string): string {
-  const normalized = filePath.replace(/\\/g, '/')
-  // Find last '/uploads/' segment — handles both absolute paths (production)
-  // and relative paths (localhost). Takes everything after that segment.
-  const marker = '/uploads/'
-  const idx = normalized.lastIndexOf(marker)
-  if (idx !== -1) return `/uploads/${normalized.slice(idx + marker.length)}`
-  // Fallback: bare 'uploads/...' with no leading slash (e.g. Windows relative)
-  return `/uploads/${normalized.replace(/^\.?\/?uploads\//, '')}`
+  const relative = path.relative(UPLOAD_BASE, path.resolve(filePath)).split(path.sep).join('/')
+  return `/uploads/${relative}`
 }

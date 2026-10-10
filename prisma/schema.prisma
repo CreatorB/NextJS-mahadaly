@@ -25,7 +25,13 @@ model User {
   isActive     Boolean            @default(true) @map("is_active")
   siswaId      Int?               @unique @map("santri_id")
   siswa        Santri?            @relation(fields: [siswaId], references: [id])
+  kiasSantriId Int?               @unique @map("kias_santri_id")
+  kiasSantri   KiasSantri?        @relation(fields: [kiasSantriId], references: [id])
+  kiasNotifications KiasNotification[]
+  eventRegistrations EventRegistration[]
   createdLinks RegistrationLink[]
+  cardUpdates  CrossAppCardSetting[]
+  posts        Post[]
   createdAt    DateTime           @default(now()) @map("created_at")
   updatedAt    DateTime           @updatedAt @map("updated_at")
 
@@ -209,4 +215,369 @@ model RegistrationLink {
 
   @@index([isActive])
   @@map("registration_links")
+}
+
+model CrossAppCardSetting {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  title       String
+  subtitle    String?
+  description String?  @db.Text
+  iconName    String?  @map("icon_name")
+  buttonLabel String?  @map("button_label")
+  targetUrl   String   @map("target_url")
+  isActive    Boolean  @default(true) @map("is_active")
+  displayOrder Int     @default(0) @map("display_order")
+  updatedById Int?     @map("updated_by_id")
+  updatedBy   User?    @relation(fields: [updatedById], references: [id])
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive, displayOrder])
+  @@map("cross_app_card_settings")
+}
+
+// ============================================================
+// KIAS (Kursus Ilmu bahasa Arab & Syar'i) — dipindah dari
+// kias.syathiby.id (Laravel, DB syathiby_kias). ID dipertahankan
+// supaya migrasi data & relasi lama tetap konsisten.
+// ============================================================
+
+model KiasJenisProgram {
+  id         Int           @id
+  slug       String        @unique
+  namaJenis  String        @map("nama_jenis")
+  roisQism   String?       @map("rois_qism")
+  tagline    String?       @db.Text
+  muqoddimah String?       @db.Text
+  kompetensi String?       @db.Text
+  peserta    String?       @db.Text
+  urutan     Int           @default(0)
+  programs   KiasProgram[]
+  kitab      KiasKitab[]
+  pengajar   KiasPengajar[]
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+
+  @@map("kias_jenis_program")
+}
+
+model KiasProgram {
+  id             Int              @id @default(autoincrement())
+  namaProgram    String           @map("nama_program")
+  jenisProgramId Int              @map("jenis_program_id")
+  jenisProgram   KiasJenisProgram @relation(fields: [jenisProgramId], references: [id])
+  tempatBelajar  String?          @map("tempat_belajar")
+  hariBelajar    String?          @map("hari_belajar")
+  waktuBelajar   String?          @map("waktu_belajar")
+  durasiBelajar  Int?             @map("durasi_belajar")
+  persyaratan    String?
+  statusPsb      String           @default("Tutup") @map("status_psb")
+  warna          String?
+  santri         KiasSantri[]
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  @@index([jenisProgramId])
+  @@map("kias_program")
+}
+
+model KiasKitab {
+  id             Int              @id @default(autoincrement())
+  jenisProgramId Int              @map("jenis_program_id")
+  jenisProgram   KiasJenisProgram @relation(fields: [jenisProgramId], references: [id])
+  namaKitab      String           @map("nama_kitab") @db.Text
+  penulis        String?          @db.Text
+  kelas          Int?
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  @@index([jenisProgramId])
+  @@map("kias_kitab")
+}
+
+model KiasPengajar {
+  id             Int               @id @default(autoincrement())
+  nama           String
+  jk             String?
+  posisi         String?
+  jenisProgramId Int?              @map("jenis_program_id")
+  jenisProgram   KiasJenisProgram? @relation(fields: [jenisProgramId], references: [id])
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  @@index([jenisProgramId])
+  @@map("kias_pengajar")
+}
+
+model KiasCabang {
+  id        Int      @id
+  nama      String
+  alamat    String?  @db.Text
+  noHp      String?  @map("no_hp")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("kias_cabang")
+}
+
+model KiasInfoPsb {
+  id                   Int       @id @default(autoincrement())
+  tahunAjaran          String    @unique @map("tahun_ajaran")
+  statusPsb            String    @default("Tutup") @map("status_psb")
+  datetimeOpen         DateTime? @map("datetime_open")
+  datetimeClosed       DateTime? @map("datetime_closed")
+  akhirPsb             DateTime? @map("akhir_psb") @db.Date
+  quotaIkhwan          Int?      @map("quota_ikhwan")
+  quotaAkhwat          Int?      @map("quota_akhwat")
+  biayaPendaftaran     Int       @default(150000) @map("biaya_pendaftaran")
+  biayaSaranaPrasarana Int       @default(300000) @map("biaya_sarana_prasarana")
+  biayaKuliahPerdana   Int       @default(0) @map("biaya_kuliah_perdana")
+  biayaSppBulanan      Int       @default(250000) @map("biaya_spp_bulanan")
+  biayaMutasi          Int?      @map("biaya_mutasi")
+  biayaTranskrip       Int?      @map("biaya_transkrip")
+  kontenPsb            String?   @map("konten_psb") @db.Text
+  posterImages         String?   @map("poster_images") @db.Text
+  linkGroup            String?   @map("link_group") @db.VarChar(500)
+  manualPassword       String?   @map("manual_password")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  @@map("kias_info_psb")
+}
+
+// ============================================================
+// Berita: artikel (editor WYSIWYG) + postingan Instagram per kategori
+// ============================================================
+
+model PostKategori {
+  id          Int                @id @default(autoincrement())
+  slug        String             @unique
+  nama        String
+  posts       Post[]
+  instagram   InstagramAccount[]
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+
+  @@map("post_kategori")
+}
+
+model Post {
+  id          Int          @id @default(autoincrement())
+  slug        String       @unique
+  judul       String
+  ringkasan   String?      @db.Text
+  konten      String       @db.LongText
+  coverImage  String?      @map("cover_image")
+  status      String       @default("draft")
+  publishedAt DateTime?    @map("published_at")
+  kategoriId  Int          @map("kategori_id")
+  kategori    PostKategori @relation(fields: [kategoriId], references: [id])
+  authorId    Int?         @map("author_id")
+  author      User?        @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  @@index([kategoriId, status, publishedAt])
+  @@map("posts")
+}
+
+/// Akun Instagram publik; postingan diambil dari halaman embed profil (tanpa token).
+model InstagramAccount {
+  id         Int             @id @default(autoincrement())
+  username   String          @unique
+  kategoriId Int             @map("kategori_id")
+  kategori   PostKategori    @relation(fields: [kategoriId], references: [id])
+  isActive   Boolean         @default(true) @map("is_active")
+  autoSync   Boolean         @default(true) @map("auto_sync")
+  lastSyncAt DateTime?       @map("last_sync_at")
+  lastError  String?         @map("last_error") @db.Text
+  posts      InstagramPost[]
+  createdAt  DateTime        @default(now()) @map("created_at")
+  updatedAt  DateTime        @updatedAt @map("updated_at")
+
+  @@map("instagram_accounts")
+}
+
+/// Hanya metadata; tampilan memakai embed resmi Instagram (iframe), gambar tidak disimpan.
+model InstagramPost {
+  id        Int              @id @default(autoincrement())
+  shortcode String
+  accountId Int              @map("account_id")
+  account   InstagramAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  caption   String?          @db.Text
+  postedAt  DateTime         @map("posted_at")
+  source    String           @default("auto")
+  isHidden  Boolean          @default(false) @map("is_hidden")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  @@unique([accountId, shortcode])
+  @@index([accountId, postedAt])
+  @@map("instagram_posts")
+}
+
+model KiasPekerjaan {
+  id   Int    @id
+  nama String
+
+  @@map("kias_pekerjaan")
+}
+
+/// Pendaftar/santri KIAS. Berkas (photo/ktp/transfer) = path relatif di UPLOAD_DIR (folder kias/).
+model KiasSantri {
+  id                Int                @id @default(autoincrement())
+  kodeRegistrasi    String             @unique @map("kode_registrasi")
+  nama              String
+  jk                String
+  nik               String?
+  nisn              String?
+  noInduk           String?            @map("no_induk")
+  tmpLahir          String?            @map("tmp_lahir")
+  tglLahir          DateTime?          @map("tgl_lahir") @db.Date
+  alamat            String?            @db.Text
+  namaAyah          String?            @map("nama_ayah")
+  noHpAyah          String?            @map("no_hp_ayah")
+  namaIbu           String?            @map("nama_ibu")
+  noHpIbu           String?            @map("no_hp_ibu")
+  namaWali          String?            @map("nama_wali")
+  noHpWali          String?            @map("no_hp_wali")
+  pendidikan        String?
+  pekerjaan         String?
+  email             String?
+  kodeNegara        String             @default("62") @map("kode_negara")
+  noHp              String?            @map("no_hp")
+  hp                String?
+  tahunPsb          String             @map("tahun_psb")
+  programId         Int?               @map("program_id")
+  program           KiasProgram?       @relation(fields: [programId], references: [id])
+  status            String             @default("Aktif")
+  photo             String?            @db.VarChar(500)
+  ktp               String?            @db.VarChar(500)
+  transfer          String?            @db.VarChar(500)
+  statusPendaftaran String             @default("Menunggu") @map("status_pendaftaran")
+  alasanPenolakan   String?            @map("alasan_penolakan") @db.Text
+  tglVerifikasi     DateTime?          @map("tgl_verifikasi")
+  statusTransfer    String             @default("Cek") @map("status_transfer")
+  nominalTransfer   Int                @default(0) @map("nominal_transfer")
+  kirimNotifikasi   Boolean            @default(false) @map("kirim_notifikasi")
+  user              User?
+  notifications     KiasNotification[]
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+
+  @@index([tahunPsb, jk])
+  @@index([programId])
+  @@map("kias_santri")
+}
+
+model KiasNotification {
+  id           Int         @id @default(autoincrement())
+  userId       Int         @map("user_id")
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kiasSantriId Int?        @map("kias_santri_id")
+  kiasSantri   KiasSantri? @relation(fields: [kiasSantriId], references: [id], onDelete: SetNull)
+  type         String
+  title        String
+  message      String      @db.Text
+  isRead       Boolean     @default(false) @map("is_read")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  @@index([userId, isRead])
+  @@map("kias_notifications")
+}
+
+// ============================================================
+// Events (dipindah dari KIAS: daurah, kajian, dll). Generik agar bisa dipakai program lain.
+// ============================================================
+
+model Event {
+  id                   Int                 @id @default(autoincrement())
+  slug                 String              @unique
+  title                String
+  content              String              @db.LongText
+  images               String?             @db.Text
+  startDate            DateTime            @map("start_date")
+  endDate              DateTime            @map("end_date")
+  registrationStart    DateTime?           @map("registration_start")
+  registrationEnd      DateTime?           @map("registration_end")
+  isPaid               Boolean             @default(false) @map("is_paid")
+  price                Int                 @default(0)
+  hasAttendance        Boolean             @default(false) @map("has_attendance")
+  hasCertificate       Boolean             @default(false) @map("has_certificate")
+  certificateTemplate  String?             @map("certificate_template")
+  status               String              @default("draft")
+  groupIkhwan          String?             @map("group_ikhwan") @db.VarChar(500)
+  groupAkhwat          String?             @map("group_akhwat") @db.VarChar(500)
+  groupPublic          String?             @map("group_public") @db.VarChar(500)
+  quotaIkhwan          Int?                @map("quota_ikhwan")
+  quotaAkhwat          Int?                @map("quota_akhwat")
+  autoAccept           Boolean             @default(false) @map("auto_accept")
+  registrations        EventRegistration[]
+  internalLinks        EventInternalLink[]
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
+
+  @@index([status, startDate])
+  @@map("events")
+}
+
+model EventRegistration {
+  id             Int                @id @default(autoincrement())
+  eventId        Int                @map("event_id")
+  event          Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId         Int?               @map("user_id")
+  user           User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  internalLinkId Int?               @map("internal_link_id")
+  internalLink   EventInternalLink? @relation(fields: [internalLinkId], references: [id], onDelete: SetNull)
+  name           String
+  phone          String
+  email          String
+  address        String?            @db.Text
+  gender         String
+  birthPlace     String?            @map("birth_place")
+  birthDate      DateTime?          @map("birth_date") @db.Date
+  occupation     String?
+  paymentProof   String?            @map("payment_proof")
+  paymentStatus  String             @default("pending") @map("payment_status")
+  registeredAt   DateTime           @default(now()) @map("registered_at")
+  attendances    EventAttendance[]
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+
+  @@unique([eventId, userId])
+  @@index([eventId, gender, paymentStatus])
+  @@index([email])
+  @@map("event_registrations")
+}
+
+model EventAttendance {
+  id             Int               @id @default(autoincrement())
+  registrationId Int               @map("event_registration_id")
+  registration   EventRegistration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  attendedAt     DateTime          @default(now()) @map("attended_at")
+  createdAt      DateTime          @default(now()) @map("created_at")
+
+  @@index([registrationId, attendedAt])
+  @@map("event_attendances")
+}
+
+model EventInternalLink {
+  id            Int                 @id @default(autoincrement())
+  eventId       Int                 @map("event_id")
+  event         Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  token         String              @unique
+  name          String
+  quotaIkhwan   Int                 @default(0) @map("quota_ikhwan")
+  quotaAkhwat   Int                 @default(0) @map("quota_akhwat")
+  usageIkhwan   Int                 @default(0) @map("usage_ikhwan")
+  usageAkhwat   Int                 @default(0) @map("usage_akhwat")
+  activeFrom    DateTime?           @map("active_from")
+  activeUntil   DateTime?           @map("active_until")
+  registrations EventRegistration[]
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+
+  @@map("event_internal_links")
 }

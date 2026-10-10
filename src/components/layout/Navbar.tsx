@@ -8,10 +8,13 @@ export function Navbar() {
   const [open, setOpen] = useState(false)
 
   const links = [
-    { href: '/#program', label: 'Program' },
+    { href: '/#pilih-program', label: 'Program' },
+    { href: '/kias', label: 'KIAS' },
     { href: '/#pengajar', label: 'Pengajar' },
     { href: '/#materi', label: 'Materi' },
-    { href: '/#jadwal', label: 'Jadwal PMB' },
+    { href: '/berita', label: 'Berita' },
+    { href: '/events', label: 'Event' },
+    { href: '/psb#jadwal', label: 'Jadwal PMB' },
     { href: '/#kontak', label: 'Kontak' },
   ]
 
@@ -35,8 +38,8 @@ return (
               {l.label}
             </a>
           ))}
-          <Link href="/psb" className="bg-brand-accent text-brand-primary font-semibold px-4 py-2 rounded-lg text-sm hover:opacity-90 transition-opacity">
-            Daftar PSB
+          <Link href="/#pilih-program" className="bg-brand-accent text-brand-primary font-semibold px-4 py-2 rounded-lg text-sm hover:opacity-90 transition-opacity">
+            Daftar
           </Link>
         </div>
 
@@ -52,8 +55,8 @@ return (
               {l.label}
             </a>
           ))}
-          <Link href="/psb" className="bg-brand-accent text-brand-primary font-semibold px-4 py-2 rounded-lg text-sm text-center">
-            Daftar PSB
+          <Link href="/#pilih-program" className="bg-brand-accent text-brand-primary font-semibold px-4 py-2 rounded-lg text-sm text-center">
+            Daftar
           </Link>
         </div>
       )}

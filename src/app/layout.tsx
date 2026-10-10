@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Geist } from 'next/font/google'
+import { Toaster } from 'sonner'
 import { StagingCookieScript } from '@/components/StagingCookieScript'
 import './globals.css'
 
@@ -7,7 +8,7 @@ const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
 
 export const metadata: Metadata = {
   title: "Ma'had Aly Al-Imam Asy-Syathiby",
-  description: "Program Studi Hukum Keluarga Islam (HKI) / Ahwal Syakhsiyyah S1",
+  description: "Program 1: Hukum Keluarga Islam (HKI) S1 · Program 2: KIAS (Kursus Ilmu bahasa Arab & Syar'i)",
   icons: {
     icon: '/images/mahadalysyathiby-logo-color.png',
   },
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full flex flex-col antialiased">
         {isStaging && <StagingCookieScript />}
         {children}
+        <Toaster richColors position="top-center" />
       </body>
     </html>
   )

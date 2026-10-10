@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { PsbStatusBanner } from '@/components/psb/PsbStatusBanner'
+import { JadwalPsbSection } from '@/components/landing/JadwalPsbSection'
 import {
   CalendarDays,
   CalendarCheck,
@@ -213,6 +214,7 @@ export default async function PsbPage({
             </Link>
           </div>
         </div>
+        <JadwalPsbSection showCta={false} />
       </main>
       <Footer />
     </>

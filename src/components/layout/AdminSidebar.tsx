@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { clsx } from 'clsx'
-import { LayoutDashboard, Users, Settings, LogOut, Shield, BookOpen, Menu, X, MapPin, Link2 } from 'lucide-react'
+import { LayoutDashboard, Users, Settings, LogOut, Shield, BookOpen, Menu, X, MapPin, Link2, Newspaper, BookOpenText, ListChecks, SlidersHorizontal, CalendarDays } from 'lucide-react'
 import { useState } from 'react'
 
 interface Props {
@@ -20,6 +20,11 @@ export function AdminSidebar({ nama, roleId }: Props) {
     { href: '/admin/pendaftaran', label: 'Pendaftaran', icon: Users },
     { href: '/admin/link-pendaftaran', label: 'Link Pendaftaran', icon: Link2 },
     { href: '/admin/pengaturan-psb', label: 'Pengaturan PSB', icon: Settings },
+    { href: '/admin/berita', label: 'Berita', icon: Newspaper },
+    { href: '/admin/kias', label: 'KIAS — Ringkasan', icon: BookOpenText },
+    { href: '/admin/kias/pendaftaran', label: 'KIAS — Pendaftar', icon: ListChecks },
+    { href: '/admin/kias/pengaturan', label: 'KIAS — Pengaturan PSB', icon: SlidersHorizontal },
+    { href: '/admin/events', label: 'Event', icon: CalendarDays },
     ...(roleId === 1 ? [
       { href: '/admin/wilayah', label: 'Wilayah', icon: MapPin },
       { href: '/admin/superadmin/users', label: 'Kelola User', icon: Shield },
@@ -86,7 +91,7 @@ export function AdminSidebar({ nama, roleId }: Props) {
           {navItems.map((item) => (
             <Link key={item.href} href={item.href} onClick={closeSidebar} className={clsx(
               'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
-              pathname.startsWith(item.href) ? 'bg-white/20 font-semibold' : 'hover:bg-white/10'
+              (item.href === '/admin/kias' ? pathname === item.href : pathname.startsWith(item.href)) ? 'bg-white/20 font-semibold' : 'hover:bg-white/10'
             )}>
               <item.icon className="h-4 w-4 shrink-0" />
               {item.label}

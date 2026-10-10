@@ -3,14 +3,30 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { clsx } from 'clsx'
-import { LayoutDashboard, FileText, LogOut, User, Menu, X } from 'lucide-react'
+import { LayoutDashboard, FileText, LogOut, User, Menu, X, BookOpenText, UserPen, CalendarDays } from 'lucide-react'
 
-const navItems = [
+export type DashboardProgram = 'hki' | 'kias' | 'both' | 'peserta'
+
+const HKI_ITEMS = [
   { href: '/dashboard', label: 'Status Pendaftaran', icon: LayoutDashboard },
   { href: '/dashboard/dokumen', label: 'Dokumen', icon: FileText },
 ]
+const KIAS_ITEMS = [
+  { href: '/dashboard/kias', label: 'Pendaftaran KIAS', icon: BookOpenText },
+  { href: '/dashboard/kias/biodata', label: 'Biodata KIAS', icon: UserPen },
+]
 
-function NavLinks({ pathname, onNavigate, onLogout }: { pathname: string; onNavigate?: () => void; onLogout: () => void }) {
+const EVENT_ITEMS = [{ href: '/dashboard/events', label: 'Event Saya', icon: CalendarDays }]
+
+function itemsFor(program: DashboardProgram) {
+  if (program === 'peserta') return EVENT_ITEMS
+  if (program === 'kias') return [...KIAS_ITEMS, ...EVENT_ITEMS]
+  if (program === 'both') return [...HKI_ITEMS, ...KIAS_ITEMS, ...EVENT_ITEMS]
+  return [...HKI_ITEMS, ...EVENT_ITEMS]
+}
+
+function NavLinks({ pathname, program, onNavigate, onLogout }: { pathname: string; program: DashboardProgram; onNavigate?: () => void; onLogout: () => void }) {
+  const navItems = itemsFor(program)
   return (
     <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
       {navItems.map((item) => (
@@ -41,7 +57,7 @@ function NavLinks({ pathname, onNavigate, onLogout }: { pathname: string; onNavi
   )
 }
 
-export function DashboardSidebar({ nama }: { nama: string }) {
+export function DashboardSidebar({ nama, program = 'hki' }: { nama: string; program?: DashboardProgram }) {
   const pathname = usePathname()
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
@@ -97,7 +113,7 @@ export function DashboardSidebar({ nama }: { nama: string }) {
                 <p className="text-xs text-blue-200">Peserta</p>
               </div>
             </div>
-            <NavLinks pathname={pathname} onNavigate={() => setIsOpen(false)} onLogout={logout} />
+            <NavLinks pathname={pathname} program={program} onNavigate={() => setIsOpen(false)} onLogout={logout} />
           </aside>
           {/* Backdrop */}
           <div className="flex-1 bg-black/50" onClick={() => setIsOpen(false)} />
@@ -118,7 +134,7 @@ export function DashboardSidebar({ nama }: { nama: string }) {
             </div>
           </div>
         </div>
-        <NavLinks pathname={pathname} onLogout={logout} />
+        <NavLinks pathname={pathname} program={program} onLogout={logout} />
       </aside>
     </>
   )

@@ -1,7 +1,6 @@
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { RegistrationForm } from '@/components/psb/RegistrationForm'
-import { Toaster } from 'sonner'
 import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
 import { Link2 } from 'lucide-react'
@@ -50,7 +49,6 @@ export default async function DaftarPage({
 
   return (
     <>
-      <Toaster richColors />
       <Navbar />
       <main className="min-h-screen bg-brand-surface py-10 px-4">
         <div className="text-center mb-8">

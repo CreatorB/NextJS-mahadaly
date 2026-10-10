@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Calendar, DollarSign } from 'lucide-react'
 import prisma from '@/lib/prisma'
 
-export async function JadwalPsbSection() {
+export async function JadwalPsbSection({ showCta = true }: { showCta?: boolean } = {}) {
   const info = await prisma.infoPsb.findFirst({ orderBy: { tahunAjaran: 'desc' } })
 
   const jadwal = [
@@ -65,11 +65,11 @@ export async function JadwalPsbSection() {
           </div>
         </div>
 
-        <div className="text-center">
+        {showCta && <div className="text-center">
           <Link href="/psb" className="inline-block bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold px-10 py-4 rounded-xl text-lg hover:opacity-90 transition-opacity shadow-lg">
             Daftar Sekarang
           </Link>
-        </div>
+        </div>}
       </div>
     </section>
   )

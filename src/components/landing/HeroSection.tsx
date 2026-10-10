@@ -29,8 +29,8 @@ export async function HeroSection() {
               <Link href="/psb" className="bg-brand-accent text-brand-primary font-bold px-8 py-4 rounded-xl text-center text-lg hover:opacity-90 transition-opacity shadow-lg">
                 Daftar Sekarang
               </Link>
-              <a href="#jadwal" className="border-2 border-white text-white font-semibold px-8 py-4 rounded-xl text-center text-lg hover:bg-white/10 transition-colors">
-                Lihat Jadwal
+              <a href="#pilih-program" className="border-2 border-white text-white font-semibold px-8 py-4 rounded-xl text-center text-lg hover:bg-white/10 transition-colors">
+                Pilih Program
               </a>
             </div>
           </div>

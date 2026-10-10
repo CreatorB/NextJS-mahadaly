@@ -44,6 +44,8 @@ export default async function DashboardPage() {
     },
   })
 
+  if (!user?.siswa && user?.kiasSantriId) redirect('/dashboard/kias')
+  if (!user?.siswa) redirect('/dashboard/events')
   if (!user?.siswa) {
     return (
       <div className="p-8 text-center text-gray-500">

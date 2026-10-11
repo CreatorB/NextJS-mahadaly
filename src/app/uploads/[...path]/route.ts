@@ -1,38 +1,37 @@
 import { NextRequest } from 'next/server'
 import fs from 'fs/promises'
-import path from 'path'
+import { verifyTokenFromRequest } from '@/lib/auth'
+import { canAccessUpload, isPublicUpload, resolveUploadPath, UPLOAD_MIME, warnUnsafeUploadDir } from '@/lib/storage'
 
 export const dynamic = 'force-dynamic'
 
-const UPLOAD_BASE = process.env.UPLOAD_DIR ?? './uploads'
+/**
+ * Semua file upload lewat sini. Gambar berita publik; berkas pendaftar hanya untuk admin
+ * atau pemiliknya, dan tidak boleh di-cache CDN (Cloudflare) karena berisi data pribadi.
+ */
+export async function GET(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
+  warnUnsafeUploadDir()
+  const { path: parts } = await params
+  const filePath = resolveUploadPath(parts)
+  if (!filePath) return new Response('Not found', { status: 404 })
 
-const MIME_MAP: Record<string, string> = {
-  jpg: 'image/jpeg',
-  jpeg: 'image/jpeg',
-  png: 'image/png',
-  pdf: 'application/pdf',
-}
-
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
-) {
-  const { path: pathParts } = await params
-  const filePath = path.join(UPLOAD_BASE, ...pathParts)
-
-  const resolved = path.resolve(filePath)
-  if (!resolved.startsWith(path.resolve(UPLOAD_BASE))) {
-    return new Response('Forbidden', { status: 403 })
+  const isPublic = isPublicUpload(parts)
+  if (!isPublic) {
+    const session = await verifyTokenFromRequest(req)
+    if (!session) return new Response('Unauthorized', { status: 401, headers: { 'Cache-Control': 'no-store' } })
+    if (!(await canAccessUpload(session, parts))) {
+      return new Response('Forbidden', { status: 403, headers: { 'Cache-Control': 'no-store' } })
+    }
   }
 
   try {
-    const buffer = await fs.readFile(resolved)
-    const ext = pathParts[pathParts.length - 1].split('.').pop()?.toLowerCase() ?? ''
-    const contentType = MIME_MAP[ext] ?? 'application/octet-stream'
+    const buffer = await fs.readFile(filePath)
+    const ext = filePath.split('.').pop()?.toLowerCase() ?? ''
     return new Response(buffer, {
       headers: {
-        'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Content-Type': UPLOAD_MIME[ext] ?? 'application/octet-stream',
+        'Cache-Control': isPublic ? 'public, max-age=31536000, immutable' : 'private, no-store',
+        'X-Content-Type-Options': 'nosniff',
       },
     })
   } catch {

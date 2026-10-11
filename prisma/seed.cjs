@@ -69,8 +69,12 @@ async function main() {
   })
   console.log('InfoPsb seeded')
 
+  const { randomBytes } = require('crypto')
+  const genPassword = () => randomBytes(9).toString('base64url')
   const adminEmail = process.env.ADMIN_EMAIL || 'superadmin@mahadaly.syathiby.id'
-  const adminPass = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'superadmin123', 10)
+  const superPass = process.env.ADMIN_PASSWORD || genPassword()
+  if (!process.env.ADMIN_PASSWORD) console.log('  (generated) ' + adminEmail + ' password: ' + superPass)
+  const adminPass = await bcrypt.hash(superPass, 10)
   await prisma.user.upsert({
     where: { email: adminEmail },
     update: {},
@@ -84,7 +88,9 @@ async function main() {
   })
   console.log('SuperAdmin seeded')
 
-  const adminHash = await bcrypt.hash('qweasd123', 10)
+  const admin2Pass = process.env.ADMIN2_PASSWORD || genPassword()
+  if (!process.env.ADMIN2_PASSWORD) console.log('  (generated) admin@mahadaly.syathiby.id password: ' + admin2Pass)
+  const adminHash = await bcrypt.hash(admin2Pass, 10)
   await prisma.user.upsert({
     where: { email: 'admin@mahadaly.syathiby.id' },
     update: {},

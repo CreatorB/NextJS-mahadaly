@@ -113,7 +113,7 @@ export default async function KiasJenisPage({ params }: Props) {
             <div className="rounded-2xl bg-brand-primary text-white p-8 text-center">
               <h2 className="text-2xl font-bold mb-2">Kelas {jenis.namaJenis}</h2>
               <p className="text-blue-100 mb-6">
-                {jenis.programs.filter((p) => p.statusPsb === 'Buka').length} dari {jenis.programs.length} kelas sedang menerima santri baru.
+{(() => { const n = jenis.programs.filter((p) => p.statusPsb === 'Buka').length; return n > 0 ? `${n} kelas sedang menerima santri baru.` : 'Pendaftaran kelas belum dibuka saat ini.' })()}
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 {buka && (

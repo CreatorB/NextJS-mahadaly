@@ -110,29 +110,25 @@ export default async function KiasPage() {
           <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl font-bold text-brand-primary text-center mb-10">Jadwal Kelas</h2>
             <div className="space-y-10">
-              {jenis.map((j) => (
+              {jenis
+                .map((j) => ({ ...j, programs: j.programs.filter((p) => p.statusPsb === 'Buka') }))
+                .filter((j) => j.programs.length > 0)
+                .map((j) => (
                 <div key={j.id}>
                   <h3 className="text-xl font-bold text-slate-800 mb-4">{j.namaJenis}</h3>
-                  {j.programs.length === 0 ? (
-                    <p className="text-sm text-slate-500">Belum ada kelas.</p>
-                  ) : (
+                  {(
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                       {j.programs.map((p) => {
-                        const open = p.statusPsb === 'Buka'
                         return (
                           <div
                             key={p.id}
-                            className={`rounded-2xl border p-5 ${open ? 'border-slate-200 bg-white shadow-sm' : 'border-slate-100 bg-slate-50 opacity-70'}`}
+                            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
                             style={{ borderTopWidth: 4, borderTopColor: p.warna ?? undefined }}
                           >
                             <div className="flex items-start justify-between gap-2 mb-3">
                               <h4 className="font-bold text-slate-900">{p.namaProgram}</h4>
-                              <span
-                                className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                                  open ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'
-                                }`}
-                              >
-                                {open ? (buka ? 'Dibuka' : 'Tersedia') : 'Ditutup'}
+                              <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                                {buka ? 'Dibuka' : 'Tersedia'}
                               </span>
                             </div>
                             <ul className="space-y-1.5 text-sm text-slate-600">
@@ -144,7 +140,7 @@ export default async function KiasPage() {
                             {p.persyaratan && p.persyaratan !== '-' && (
                               <p className="mt-3 text-xs text-slate-500">Syarat: {p.persyaratan}</p>
                             )}
-                            {open && buka && (
+                            {buka && (
                               <a
                                 href={KIAS_DAFTAR_URL}
                                 className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90"

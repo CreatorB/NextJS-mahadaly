@@ -109,52 +109,43 @@ export default async function KiasPage() {
         <section id="kelas" className="py-16 px-4 bg-white">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl font-bold text-brand-primary text-center mb-10">Jadwal Kelas</h2>
-            <div className="space-y-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {jenis
-                .map((j) => ({ ...j, programs: j.programs.filter((p) => p.statusPsb === 'Buka') }))
-                .filter((j) => j.programs.length > 0)
-                .map((j) => (
-                <div key={j.id}>
-                  <h3 className="text-xl font-bold text-slate-800 mb-4">{j.namaJenis}</h3>
-                  {(
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                      {j.programs.map((p) => {
-                        return (
-                          <div
-                            key={p.id}
-                            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-                            style={{ borderTopWidth: 4, borderTopColor: p.warna ?? undefined }}
-                          >
-                            <div className="flex items-start justify-between gap-2 mb-3">
-                              <h4 className="font-bold text-slate-900">{p.namaProgram}</h4>
-                              <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
-                                {buka ? 'Dibuka' : 'Tersedia'}
-                              </span>
-                            </div>
-                            <ul className="space-y-1.5 text-sm text-slate-600">
-                              {p.hariBelajar && <li className="flex gap-2"><CalendarDays className="h-4 w-4 shrink-0 text-brand-secondary" />{p.hariBelajar}</li>}
-                              {p.waktuBelajar && <li className="flex gap-2"><Clock className="h-4 w-4 shrink-0 text-brand-secondary" />{p.waktuBelajar} WIB</li>}
-                              {p.tempatBelajar && <li className="flex gap-2"><MapPin className="h-4 w-4 shrink-0 text-brand-secondary" />{p.tempatBelajar}</li>}
-                              {p.durasiBelajar && <li className="flex gap-2"><Timer className="h-4 w-4 shrink-0 text-brand-secondary" />{p.durasiBelajar} tahun</li>}
-                            </ul>
-                            {p.persyaratan && p.persyaratan !== '-' && (
-                              <p className="mt-3 text-xs text-slate-500">Syarat: {p.persyaratan}</p>
-                            )}
-                            {buka && (
-                              <a
-                                href={KIAS_DAFTAR_URL}
-                                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
-                              >
-                                Daftar kelas ini
-                              </a>
-                            )}
-                          </div>
-                        )
-                      })}
+                .flatMap((j) => j.programs.filter((p) => p.statusPsb === 'Buka').map((p) => ({ ...p, jenisNama: j.namaJenis })))
+                .map((p) => (
+                  <div
+                    key={p.id}
+                    className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                    style={{ borderTopWidth: 4, borderTopColor: p.warna ?? undefined }}
+                  >
+                    <div className="mb-3 flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-brand-secondary">{p.jenisNama}</p>
+                        <h4 className="font-bold text-slate-900">{p.namaProgram}</h4>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                        {buka ? 'Dibuka' : 'Tersedia'}
+                      </span>
                     </div>
-                  )}
-                </div>
-              ))}
+                    <ul className="space-y-1.5 text-sm text-slate-600">
+                      {p.hariBelajar && <li className="flex gap-2"><CalendarDays className="h-4 w-4 shrink-0 text-brand-secondary" />{p.hariBelajar}</li>}
+                      {p.waktuBelajar && <li className="flex gap-2"><Clock className="h-4 w-4 shrink-0 text-brand-secondary" />{p.waktuBelajar} WIB</li>}
+                      {p.tempatBelajar && <li className="flex gap-2"><MapPin className="h-4 w-4 shrink-0 text-brand-secondary" />{p.tempatBelajar}</li>}
+                      {p.durasiBelajar && <li className="flex gap-2"><Timer className="h-4 w-4 shrink-0 text-brand-secondary" />{p.durasiBelajar} tahun</li>}
+                    </ul>
+                    {p.persyaratan && p.persyaratan !== '-' && (
+                      <p className="mt-3 text-xs text-slate-500">Syarat: {p.persyaratan}</p>
+                    )}
+                    {buka && (
+                      <a
+                        href={KIAS_DAFTAR_URL}
+                        className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+                      >
+                        Daftar kelas ini
+                      </a>
+                    )}
+                  </div>
+                ))}
             </div>
           </div>
         </section>

@@ -69,7 +69,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     userId = session.userId
   } else {
     if (await prisma.user.findUnique({ where: { email: d.email }, select: { id: true } })) {
-      return NextResponse.json(fail('Data tidak valid', { email: ['Email sudah terdaftar. Silakan login terlebih dahulu, lalu daftar event.'] }), { status: 422 })
+      return NextResponse.json(
+        fail('Data tidak valid', {
+          email: [
+            'Email sudah terdaftar. Silakan login terlebih dahulu, lalu daftar event. Lupa password? Ajukan reset di /lupa-password.',
+          ],
+        }),
+        { status: 422 },
+      )
     }
     if (!d.password || d.password.length < 6) {
       return NextResponse.json(fail('Data tidak valid', { password: ['Password minimal 6 karakter'] }), { status: 422 })

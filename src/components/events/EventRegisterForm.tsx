@@ -19,6 +19,7 @@ export function EventRegisterForm({ slug, token, isPaid, price, loggedIn }: Prop
   const router = useRouter()
   const [busy, setBusy] = useState(false)
   const [errors, setErrors] = useState<Record<string, string[]>>({})
+  const [emailTaken, setEmailTaken] = useState(false)
   const err = (k: string) => errors[k] && <p className="mt-1 text-xs text-red-600">{errors[k][0]}</p>
   const loginHref = `/login?next=${encodeURIComponent(token ? `/events/internal/${slug}/${token}` : `/events/${slug}`)}`
 
@@ -28,6 +29,7 @@ export function EventRegisterForm({ slug, token, isPaid, price, loggedIn }: Prop
         e.preventDefault()
         setBusy(true)
         setErrors({})
+        setEmailTaken(false)
         const fd = new FormData(e.currentTarget)
         if (token) fd.set('token', token)
         try {
@@ -35,6 +37,8 @@ export function EventRegisterForm({ slug, token, isPaid, price, loggedIn }: Prop
           const json = await res.json()
           if (!res.ok || !json.success) {
             if (json.errors) setErrors(json.errors)
+            const emailErr = json.errors?.email?.[0] ?? ''
+            if (/sudah terdaftar/i.test(emailErr)) setEmailTaken(true)
             toast.error(json.message ?? 'Pendaftaran gagal')
             return
           }
@@ -53,7 +57,10 @@ export function EventRegisterForm({ slug, token, isPaid, price, loggedIn }: Prop
         <p className="text-xs text-slate-500">Masuk sebagai {loggedIn.email}</p>
       ) : (
         <p className="text-xs text-slate-500">
-          Sudah punya akun? <Link href={loginHref} className="font-semibold text-brand-primary">Login dulu</Link>. Belum? Akun dibuat otomatis dari formulir ini.
+          Sudah punya akun? <Link href={loginHref} className="font-semibold text-brand-primary">Login dulu</Link>. Belum? Akun dibuat otomatis dari formulir ini.{' '}
+          <Link href="/lupa-password" className="font-semibold text-brand-primary">
+            Lupa password?
+          </Link>
         </p>
       )}
       <div>
@@ -63,6 +70,20 @@ export function EventRegisterForm({ slug, token, isPaid, price, loggedIn }: Prop
       <div>
         <input name="email" type="email" placeholder="Email *" defaultValue={loggedIn?.email} readOnly={!!loggedIn} className={input} />
         {err('email')}
+        {emailTaken && (
+          <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+            <p className="font-semibold">Email ini sudah terdaftar.</p>
+            <p className="mt-1">
+              Akun ini bisa dari pendaftaran PSB/KIAS atau event sebelumnya. Silakan{' '}
+              <Link href={loginHref} className="font-semibold underline">login</Link> lalu daftar event. Kalau lupa
+              password,{' '}
+              <Link href="/lupa-password" className="font-semibold underline">
+                ajukan reset password
+              </Link>{' '}
+              (admin akan menghubungi via WhatsApp).
+            </p>
+          </div>
+        )}
       </div>
       <div>
         <input name="phone" type="tel" placeholder="No. HP / WhatsApp *" className={input} />

@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
+import prisma from '@/lib/prisma'
 
 const COOKIE_NAME = 'mahadaly_session'
 const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
@@ -28,11 +29,39 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
   }
 }
 
+/**
+ * Sesi dianggap kedaluwarsa bila:
+ * - akun dinonaktifkan admin, atau
+ * - password diganti (reset password) AFTER token sesi diterbitkan.
+ *Efeknya: reset password langsung memaksa user login ulang di perangkat lama.
+ */
+export async function isSessionStale(payload: JWTPayload): Promise<boolean> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { passwordChangedAt: true, isActive: true },
+    })
+    if (!user) return true
+    if (user.isActive === false) return true
+    const iat = (payload as unknown as { iat?: number }).iat
+    if (user.passwordChangedAt && iat) {
+      return user.passwordChangedAt.getTime() > iat * 1000
+    }
+    return false
+  } catch {
+    // Jangan matikan sesi hanya karena DB sedang tidak bisa diakses.
+    return false
+  }
+}
+
 export async function getSession(): Promise<JWTPayload | null> {
   const cookieStore = await cookies()
   const token = cookieStore.get(COOKIE_NAME)?.value
   if (!token) return null
-  return verifyToken(token)
+  const payload = await verifyToken(token)
+  if (!payload) return null
+  if (await isSessionStale(payload)) return null
+  return payload
 }
 
 export async function setSession(payload: JWTPayload): Promise<void> {
@@ -62,5 +91,8 @@ export function getTokenFromRequest(req: Request): string | null {
 export async function verifyTokenFromRequest(req: Request): Promise<JWTPayload | null> {
   const token = getTokenFromRequest(req)
   if (!token) return null
-  return verifyToken(token)
+  const payload = await verifyToken(token)
+  if (!payload) return null
+  if (await isSessionStale(payload)) return null
+  return payload
 }

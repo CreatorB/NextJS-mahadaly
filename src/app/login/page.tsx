@@ -13,11 +13,12 @@ const ERROR_MESSAGES: Record<string, string> = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; next?: string }>
+  searchParams: Promise<{ error?: string; next?: string; reset?: string }>
 }) {
-  const { error, next } = await searchParams
+  const { error, next, reset } = await searchParams
   const safeNext = safeRedirectPath(next)
   const errorMessage = error ? ERROR_MESSAGES[error] ?? 'Terjadi kesalahan. Silakan coba lagi.' : null
+  const resetSuccess = reset === 'success'
 
   return (
     <>
@@ -51,6 +52,15 @@ export default async function LoginPage({
               </div>
             )}
 
+            {resetSuccess && (
+              <div
+                role="status"
+                className="mb-6 flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700"
+              >
+                <span>Password berhasil diperbarui. Silakan login dengan password baru.</span>
+              </div>
+            )}
+
             {/* PURE NATIVE HTML FORM - no JS, no fetch, no React state */}
             {/* Browser submits directly to API, API redirects with cookie */}
             <form method="POST" action="/api/auth/login" className="space-y-4">
@@ -79,6 +89,12 @@ export default async function LoginPage({
               Belum mendaftar?{' '}
               <Link href="/psb" className="text-brand-primary font-medium hover:underline">
                 Daftar PSB
+              </Link>
+            </div>
+
+            <div className="mt-3 text-center text-sm text-gray-500">
+              <Link href="/lupa-password" className="text-brand-primary font-medium hover:underline">
+                Lupa password?
               </Link>
             </div>
 

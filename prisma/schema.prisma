@@ -32,10 +32,35 @@ model User {
   createdLinks RegistrationLink[]
   cardUpdates  CrossAppCardSetting[]
   posts        Post[]
+  /// Waktu password terakhir diganti (null = belum pernah). Dipakai untuk
+  /// membatalkan sesi lama setelah reset password.
+  passwordChangedAt DateTime? @map("password_changed_at")
+  resetTokens       PasswordResetToken[] @relation("UserResetTokens")
+  resetTokensCreated PasswordResetToken[] @relation("ResetCreatedBy")
   createdAt    DateTime           @default(now()) @map("created_at")
   updatedAt    DateTime           @updatedAt @map("updated_at")
 
   @@map("users")
+}
+
+/// Token reset password.
+/// type = 'request' -> permintaan dari pengguna (belum ada link, admin yang menerbitkan).
+/// type = 'reset'   -> link set password baru yang dibuat admin (berlaku sekali).
+model PasswordResetToken {
+  id          Int       @id @default(autoincrement())
+  token       String    @unique
+  type        String    @default("request")
+  userId      Int       @map("user_id")
+  user        User      @relation("UserResetTokens", fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime  @map("expires_at")
+  usedAt      DateTime? @map("used_at")
+  createdById Int?      @map("created_by_id")
+  createdBy   User?     @relation("ResetCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([type, usedAt])
+  @@map("password_reset_tokens")
 }
 
 model Program {

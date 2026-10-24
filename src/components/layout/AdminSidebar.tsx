@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { clsx } from 'clsx'
-import { LayoutDashboard, Users, Settings, LogOut, Shield, BookOpen, Menu, X, MapPin, Link2, Newspaper, BookOpenText, ListChecks, SlidersHorizontal, CalendarDays } from 'lucide-react'
+import { LayoutDashboard, Users, Settings, LogOut, Shield, BookOpen, Menu, X, MapPin, Link2, Newspaper, BookOpenText, ListChecks, SlidersHorizontal, CalendarDays, KeyRound } from 'lucide-react'
 import { useState } from 'react'
 
 interface Props {
@@ -25,12 +25,17 @@ export function AdminSidebar({ nama, roleId }: Props) {
     { href: '/admin/kias/pendaftaran', label: 'KIAS — Pendaftar', icon: ListChecks },
     { href: '/admin/kias/pengaturan', label: 'KIAS — Pengaturan PSB', icon: SlidersHorizontal },
     { href: '/admin/events', label: 'Event', icon: CalendarDays },
+    { href: '/admin/events/pengguna', label: 'Pengguna & Reset', icon: KeyRound },
     ...(roleId === 1 ? [
       { href: '/admin/wilayah', label: 'Wilayah', icon: MapPin },
       { href: '/admin/superadmin/users', label: 'Kelola User', icon: Shield },
       { href: '/admin/superadmin/program', label: 'Kelola Program', icon: BookOpen },
     ] : []),
   ]
+
+  // Menu yang hanya aktif saat path-nya persis sama (mis. /admin/events vs /admin/events/pengguna)
+  const exactHrefs = ['/admin/kias', '/admin/events', '/admin/events/pengguna']
+  const isActive = (href: string) => (exactHrefs.includes(href) ? pathname === href : pathname.startsWith(href))
 
   const logout = async () => {
     try {
@@ -91,7 +96,7 @@ export function AdminSidebar({ nama, roleId }: Props) {
           {navItems.map((item) => (
             <Link key={item.href} href={item.href} onClick={closeSidebar} className={clsx(
               'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
-              (item.href === '/admin/kias' ? pathname === item.href : pathname.startsWith(item.href)) ? 'bg-white/20 font-semibold' : 'hover:bg-white/10'
+              isActive(item.href) ? 'bg-white/20 font-semibold' : 'hover:bg-white/10'
             )}>
               <item.icon className="h-4 w-4 shrink-0" />
               {item.label}

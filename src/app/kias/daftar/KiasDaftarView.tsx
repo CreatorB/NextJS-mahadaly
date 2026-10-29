@@ -33,7 +33,7 @@ export async function KiasDaftarView({ manual = false }: { manual?: boolean } = 
       <main className="bg-brand-surface py-12 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8">
-            <Link href="/kias" className="text-sm text-slate-500 hover:text-brand-primary">← Program KIAS</Link>
+            <Link href="/program/kias" className="text-sm text-slate-500 hover:text-brand-primary">← Program KIAS</Link>
             <h1 className="mt-2 text-3xl md:text-4xl font-bold text-brand-primary">
               Pendaftaran KIAS {info?.tahunAjaran}
               {manual && <span className="ml-3 align-middle rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-800">Manual</span>}
@@ -51,7 +51,7 @@ export async function KiasDaftarView({ manual = false }: { manual?: boolean } = 
                   : 'Pantau pengumuman pembukaan pendaftaran berikutnya di halaman KIAS dan Instagram @kias_syathiby.'}
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href="/kias" className="rounded-xl bg-brand-primary px-6 py-3 font-semibold text-white">Lihat Program KIAS</Link>
+                <Link href="/program/kias" className="rounded-xl bg-brand-primary px-6 py-3 font-semibold text-white">Lihat Program KIAS</Link>
                 <Link href="/login" className="rounded-xl border border-slate-300 px-6 py-3 font-semibold text-slate-700">Login Peserta</Link>
               </div>
             </div>

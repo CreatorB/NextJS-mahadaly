@@ -46,7 +46,7 @@ export default async function KiasJenisPage({ params }: Props) {
       <main>
         <section className="gradient-hero text-white py-16 px-4">
           <div className="max-w-4xl mx-auto">
-            <Link href="/kias" className="inline-flex items-center gap-2 text-sm text-blue-100 hover:text-white mb-6">
+            <Link href="/program/kias" className="inline-flex items-center gap-2 text-sm text-blue-100 hover:text-white mb-6">
               <ArrowLeft className="h-4 w-4" /> Semua program KIAS
             </Link>
             <h1 className="text-4xl md:text-5xl font-bold mb-3">{jenis.namaJenis}</h1>
@@ -121,7 +121,7 @@ export default async function KiasJenisPage({ params }: Props) {
                     Daftar Sekarang
                   </a>
                 )}
-                <Link href="/kias#kelas" className="border-2 border-white font-semibold px-8 py-3 rounded-xl hover:bg-white/10">
+                <Link href="/program/kias#kelas" className="border-2 border-white font-semibold px-8 py-3 rounded-xl hover:bg-white/10">
                   Lihat Jadwal Kelas
                 </Link>
               </div>

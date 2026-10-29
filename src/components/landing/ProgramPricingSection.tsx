@@ -131,8 +131,8 @@ export async function ProgramPricingSection() {
     <section id="pilih-program" className="py-20 px-4 bg-gradient-to-b from-brand-surface to-white">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-14">
-          <p className="text-sm font-semibold tracking-widest text-brand-secondary uppercase mb-2">Pilih Program</p>
-          <h2 className="text-3xl md:text-4xl font-bold text-brand-primary mb-3">Program Belajar di Asy-Syathiby</h2>
+          <p className="text-sm font-semibold tracking-widest text-brand-secondary uppercase mb-2">Program Belajar</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-brand-primary mb-3">Program di Asy-Syathiby</h2>
           <p className="text-slate-600 max-w-2xl mx-auto">
             Jenjang S1 bergelar untuk yang sudah berbahasa Arab, atau kursus bertahap dari tajwid hingga ilmu syar&apos;i.
           </p>
@@ -158,8 +158,8 @@ export async function ProgramPricingSection() {
               "Jum'at online 20:00 WIB · Sabtu offline 07:30–15:30",
               "Fokus ilmu-ilmu syar'i",
             ]}
-            primary={{ href: '/psb', label: 'Daftar HKI' }}
-            secondary={{ href: '/#program', label: 'Lihat detail program HKI' }}
+            primary={{ href: '/program/hki', label: 'Lihat Program HKI' }}
+            secondary={{ href: '/psb', label: 'Daftar sekarang' }}
           />
 
           <PlanCard
@@ -179,8 +179,8 @@ export async function ProgramPricingSection() {
               `${jenis.length} jenjang: ${jenis.map((j) => j.namaJenis).join(', ')}`,
               kiasStatus === 'Buka' ? `${kelasBuka} kelas sedang menerima santri baru` : `${kelasBuka} kelas tersedia untuk angkatan berikutnya`,
             ]}
-            primary={{ href: '/kias', label: 'Lihat Program KIAS' }}
-            secondary={{ href: '/kias#kelas', label: 'Lihat jadwal kelas' }}
+            primary={{ href: '/program/kias', label: 'Lihat Program KIAS' }}
+            secondary={{ href: '/psb', label: 'Daftar sekarang' }}
           />
         </div>
       </div>

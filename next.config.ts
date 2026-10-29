@@ -7,6 +7,12 @@ const nextConfig = {
   turbopack: {
     root: __dirname,
   },
+  // URL lama -> URL baru (permanent). Struktur program dipindah ke /program/<slug>
+  // pada 29 Okt 2026. Sub-path /kias/daftar, /kias/formulir/*, /psb/daftar SENGAJA
+  // tidak dipindah: sudah dipakai peserta & admin (link WA, QR, form).
+  async redirects() {
+    return [{ source: '/kias', destination: '/program/kias', permanent: true }]
+  },
 }
 
 module.exports = nextConfig

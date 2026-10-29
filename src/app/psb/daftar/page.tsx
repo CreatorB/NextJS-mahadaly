@@ -44,7 +44,7 @@ export default async function DaftarPage({
 
   // Tautan khusus boleh dipakai walaupun PSB sudah tutup (untuk pendaftar susulan).
   if (!isOpen && !linkData) {
-    redirect('/psb?closed=1')
+    redirect('/program/hki?closed=1')
   }
 
   return (

@@ -62,6 +62,16 @@ export async function getKiasJenisPrograms() {
   })
 }
 
+/**
+ * Jenjang KIAS yang punya minimal satu kelas dengan status 'Buka'.
+ * Jenjang yang seluruh kelasnya ditutup (mis. dinonaktifkan admin) disembunyikan dari
+ * halaman publik supaya tidak muncul sebagai "Belum dibuka".
+ * Data historis (peserta, kitab, pengajar) tetap utuh di database.
+ */
+export function jenisDenganKelasAktif<T extends { programs: { statusPsb: string }[] }>(jenis: T[]): T[] {
+  return jenis.filter((j) => j.programs.some((p) => p.statusPsb === 'Buka'))
+}
+
 /** Kode registrasi format KIAS lama: yy + menit + detik + urutan pendaftar tahun itu. Dipakai juga sebagai password awal. */
 export async function generateKiasKode(tahunPsb: string) {
   const now = new Date()

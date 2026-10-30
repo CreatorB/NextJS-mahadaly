@@ -1,14 +1,16 @@
 import Link from 'next/link'
 import { ArrowRight, CalendarDays, Clock, MapPin, Timer } from 'lucide-react'
 import { ContactSection } from '@/components/landing/ContactSection'
-import { formatRupiah, getActiveKiasInfo, getKiasJenisPrograms, isKiasPsbOpen, KIAS_DAFTAR_URL } from '@/lib/kias'
+import { formatRupiah, getActiveKiasInfo, getKiasJenisPrograms, isKiasPsbOpen, jenisDenganKelasAktif, KIAS_DAFTAR_URL } from '@/lib/kias'
 
 /**
  * Detail program KIAS — dipakai oleh /program/kias.
  * Form pendaftarannya tetap di /kias/daftar.
  */
 export async function KiasProgramDetail() {
-  const [info, jenis] = await Promise.all([getActiveKiasInfo(), getKiasJenisPrograms()])
+  const [info, semuaJenis] = await Promise.all([getActiveKiasInfo(), getKiasJenisPrograms()])
+  // Jenjang tanpa kelas aktif (mis. Ulum Asy-Syariah) tidak ditampilkan.
+  const jenis = jenisDenganKelasAktif(semuaJenis)
   const buka = isKiasPsbOpen(info)
 
   const biaya = [

@@ -63,7 +63,8 @@ export async function HeroSection() {
           </div>
 
           {/* Video profil (YouTube) — autoplay muted + loop; suara dinyalakan
-              otomatis setelah jendela sambutan ditutup. */}
+              otomatis begitu pengunjung berinteraksi (klik/scroll/dll) atau
+              jendela sambutan ditutup. */}
           <div>
             <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-black shadow-2xl">
               <div className="aspect-video w-full">
@@ -77,10 +78,10 @@ export async function HeroSection() {
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-blue-100">
               <span className="inline-flex items-center gap-1.5">
                 <PlayCircle className="h-4 w-4 text-brand-accent" />
-                Video profil — diputar otomatis, bersuara setelah jendela sambutan ditutup.
+                Silahkan aktifkan suara pada menu video
               </span>
               <Link href="/profil" className="font-semibold text-brand-accent hover:underline">
-                Baca halaman Profil →
+                Lihat Profil
               </Link>
             </div>
           </div>

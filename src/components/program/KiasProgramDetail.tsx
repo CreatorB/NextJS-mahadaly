@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { ArrowRight, CalendarDays, Clock, MapPin, Timer } from 'lucide-react'
 import { ContactSection } from '@/components/landing/ContactSection'
-import { BeritaSection } from '@/components/berita/BeritaSection'
 import { formatRupiah, getActiveKiasInfo, getKiasJenisPrograms, isKiasPsbOpen, KIAS_DAFTAR_URL } from '@/lib/kias'
 
 /**
@@ -120,7 +119,7 @@ export async function KiasProgramDetail() {
       <section id="kelas" className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-brand-primary text-center mb-10">Jadwal Kelas</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {jenis
               .flatMap((j) =>
                 j.programs
@@ -130,7 +129,7 @@ export async function KiasProgramDetail() {
               .map((p) => (
                 <div
                   key={p.id}
-                  className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                  className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
                   style={{ borderTopWidth: 4, borderTopColor: p.warna ?? undefined }}
                 >
                   <div className="mb-3 flex items-start justify-between gap-2">
@@ -187,12 +186,6 @@ export async function KiasProgramDetail() {
         </div>
       </section>
 
-      <BeritaSection
-        kategori="kias"
-        instagram="kias_syathiby"
-        title="Berita KIAS"
-        subtitle="Kabar kegiatan Kursus Ilmu bahasa Arab & Syar'i"
-      />
       <ContactSection />
     </>
   )

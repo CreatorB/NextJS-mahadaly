@@ -6,7 +6,7 @@ import { PengajarSection } from '@/components/landing/PengajarSection'
 import { ProfilLulusanSection } from '@/components/landing/ProfilLulusanSection'
 import { ContactSection } from '@/components/landing/ContactSection'
 import { ProgramPricingSection } from '@/components/landing/ProgramPricingSection'
-import { BeritaSection } from '@/components/berita/BeritaSection'
+import { BeritaEventSection } from '@/components/berita/BeritaEventSection'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
@@ -101,15 +101,12 @@ export default async function Home() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <HeroSection />
+        {/* Kabar & agenda terbaru: satu section di depan, sebelum "Program Belajar". */}
+        <BeritaEventSection />
         <ProgramPricingSection />
         <VisiMisiSection />
         <PengajarSection />
         <ProfilLulusanSection />
-        <BeritaSection
-          kategori="mahadaly"
-          instagram="mahadalysyathiby"
-          subtitle="Kabar kegiatan Ma'had Aly Al-Imam Asy-Syathiby"
-        />
         <ContactSection />
       </main>
       <Footer />

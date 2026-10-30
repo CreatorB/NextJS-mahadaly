@@ -4,7 +4,6 @@ import { notFound } from 'next/navigation'
 import { PsbStatusBanner } from '@/components/psb/PsbStatusBanner'
 import { JadwalPsbSection } from '@/components/landing/JadwalPsbSection'
 import { MateriSection } from '@/components/landing/MateriSection'
-import { BeritaSection } from '@/components/berita/BeritaSection'
 import {
   CalendarDays,
   CalendarCheck,
@@ -286,12 +285,6 @@ export async function HkiProgramDetail({ searchParams }: Props) {
 
       <JadwalPsbSection showCta={false} />
       <MateriSection />
-      <BeritaSection
-        kategori="mahadaly"
-        instagram="mahadalysyathiby"
-        title="Kabar Ma'had Aly"
-        subtitle="Kabar kegiatan & informasi terbaru Ma'had Aly Al-Imam Asy-Syathiby"
-      />
     </>
   )
 }

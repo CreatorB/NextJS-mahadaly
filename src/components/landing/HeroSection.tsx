@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { UserRound, PlayCircle } from 'lucide-react'
+import { PlayCircle } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { getProfil } from '@/lib/profil'
 import { HeroVideo } from '@/components/landing/HeroVideo'
@@ -10,7 +10,8 @@ import { HeroVideo } from '@/components/landing/HeroVideo'
  *
  * 30 Okt 2026: kolom kanan diganti video YouTube (autoplay) profil; 4 kartu
  * info (Program Belajar, Waktu Pembelajaran, Santri & Mahasiswa, Kontak)
- * dipindah ke halaman /program/hki.
+ * dipindah ke halaman /program/hki. Tombol profil di hero dihapus — cukup
+ * link "Lihat Profil" di bawah video.
  */
 export async function HeroSection() {
   const [info, profil] = await Promise.all([
@@ -51,13 +52,6 @@ export async function HeroSection() {
                 className="border-2 border-white text-white font-semibold px-8 py-4 rounded-xl text-center text-lg hover:bg-white/10 transition-colors"
               >
                 Pendaftaran {tahun}
-              </Link>
-              <Link
-                href="/profil"
-                className="inline-flex items-center justify-center gap-2 border-2 border-white/40 text-white font-semibold px-6 py-3.5 rounded-xl text-base hover:bg-white/10 transition-colors sm:w-full lg:w-auto"
-              >
-                <UserRound className="h-5 w-5" />
-                Profil Ma&apos;had Aly
               </Link>
             </div>
           </div>

@@ -3,6 +3,15 @@ import prisma from '@/lib/prisma'
 import { fail } from '@/types/api'
 import { requireAdminApi } from '@/lib/kias-admin'
 import { PAYMENT_STATUS_LABEL } from '@/lib/events'
+import {
+  csvText,
+  downloadHeaders,
+  excelXml,
+  exportFileName,
+  formatContactName,
+  vcfText,
+  type VCardInput,
+} from '@/lib/export'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -10,17 +19,64 @@ export const runtime = 'nodejs'
 const tglJam = (d: Date | null) => (d ? d.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'short', timeStyle: 'short' }) : '')
 const tgl = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : '')
 
-/** ?format=csv|xls — daftar peserta + jumlah & waktu kehadiran. */
+/**
+ * Export peserta satu event.
+ *
+ * ?format=xls|csv → daftar peserta (menghormati filter q / gender / status)
+ * ?format=vcf     → kontak peserta (dukung ?prefix= &tahun=)
+ */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!(await requireAdminApi(req))) return Response.json(fail('Akses ditolak'), { status: 401 })
   const id = Number((await params).id)
-  const event = await prisma.event.findUnique({ where: { id }, select: { slug: true } })
+  const event = await prisma.event.findUnique({ where: { id }, select: { slug: true, title: true, startDate: true } })
   if (!event) return Response.json(fail('Event tidak ditemukan'), { status: 404 })
+
+  const sp = req.nextUrl.searchParams
+  const format = (sp.get('format') ?? 'csv').toLowerCase()
+  const q = sp.get('q') ?? ''
+  const gender = sp.get('gender') ?? ''
+  const status = sp.get('status') ?? ''
+  const prefix = (sp.get('prefix') ?? '').trim()
+  const tahunParam = (sp.get('tahun') ?? '').trim()
+
+  const where = {
+    eventId: id,
+    ...(gender ? { gender } : {}),
+    ...(status ? { paymentStatus: status } : {}),
+    ...(q ? { OR: [{ name: { contains: q } }, { email: { contains: q } }, { phone: { contains: q } }] } : {}),
+  }
+
   const regs = await prisma.eventRegistration.findMany({
-    where: { eventId: id },
+    where,
     orderBy: { registeredAt: 'asc' },
     include: { attendances: { orderBy: { attendedAt: 'asc' } }, internalLink: { select: { name: true } } },
   })
+
+  /* ------------------------------------------------------------- vCard */
+  if (format === 'vcf') {
+    const cards: VCardInput[] = regs.map((r) => ({
+      nama: r.name,
+      displayName: formatContactName(r.name, {
+        prefix,
+        tahun: tahunParam || String(event.startDate.getFullYear()),
+      }),
+      telepon: r.phone,
+      email: r.email,
+      org: event.title,
+      nickname: event.slug,
+      catatan: [
+        `Status: ${PAYMENT_STATUS_LABEL[r.paymentStatus] ?? r.paymentStatus}`,
+        r.internalLink ? `Jalur: Internal ${r.internalLink.name}` : 'Jalur: Publik',
+      ].join(' | '),
+    }))
+    return new Response(vcfText(cards), {
+      status: 200,
+      headers: downloadHeaders(
+        exportFileName(`kontak-${event.slug}`, 'vcf'),
+        'text/x-vcard; charset=utf-8',
+      ),
+    })
+  }
 
   const header = ['No', 'Nama', 'Jenis Kelamin', 'No HP', 'Email', 'Alamat', 'Tempat Lahir', 'Tanggal Lahir', 'Pekerjaan', 'Status', 'Jalur', 'Tgl Daftar', 'Jumlah Hadir', 'Waktu Hadir']
   const rows = regs.map((r, i) => [
@@ -28,27 +84,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     PAYMENT_STATUS_LABEL[r.paymentStatus] ?? r.paymentStatus, r.internalLink ? `Internal: ${r.internalLink.name}` : 'Publik',
     tglJam(r.registeredAt), r.attendances.length, r.attendances.map((a) => tglJam(a.attendedAt)).join('; '),
   ])
-  const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '')
 
-  if (req.nextUrl.searchParams.get('format') === 'xls') {
-    const x = (v: string | number) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-    const cell = (v: string | number, st = '') => `<Cell${st}><Data ss:Type="${typeof v === 'number' ? 'Number' : 'String'}">${x(v)}</Data></Cell>`
-    const body = `<?xml version="1.0" encoding="UTF-8"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
-<Styles><Style ss:ID="h"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#00367C" ss:Pattern="Solid"/></Style></Styles>
-<Worksheet ss:Name="Peserta"><Table>
-<Row>${header.map((h) => cell(h, ' ss:StyleID="h"')).join('')}</Row>
-${rows.map((r) => `<Row>${r.map((v) => cell(v)).join('')}</Row>`).join('\n')}
-</Table></Worksheet></Workbook>`
-    return new Response(body, {
-      headers: { 'Content-Type': 'application/vnd.ms-excel; charset=utf-8', 'Content-Disposition': `attachment; filename="peserta-${event.slug}-${stamp}.xls"`, 'Cache-Control': 'no-store' },
+  if (format === 'xls') {
+    return new Response(excelXml(`Peserta ${event.slug}`, header, rows), {
+      status: 200,
+      headers: downloadHeaders(
+        exportFileName(`peserta-${event.slug}`, 'xls'),
+        'application/vnd.ms-excel; charset=utf-8',
+      ),
     })
   }
 
-  const esc = (v: string | number) => (/[",\n;]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v))
-  const csv = '﻿' + [header.join(','), ...rows.map((r) => r.map(esc).join(','))].join('\r\n')
-  return new Response(csv, {
-    headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="peserta-${event.slug}-${stamp}.csv"`, 'Cache-Control': 'no-store' },
+  return new Response(csvText(header, rows), {
+    status: 200,
+    headers: downloadHeaders(exportFileName(`peserta-${event.slug}`, 'csv'), 'text/csv; charset=utf-8'),
   })
 }

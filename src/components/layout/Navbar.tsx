@@ -7,10 +7,9 @@ import { Menu, X, LogIn, UserPlus } from 'lucide-react'
 export function Navbar() {
   const [open, setOpen] = useState(false)
 
-  // Navbar ringkas: Ma'had Aly, KIAS, Pengajar, dan Materi dihapus dari menu
+  // Navbar ringkas: Ma'had Aly, KIAS, Pengajar, Materi, dan Program dihapus dari menu
   // (halaman program tetap bisa diakses lewat section Program di beranda & footer).
   const links = [
-    { href: '/#pilih-program', label: 'Program', anchor: true },
     { href: '/profil', label: 'Profil', anchor: false },
     { href: '/berita', label: 'Berita', anchor: false },
     { href: '/events', label: 'Event', anchor: false },

@@ -10,7 +10,6 @@ export const PROFIL_DEFAULT_KONTEN = [
   '<h2>Ma&#39;had Aly Al-Imam Asy-Syathiby</h2>',
   '<p>Ma&#39;had Aly Al-Imam Asy-Syathiby adalah pusat pendidikan Islam yang berada di Cileungsi, Bogor, dengan fokus kajian ilmu syar&#39;i dan bahasa Arab.</p>',
   '<p>Program yang tersedia meliputi Hukum Keluarga Islam (HKI) jenjang S1 Ahwal Syakhsiyyah dengan masa studi empat tahun, serta KIAS (Kursus Ilmu Bahasa Arab dan Syar&#39;i) yang terbuka untuk ikhwan dan akhwat.</p>',
-  '<p>Seluruh isi halaman ini dapat disunting sendiri melalui Panel Admin.</p>',
 ].join('')
 
 const YOUTUBE_EMBED_BASE = 'https://www.youtube.com/embed/'

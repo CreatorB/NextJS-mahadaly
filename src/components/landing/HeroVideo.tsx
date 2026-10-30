@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { youtubeId, youtubeEmbedUrlWith } from '@/lib/youtube'
 import { WELCOME_CLOSED_EVENT } from './WelcomeModal'
 
@@ -9,10 +9,15 @@ import { WELCOME_CLOSED_EVENT } from './WelcomeModal'
  *
  * Memakai YouTube IFrame API karena kita perlu menyalakan suara dari luar
  * iframe (browser hanya mengizinkan pemutaran bersuara setelah ada gesture
- * pengguna — pada kasus ini: tombol "Tutup" di modal sambutan).
+ * pengguna).
+ *
+ * Suara dinyalakan otomatis pada dua situasi:
+ * 1. jendela sambutan ditutup (tombol "Tutup & Putar Video"), dan
+ * 2. interaksi pertama pengunjung di halaman (klik/scroll/keyboard/sentuh) —
+ *    sehingga pengunjung tidak perlu menyentuh menu player.
  *
  * Fallback: bila script iframe_api gagal dimuat, dipakai iframe biasa; saat
- * modal ditutup, src iframe diganti ke versi tanpa `mute=1` (tetap autoplay).
+ * suara diminta, src iframe diganti ke versi tanpa `mute=1` (tetap autoplay).
  */
 
 const API_SRC = 'https://www.youtube.com/iframe_api'
@@ -23,6 +28,18 @@ type Player = {
   unMute?: () => void
   mute?: () => void
   playVideo?: () => void
+  getPlayerState?: () => number
+}
+
+/**
+ * True kalau pengguna benar-benar sudah berinteraksi dengan halaman (klik, tekan
+ * tombol, dsb). Browser HANYA mengizinkan pemutaran bersuara setelah interaksi
+ * seperti ini — scroll otomatis bukan interaksi, jadi tidak dihitung.
+ */
+function hasUserActivation(): boolean {
+  if (typeof navigator === 'undefined') return false
+  const nav = navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }
+  return nav.userActivation?.hasBeenActive === true
 }
 
 let apiPromise: Promise<void> | null = null
@@ -68,6 +85,7 @@ export function HeroVideo({
   const mountRef = useRef<HTMLDivElement>(null)
   const playerRef = useRef<Player | null>(null)
   const wantSoundRef = useRef(false)
+  const unmuteAtRef = useRef(0)
   const [fallbackSrc, setFallbackSrc] = useState<string | null>(null)
 
   useEffect(() => {
@@ -94,7 +112,13 @@ export function HeroVideo({
           events: {
             onReady: (e: { target: Player & { getIframe?: () => HTMLIFrameElement } }) => {
               try {
-                e.target.mute?.()
+                // Kalau pengunjung sudah berinteraksi sungguhan, langsung berbunyi.
+                if (wantSoundRef.current && hasUserActivation()) {
+                  unmuteAtRef.current = Date.now()
+                  e.target.unMute?.()
+                } else {
+                  e.target.mute?.()
+                }
                 e.target.playVideo?.()
               } catch {
                 /* abaikan */
@@ -107,6 +131,20 @@ export function HeroVideo({
                 }
               } catch {
                 /* abaikan */
+              }
+            },
+            onStateChange: (e: { data: number }) => {
+              // Browser menolak pemutaran bersuara tanpa interaksi -> player bisa
+              // PAUSED. Supaya video tidak membeku, kembalikan ke mode muted
+              // (autoplay muted selalu diizinkan browser).
+              if (e.data === 2 && unmuteAtRef.current && Date.now() - unmuteAtRef.current < 4000) {
+                unmuteAtRef.current = 0
+                try {
+                  playerRef.current?.mute?.()
+                  playerRef.current?.playVideo?.()
+                } catch {
+                  /* abaikan */
+                }
               }
             },
           },
@@ -129,20 +167,27 @@ export function HeroVideo({
     }
   }, [id, videoUrl])
 
+  // Nyalakan suara + pastikan video berjalan.
+  const unmuteAndPlay = useCallback(() => {
+    const player = playerRef.current
+    if (player && typeof player.unMute === 'function') {
+      try {
+        unmuteAtRef.current = Date.now()
+        player.unMute()
+        player.playVideo?.()
+        return true
+      } catch {
+        /* lanjut ke fallback */
+      }
+    }
+    return false
+  }, [])
+
   // Modal sambutan ditutup -> nyalakan suara + lanjutkan pemutaran.
   useEffect(() => {
     const onWelcomeClosed = () => {
       wantSoundRef.current = true
-      const player = playerRef.current
-      if (player && typeof player.unMute === 'function') {
-        try {
-          player.unMute()
-          player.playVideo?.()
-          return
-        } catch {
-          /* lanjut ke fallback */
-        }
-      }
+      if (unmuteAndPlay()) return
       // Fallback: ganti src iframe ke versi tanpa mute.
       setFallbackSrc(
         youtubeEmbedUrlWith(videoUrl, {
@@ -155,7 +200,42 @@ export function HeroVideo({
     }
     window.addEventListener(WELCOME_CLOSED_EVENT, onWelcomeClosed)
     return () => window.removeEventListener(WELCOME_CLOSED_EVENT, onWelcomeClosed)
-  }, [videoUrl])
+  }, [videoUrl, unmuteAndPlay])
+
+  // Interaksi pertama pengunjung (klik/ketik/sentuh) -> suara langsung nyala,
+  // tanpa perlu menyentuh menu player. Syaratnya: interaksi sungguhan
+  // (dicek lewat User Activation API) — scroll otomatis bukan gestur, jadi
+  // tidak dicoba (kalau dipaksa, browser bisa membekukan video).
+  useEffect(() => {
+    let done = false
+    const events: (keyof WindowEventMap)[] = ['pointerdown', 'touchstart', 'keydown']
+    const onInteract = () => {
+      if (done) return
+      if (!hasUserActivation()) return
+      done = true
+      wantSoundRef.current = true
+      if (!unmuteAndPlay()) {
+        setFallbackSrc(
+          youtubeEmbedUrlWith(videoUrl, {
+            autoplay: true,
+            muted: false,
+            loop: true,
+            hideRelated: true,
+          }),
+        )
+      }
+      cleanup()
+    }
+    const cleanup = () => {
+      events.forEach((e) => window.removeEventListener(e, onInteract))
+      document.removeEventListener('scroll', onInteract)
+    }
+    events.forEach((e) => window.addEventListener(e, onInteract, { passive: true }))
+    // Scroll ikut dipantau: kalau pengguna memang sedang scrolls-gulir dengan
+    //-tetikus/jarinya, itu interaksi sungguhan (dicek lewat User Activation).
+    document.addEventListener('scroll', onInteract, { passive: true, capture: true })
+    return cleanup
+  }, [videoUrl, unmuteAndPlay])
 
   if (!id) return null
 

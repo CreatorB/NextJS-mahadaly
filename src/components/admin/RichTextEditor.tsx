@@ -6,9 +6,11 @@ import Image from '@tiptap/extension-image'
 import { toast } from 'sonner'
 import {
   Bold, Italic, Underline, Strikethrough, Heading2, Heading3, List, ListOrdered,
-  Quote, Link2, ImagePlus, Minus, Undo2, Redo2, Loader2,
+  Quote, Link2, ImagePlus, Minus, Undo2, Redo2, Loader2, Video,
 } from 'lucide-react'
 import { useState } from 'react'
+import { YouTube } from './YouTubeNode'
+import { youtubeEmbedUrl, youtubeId } from '@/lib/youtube'
 
 export async function uploadBeritaImage(file: File) {
   const fd = new FormData()
@@ -19,7 +21,7 @@ export async function uploadBeritaImage(file: File) {
   return json.data as { path: string; url: string }
 }
 
-function Toolbar({ editor }: { editor: Editor }) {
+function Toolbar({ editor, allowVideo }: { editor: Editor; allowVideo: boolean }) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const state = useEditorState({
@@ -60,6 +62,26 @@ function Toolbar({ editor }: { editor: Editor }) {
     }
   }
 
+  const insertVideo = () => {
+    const url = window.prompt(
+      'URL video YouTube (mis. https://youtu.be/dwqXJ3kg7bs)',
+      'https://youtu.be/',
+    )
+    if (url === null) return
+    const trimmed = url.trim()
+    if (!trimmed) return
+    if (!youtubeId(trimmed)) {
+      toast.error('URL itu bukan tautan YouTube yang valid')
+      return
+    }
+    editor
+      .chain()
+      .focus()
+      .insertYouTube({ src: youtubeEmbedUrl(trimmed)!, title: 'Video YouTube' })
+      .run()
+    toast.success('Video disisipkan')
+  }
+
   const btn = (active: boolean) =>
     `rounded p-1.5 transition-colors ${active ? 'bg-brand-primary text-white' : 'text-gray-600 hover:bg-gray-100'}`
 
@@ -87,6 +109,11 @@ function Toolbar({ editor }: { editor: Editor }) {
       <button type="button" title="Sisipkan gambar" onClick={() => fileRef.current?.click()} className={btn(false)} disabled={uploading}>
         {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
       </button>
+      {allowVideo && (
+        <button type="button" title="Sisipkan video YouTube" onClick={insertVideo} className={btn(false)}>
+          <Video className="h-4 w-4" />
+        </button>
+      )}
       <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden onChange={(e) => onImage(e.target.files?.[0])} />
       <span className="mx-1 h-5 w-px bg-gray-300" />
       <button type="button" title="Batal" onClick={() => editor.chain().focus().undo().run()} className={btn(false)}>
@@ -99,7 +126,16 @@ function Toolbar({ editor }: { editor: Editor }) {
   )
 }
 
-export function RichTextEditor({ value, onChange }: { value: string; onChange: (html: string) => void }) {
+export function RichTextEditor({
+  value,
+  onChange,
+  allowVideo = false,
+}: {
+  value: string
+  onChange: (html: string) => void
+  /** Aktifkan tombol sisip video YouTube (hanya untuk konten Profil). */
+  allowVideo?: boolean
+}) {
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -108,6 +144,7 @@ export function RichTextEditor({ value, onChange }: { value: string; onChange: (
         link: { openOnClick: false, autolink: true },
       }),
       Image,
+      ...(allowVideo ? [YouTube] : []),
     ],
     content: value,
     editorProps: {
@@ -120,7 +157,7 @@ export function RichTextEditor({ value, onChange }: { value: string; onChange: (
 
   return (
     <div className="overflow-hidden rounded-lg border border-gray-300 bg-white focus-within:ring-2 focus-within:ring-brand-primary">
-      <Toolbar editor={editor} />
+      <Toolbar editor={editor} allowVideo={allowVideo} />
       <EditorContent editor={editor} />
     </div>
   )

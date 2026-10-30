@@ -32,6 +32,7 @@ model User {
   createdLinks RegistrationLink[]
   cardUpdates  CrossAppCardSetting[]
   posts        Post[]
+  profil       Profil[]
   passwordChangedAt DateTime? @map("password_changed_at")
   resetTokens       PasswordResetToken[] @relation("UserResetTokens")
   resetTokensCreated PasswordResetToken[] @relation("ResetCreatedBy")
@@ -626,4 +627,18 @@ model ProgramCatalog {
 
   @@index([tampilDiPsb, urutan])
   @@map("program_katalog")
+}
+
+/// Profil lembaga (halaman /profil) — tabel SINGLETON: hanya satu baris
+/// (id = 1) berisi profil yang disunting dari panel admin lewat editor WYSIWYG.
+/// `konten` = HTML tersanitasi, `video_url` = URL YouTube untuk video utama.
+model Profil {
+  id          Int      @id @default(1)
+  konten      String   @db.LongText
+  videoUrl    String?  @map("video_url")
+  updatedById Int?     @map("updated_by_id")
+  updatedBy   User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("profil")
 }

@@ -23,8 +23,11 @@ async function getJenis(slug: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const jenis = await prisma.kiasJenisProgram.findUnique({ where: { slug } })
-  if (!jenis) return { title: 'Program tidak ditemukan' }
+  const jenis = await prisma.kiasJenisProgram.findUnique({
+    where: { slug },
+    include: { programs: { select: { statusPsb: true } } },
+  })
+  if (!jenis || !jenis.programs.some((p) => p.statusPsb === 'Buka')) return { title: 'Program tidak ditemukan' }
   return { title: `KIAS ${jenis.namaJenis} | Asy-Syathiby`, description: jenis.tagline ?? undefined }
 }
 
@@ -32,6 +35,8 @@ export default async function KiasJenisPage({ params }: Props) {
   const { slug } = await params
   const [jenis, info] = await Promise.all([getJenis(slug), getActiveKiasInfo()])
   if (!jenis) notFound()
+  // Jenjang tanpa kelas aktif (mis. dinonaktifkan admin) disembunyikan juga di halaman detailnya.
+  if (!jenis.programs.some((p) => p.statusPsb === 'Buka')) notFound()
 
   const buka = isKiasPsbOpen(info) && KIAS_JENIS_DAFTAR.includes(jenis.id) && jenis.programs.some((p) => p.statusPsb === 'Buka')
   const kitabPerKelas = new Map<number, typeof jenis.kitab>()

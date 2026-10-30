@@ -187,6 +187,9 @@ export async function HkiProgramDetail({ searchParams }: Props) {
         </div>
       </section>
 
+      {/* ===== MATERI PANDUAN (naik ke atas) ===== */}
+      <MateriSection />
+
       {/* ===== INFORMASI PSB ===== */}
       <div className="mx-auto max-w-3xl px-4 pb-12 pt-8">
         {linkData && (
@@ -221,26 +224,7 @@ export async function HkiProgramDetail({ searchParams }: Props) {
           </div>
         )}
 
-        {infoForComponent ? (
-          <PsbStatusBanner info={infoForComponent} quota={quota} />
-        ) : (
-          <div className="rounded-2xl border border-gray-100 bg-white py-10 text-center text-gray-500 shadow-sm">
-            <p>
-              Informasi PSB belum tersedia. Hubungi panitia di{' '}
-              <a
-                href="https://api.whatsapp.com/send?phone=628111516756"
-                className="text-brand-secondary font-medium hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                0811-1516-756
-              </a>
-              .
-            </p>
-          </div>
-        )}
-
-        <div className="mt-8 rounded-2xl border border-brand-primary/10 bg-white p-6 shadow-[0_12px_40px_-18px_rgba(0,54,124,0.35)] sm:p-7">
+        <div className="rounded-2xl border border-brand-primary/10 bg-white p-6 shadow-[0_12px_40px_-18px_rgba(0,54,124,0.35)] sm:p-7">
           <div className="mb-5 flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-primary/10">
               <Info className="h-5 w-5 text-brand-primary" />
@@ -284,7 +268,28 @@ export async function HkiProgramDetail({ searchParams }: Props) {
       </div>
 
       <JadwalPsbSection showCta={false} />
-      <MateriSection />
+
+      {/* ===== FORM PSB (section paling bawah) ===== */}
+      <div className="mx-auto max-w-3xl px-4 pb-16 pt-8">
+        {infoForComponent ? (
+          <PsbStatusBanner info={infoForComponent} quota={quota} />
+        ) : (
+          <div className="rounded-2xl border border-gray-100 bg-white py-10 text-center text-gray-500 shadow-sm">
+            <p>
+              Informasi PSB belum tersedia. Hubungi panitia di{' '}
+              <a
+                href="https://api.whatsapp.com/send?phone=628111516756"
+                className="text-brand-secondary font-medium hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                0811-1516-756
+              </a>
+              .
+            </p>
+          </div>
+        )}
+      </div>
     </>
   )
 }

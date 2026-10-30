@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { PlayCircle } from 'lucide-react'
-import prisma from '@/lib/prisma'
 import { getProfil } from '@/lib/profil'
 import { HeroVideo } from '@/components/landing/HeroVideo'
 
@@ -11,14 +10,11 @@ import { HeroVideo } from '@/components/landing/HeroVideo'
  * 30 Okt 2026: kolom kanan diganti video YouTube (autoplay) profil; 4 kartu
  * info (Program Belajar, Waktu Pembelajaran, Santri & Mahasiswa, Kontak)
  * dipindah ke halaman /program/hki. Tombol profil di hero dihapus — cukup
- * link "Lihat Profil" di bawah video.
+ * link "Lihat Profil" di bawah video. Tombol hero ("Program" + "Pendaftaran")
+ * sekarang menggulir ke section "Program Belajar" di halaman ini.
  */
 export async function HeroSection() {
-  const [info, profil] = await Promise.all([
-    prisma.infoPsb.findFirst({ orderBy: { tahunAjaran: 'desc' } }),
-    getProfil(),
-  ])
-  const tahun = info?.tahunAjaran ?? '2026'
+  const profil = await getProfil()
 
   return (
     <section className="gradient-hero text-white py-20 px-4">
@@ -41,18 +37,18 @@ export async function HeroSection() {
               <em>(bagi yang sudah bisa berbahasa arab pasif)</em>
             </p>
             <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
-              <Link
-                href="/program/hki"
+              <a
+                href="#pilih-program"
                 className="bg-brand-accent text-brand-primary font-bold px-8 py-4 rounded-xl text-center text-lg hover:opacity-90 transition-opacity shadow-lg"
               >
-                Pelajari Program
-              </Link>
-              <Link
-                href="/psb"
+                Program
+              </a>
+              <a
+                href="#pilih-program"
                 className="border-2 border-white text-white font-semibold px-8 py-4 rounded-xl text-center text-lg hover:bg-white/10 transition-colors"
               >
-                Pendaftaran {tahun}
-              </Link>
+                Pendaftaran
+              </a>
             </div>
           </div>
 

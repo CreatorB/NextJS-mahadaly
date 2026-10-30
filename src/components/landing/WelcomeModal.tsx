@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Image from 'next/image'
 import { Volume2, X } from 'lucide-react'
+import { setWelcomeState } from '@/lib/welcome-modal-state'
 
 /**
  * Event global: dipanggil saat modal sambutan ditutup.
@@ -27,14 +28,22 @@ export function WelcomeModal() {
     } catch {
       dismissed = false
     }
-    if (dismissed) return
+    if (dismissed) {
+      // Sudah pernah ditutup di sesi ini -> tidak ada modal, video boleh jalan.
+      setWelcomeState('closed')
+      return
+    }
     // Sedikit jeda supaya hero sempat tampil sebelum modal masuk.
-    const timer = window.setTimeout(() => setOpen(true), 700)
+    const timer = window.setTimeout(() => {
+      setWelcomeState('open')
+      setOpen(true)
+    }, 700)
     return () => window.clearTimeout(timer)
   }, [])
 
   const close = useCallback(() => {
     setOpen(false)
+    setWelcomeState('closed')
     try {
       sessionStorage.setItem(STORAGE_KEY, '1')
     } catch {
@@ -83,8 +92,9 @@ export function WelcomeModal() {
         <button
           type="button"
           onClick={close}
-          aria-label="Tutup"
-          className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/80 transition-colors hover:bg-white/20 hover:text-white"
+          aria-label="Tutup dan putar video"
+          title="Tutup dan putar video"
+          className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white/90 ring-1 ring-white/30 transition-colors hover:bg-white/25 hover:text-white"
         >
           <X className="h-5 w-5" />
         </button>
@@ -134,16 +144,10 @@ export function WelcomeModal() {
             وَفَّقَنَا اللَّهُ جَمِيعًا
           </p>
 
-          <button
-            type="button"
-            onClick={close}
-            className="mt-7 inline-flex items-center gap-2 rounded-xl bg-brand-accent px-7 py-3.5 text-base font-bold text-brand-primary shadow-lg transition-transform hover:-translate-y-0.5 hover:opacity-95"
-          >
-            <Volume2 className="h-5 w-5" />
-            Tutup &amp; Putar Video
-          </button>
-          <p className="mt-3 text-xs text-blue-100/80">
-            Menutup jendela ini akan memutar video profil dengan suara.
+          <p className="mt-7 inline-flex items-center gap-2 text-xs text-blue-100/80">
+            <Volume2 className="h-4 w-4 text-brand-accent" />
+            Klik ikon × di pojok kanan atas untuk menutup jendela ini dan memutar video profil
+            dengan suara.
           </p>
         </div>
       </div>

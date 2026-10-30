@@ -51,6 +51,9 @@ export function Footer() {
               <a href="/psb" className="hover:text-white">
                 Pendaftaran Santri &amp; Mahasiswa Baru
               </a>
+              <a href="/profil" className="hover:text-white">
+                Profil Ma&apos;had Aly
+              </a>
               <a href="/berita" className="hover:text-white">
                 Berita &amp; Kabar Kegiatan
               </a>

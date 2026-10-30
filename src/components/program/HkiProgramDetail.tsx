@@ -24,7 +24,7 @@ type Props = {
 }
 
 /**
- * Detail program Ma'had Aly (HKI) —（含 PSB: status, kuota, jadwal, panduan).
+ * Detail program Ma'had Aly (HKI) - memuat PSB (status, kuota, jadwal, panduan).
  * Dipakai oleh /program/hki. Form pendaftarannya tetap di /psb/daftar.
  */
 export async function HkiProgramDetail({ searchParams }: Props) {

@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { PsbStatusBanner } from '@/components/psb/PsbStatusBanner'
 import { JadwalPsbSection } from '@/components/landing/JadwalPsbSection'
 import { MateriSection } from '@/components/landing/MateriSection'
+import { ProgramInfoCards } from '@/components/landing/ProgramInfoCards'
 import {
   CalendarDays,
   CalendarCheck,
@@ -12,6 +13,7 @@ import {
   Phone,
   Info,
   ArrowRight,
+  Compass,
   Link2,
 } from 'lucide-react'
 import prisma from '@/lib/prisma'
@@ -266,6 +268,20 @@ export async function HkiProgramDetail({ searchParams }: Props) {
           </Link>
         </div>
       </div>
+
+      {/* ===== INFORMASI PROGRAM (pindah dari hero landing page, 30 Okt 2026) ===== */}
+      <section className="mx-auto max-w-3xl px-4 pb-12">
+        <div className="mb-5 flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-primary/10">
+            <Compass className="h-5 w-5 text-brand-primary" />
+          </span>
+          <div>
+            <h2 className="font-bold leading-tight text-brand-primary">Informasi Program</h2>
+            <p className="text-xs text-gray-400">Program belajar, jadwal, jumlah pendaftar &amp; kontak</p>
+          </div>
+        </div>
+        <ProgramInfoCards />
+      </section>
 
       <JadwalPsbSection showCta={false} />
 

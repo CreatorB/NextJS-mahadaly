@@ -64,6 +64,40 @@ export function youtubeEmbedUrl(input: string | null | undefined): string | null
   return id ? `https://www.youtube.com/embed/${id}` : null
 }
 
+export interface YoutubeEmbedOptions {
+  /** Autoplay hanya diizinkan browser kalau video dimatikan (mute=1). */
+  autoplay?: boolean
+  muted?: boolean
+  /** Loop video tunggal (butuh playlist=ID yang sama). */
+  loop?: boolean
+  /** Detik mulai. */
+  start?: number
+  /** Sembunyikan video terkait di akhir pemutaran. */
+  hideRelated?: boolean
+}
+
+/** URL embed lengkap dengan parameter pemutaran (autoplay/mute/loop/dll). */
+export function youtubeEmbedUrlWith(input: string | null | undefined, opts: YoutubeEmbedOptions = {}): string | null {
+  const id = youtubeId(input)
+  if (!id) return null
+  const params = new URLSearchParams()
+  if (opts.autoplay) {
+    params.set('autoplay', '1')
+    // Browser memblokir autoplay bersuara -> mute otomatis.
+    params.set('mute', '1')
+  } else if (opts.muted) {
+    params.set('mute', '1')
+  }
+  if (opts.loop) {
+    params.set('loop', '1')
+    params.set('playlist', id)
+  }
+  if (opts.start && opts.start > 0) params.set('start', String(opts.start))
+  if (opts.hideRelated) params.set('rel', '0')
+  const qs = params.toString()
+  return `https://www.youtube.com/embed/${id}${qs ? `?${qs}` : ''}`
+}
+
 /** URL thumbnail untuk preview di panel admin. */
 export function youtubeThumbnail(input: string | null | undefined): string | null {
   const id = youtubeId(input)

@@ -128,7 +128,7 @@ export async function ProgramPricingSection() {
   const kelasBuka = jenis.flatMap((j) => j.programs).filter((p) => p.statusPsb === 'Buka').length
 
   return (
-    <section id="pilih-program" className="py-20 px-4 bg-gradient-to-b from-brand-surface to-white">
+    <section id="pilih-program" className="scroll-mt-24 py-20 px-4 bg-gradient-to-b from-brand-surface to-white">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-14">
           <p className="text-sm font-semibold tracking-widest text-brand-secondary uppercase mb-2">Program Belajar</p>

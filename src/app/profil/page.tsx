@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
+import { YouTubeEmbed } from '@/components/YouTubeEmbed'
 import { getProfil, sanitizeProfilKonten } from '@/lib/profil'
 import { youtubeEmbedUrl } from '@/lib/youtube'
 
@@ -53,13 +54,10 @@ export default async function ProfilPage() {
             {embed && (
               <div className="mb-10 overflow-hidden rounded-2xl shadow-[0_20px_60px_-30px_rgba(0,54,124,0.55)] bg-black">
                 <div className="aspect-video w-full">
-                  <iframe
-                    src={embed}
+                  <YouTubeEmbed
+                    videoUrl={profil.videoUrl}
                     title="Video profil Ma'had Aly Al-Imam Asy-Syathiby"
                     className="h-full w-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    loading="lazy"
                   />
                 </div>
               </div>

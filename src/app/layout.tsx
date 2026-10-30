@@ -1,11 +1,13 @@
 import type { Metadata } from 'next'
-import { Geist } from 'next/font/google'
+import { Geist, Amiri } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { StagingCookieScript } from '@/components/StagingCookieScript'
 import { GoogleAnalytics } from '@/components/GoogleAnalytics'
 import './globals.css'
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
+// Font Arab (naskh) untuk kalimat arabic pada modal sambutan landing page.
+const amiri = Amiri({ subsets: ['arabic'], weight: ['400', '700'], variable: '--font-amiri' })
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mahadaly.syathiby.id'
 const isStaging = process.env.NEXT_PUBLIC_APP_URL?.includes('tes') ?? false
@@ -73,7 +75,7 @@ export const metadata: Metadata = {
 // kita skip render komponen ini — kalau tidak, prod akan redirect loop ke /?key=bismillah.
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" className={`${geist.variable} h-full`}>
+    <html lang="id" className={`${geist.variable} ${amiri.variable} h-full scroll-smooth`}>
       <body className="min-h-full flex flex-col antialiased">
         {isStaging && <StagingCookieScript />}
         {children}

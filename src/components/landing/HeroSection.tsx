@@ -1,19 +1,20 @@
 import Link from 'next/link'
-import { BookOpen, Users, Award, Compass } from 'lucide-react'
-import prisma from '@/lib/prisma'
-import { getCatalogRekap } from '@/lib/program-catalog'
+import { PlayCircle } from 'lucide-react'
+import { getProfil } from '@/lib/profil'
+import { HeroVideo } from '@/components/landing/HeroVideo'
 
 /**
  * Hero landing page — TANPA nuansa PMB.
  * Informasi pendaftaran (kuota, biaya, tanggal) milik halaman /program/*.
+ *
+ * 30 Okt 2026: kolom kanan diganti video YouTube (autoplay) profil; 4 kartu
+ * info (Program Belajar, Waktu Pembelajaran, Santri & Mahasiswa, Kontak)
+ * dipindah ke halaman /program/hki. Tombol profil di hero dihapus — cukup
+ * link "Lihat Profil" di bawah video. Tombol hero ("Program" + "Pendaftaran")
+ * sekarang menggulir ke section "Program Belajar" di halaman ini.
  */
 export async function HeroSection() {
-  const [info, rekap] = await Promise.all([
-    prisma.infoPsb.findFirst({ orderBy: { tahunAjaran: 'desc' } }),
-    getCatalogRekap(),
-  ])
-  const tahun = info?.tahunAjaran ?? '2026'
-  const programs = rekap.programs
+  const profil = await getProfil()
 
   return (
     <section className="gradient-hero text-white py-20 px-4">
@@ -35,85 +36,43 @@ export async function HeroSection() {
               Hukum Keluarga Islam (HKI) S1 — program belajar ilmu-ilmu syar&apos;i{' '}
               <em>(bagi yang sudah bisa berbahasa arab pasif)</em>
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link
-                href="/program/hki"
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
+              <a
+                href="#pilih-program"
                 className="bg-brand-accent text-brand-primary font-bold px-8 py-4 rounded-xl text-center text-lg hover:opacity-90 transition-opacity shadow-lg"
               >
-                Pelajari Program
-              </Link>
-              <Link
-                href="/psb"
+                Program
+              </a>
+              <a
+                href="#pilih-program"
                 className="border-2 border-white text-white font-semibold px-8 py-4 rounded-xl text-center text-lg hover:bg-white/10 transition-colors"
               >
-                Pendaftaran {tahun}
-              </Link>
+                Pendaftaran
+              </a>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4">
-            <div className="bg-white/10 backdrop-blur rounded-xl p-5 border border-white/20">
-              <div className="flex items-center gap-3 mb-2">
-                <Compass className="h-6 w-6 text-brand-accent" />
-                <span className="font-semibold">Program Belajar</span>
-              </div>
-              <ul className="text-blue-100 text-sm space-y-1.5">
-                {programs.map((p) => (
-                  <li key={p.slug} className="flex items-start gap-2">
-                    <span className="mt-1 h-1.5 w-1.5 rounded-full bg-brand-accent shrink-0" />
-                    <span>
-                      <Link href={p.detailUrl} className="text-white font-semibold hover:underline">
-                        {p.nama}
-                      </Link>{' '}
-                      {p.jenjang ? `(${p.jenjang})` : ''}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="bg-white/10 backdrop-blur rounded-xl p-5 border border-white/20">
-              <div className="flex items-center gap-3 mb-2">
-                <BookOpen className="h-6 w-6 text-brand-accent" />
-                <span className="font-semibold">Waktu Pembelajaran</span>
-              </div>
-              <div className="text-blue-100 text-sm space-y-1">
-                <p>
-                  📱 <strong>Jum&apos;at Online</strong> — 20:00 WIB – Selesai
-                </p>
-                <p>
-                  🏫 <strong>Sabtu Offline</strong> — 07:30 – 15:30 WIB
-                </p>
+          {/* Video profil (YouTube) — autoplay muted + loop; suara dinyalakan
+              otomatis begitu pengunjung berinteraksi (klik/scroll/dll) atau
+              jendela sambutan ditutup. */}
+          <div>
+            <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-black shadow-2xl">
+              <div className="aspect-video w-full">
+                <HeroVideo
+                  videoUrl={profil.videoUrl}
+                  title="Video Profil Ma'had Aly Al-Imam Asy-Syathiby"
+                  className="h-full w-full"
+                />
               </div>
             </div>
-            <div className="bg-white/10 backdrop-blur rounded-xl p-5 border border-white/20">
-              <div className="flex items-center gap-3 mb-2">
-                <Users className="h-6 w-6 text-brand-accent" />
-                <span className="font-semibold">Santri &amp; Mahasiswa</span>
-              </div>
-              <div className="text-blue-100 text-sm space-y-1">
-                <p>
-                  Total terdaftar:{' '}
-                  <strong className="text-white">
-                    {rekap.totalPendaftar.toLocaleString('id-ID')} orang
-                  </strong>
-                </p>
-                <p>
-                  Tersedia: <strong className="text-white">{programs.length} program belajar</strong>
-                </p>
-              </div>
-            </div>
-            <div className="bg-white/10 backdrop-blur rounded-xl p-5 border border-white/20">
-              <div className="flex items-center gap-3 mb-2">
-                <Award className="h-6 w-6 text-brand-accent" />
-                <span className="font-semibold">Kontak</span>
-              </div>
-              <a
-                href="https://api.whatsapp.com/send?phone=628111516756"
-                className="text-blue-100 text-sm"
-              >
-                📞 0811-1516-756
-              </a>
-              <p className="text-blue-100 text-sm">🌐 www.mahadaly.syathiby.id</p>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-blue-100">
+              <span className="inline-flex items-center gap-1.5">
+                <PlayCircle className="h-4 w-4 text-brand-accent" />
+                Silahkan aktifkan suara pada menu video
+              </span>
+              <Link href="/profil" className="font-semibold text-brand-accent hover:underline">
+                Lihat Profil
+              </Link>
             </div>
           </div>
         </div>

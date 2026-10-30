@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Download } from 'lucide-react'
 import prisma from '@/lib/prisma'
+import { suggestPrefix } from '@/lib/export'
+import { ExportLink, VcfExportButton } from '@/components/admin/ExportButtons'
 import { AbsensiToggle, PrintButton } from './AbsensiClient'
 
 export const dynamic = 'force-dynamic'
@@ -30,6 +31,13 @@ export default async function AbsensiPage({ params, searchParams }: { params: Pr
   })
   const hadirHariIni = rows.filter((r) => r.attendances.some((a) => a.attendedAt >= start && a.attendedAt < end)).length
   const sel = 'rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm'
+  // Export mengikuti filter aktif (pencarian + jenis kelamin).
+  const exportUrl = (format: string) => {
+    const q = new URLSearchParams({ format })
+    if (sp.gender) q.set('gender', sp.gender)
+    if (sp.q) q.set('q', sp.q)
+    return `/api/admin/events/${id}/export?${q.toString()}`
+  }
 
   return (
     <div className="p-6 sm:p-8 space-y-5 print:p-0">
@@ -41,8 +49,17 @@ export default async function AbsensiPage({ params, searchParams }: { params: Pr
             {start.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · hadir hari ini {hadirHariIni} dari {rows.length} peserta valid
           </p>
         </div>
-        <div className="flex gap-2 print:hidden">
-          <a href={`/api/admin/events/${id}/export?format=xls`} className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium hover:bg-gray-50"><Download className="h-4 w-4" /> Excel</a>
+        <div className="flex flex-wrap gap-2 print:hidden">
+          <ExportLink href={exportUrl('xls')} label="Excel" kind="excel" />
+          <ExportLink href={exportUrl('csv')} label="CSV" kind="csv" />
+          <VcfExportButton
+            url={`/api/admin/events/${id}/export`}
+            params={{ q: sp.q, gender: sp.gender }}
+            storageKey={`event-${id}`}
+            suggestedPrefix={suggestPrefix(event.title, event.startDate)}
+            defaultTahun={String(event.startDate.getFullYear())}
+            previewNames={rows.map((r) => r.name)}
+          />
           <PrintButton />
         </div>
       </div>

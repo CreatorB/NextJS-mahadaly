@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { clsx } from 'clsx'
-import { LayoutDashboard, Users, Settings, LogOut, Shield, BookOpen, Menu, X, MapPin, Link2, Newspaper, BookOpenText, ListChecks, SlidersHorizontal, CalendarDays, KeyRound, UserRound } from 'lucide-react'
+import { LayoutDashboard, Users, Settings, LogOut, Shield, BookOpen, Menu, X, MapPin, Link2, Newspaper, BookOpenText, ListChecks, SlidersHorizontal, CalendarDays, KeyRound, UserRound, ClipboardCheck, Briefcase } from 'lucide-react'
 import { useState } from 'react'
 
 interface Props {
@@ -27,6 +27,8 @@ export function AdminSidebar({ nama, roleId }: Props) {
     { href: '/admin/kias/pengaturan', label: 'KIAS — Pengaturan PSB', icon: SlidersHorizontal },
     { href: '/admin/events', label: 'Event', icon: CalendarDays },
     { href: '/admin/events/pengguna', label: 'Pengguna & Reset', icon: KeyRound },
+    { href: '/admin/absen', label: 'Absen Kerja', icon: ClipboardCheck },
+    { href: '/admin/pegawai', label: 'Pegawai', icon: Briefcase },
     ...(roleId === 1 ? [
       { href: '/admin/wilayah', label: 'Wilayah', icon: MapPin },
       { href: '/admin/superadmin/users', label: 'Kelola User', icon: Shield },

@@ -33,6 +33,7 @@ model User {
   cardUpdates  CrossAppCardSetting[]
   posts        Post[]
   profil       Profil[]
+  pegawai      Pegawai?
   passwordChangedAt DateTime? @map("password_changed_at")
   resetTokens       PasswordResetToken[] @relation("UserResetTokens")
   resetTokensCreated PasswordResetToken[] @relation("ResetCreatedBy")
@@ -57,6 +58,76 @@ model PasswordResetToken {
   @@index([userId])
   @@index([type, usedAt])
   @@map("password_reset_tokens")
+}
+
+/// Master data pegawai (staf) Ma'had Aly.
+/// Satu pegawai bisa punya satu akun `users` (role `pegawai`) untuk absen kerja.
+model Pegawai {
+  id               Int       @id @default(autoincrement())
+  userId           Int?      @unique @map("user_id")
+  user             User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  nama             String
+  jabatan          String?
+  noHp             String?   @map("no_hp")
+  email            String?
+  nik              String?
+  jk               String?
+  tmpLahir         String?   @map("tmp_lahir")
+  tglLahir         DateTime? @map("tgl_lahir") @db.Date
+  pendidikan       String?
+  statusPernikahan String?   @map("status_pernikahan")
+  alamat           String?   @db.Text
+  tahunBergabung   String?   @map("tahun_bergabung")
+  kontakKeluarga   String?   @map("kontak_keluarga")
+  fotoUrl          String?   @map("foto_url")
+  isActive         Boolean   @default(true) @map("is_active")
+  absensi          AbsensiKerja[]
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  @@index([noHp])
+  @@index([nama])
+  @@map("pegawai")
+}
+
+/// Absensi kerja pegawai: satu baris per pegawai per tanggal.
+/// jamMasuk diisi saat absen masuk, jamPulang saat absen pulang.
+model AbsensiKerja {
+  id         Int       @id @default(autoincrement())
+  pegawaiId  Int       @map("pegawai_id")
+  pegawai    Pegawai   @relation(fields: [pegawaiId], references: [id], onDelete: Cascade)
+  tanggal    DateTime  @db.Date
+  jamMasuk   DateTime? @map("jam_masuk")
+  jamPulang  DateTime? @map("jam_pulang")
+  metode     String? // 'gps' | 'wifi'
+  latitude   Decimal?  @db.Decimal(10, 7)
+  longitude  Decimal?  @db.Decimal(10, 7)
+  jarakMeter Int?      @map("jarak_meter")
+  ip         String?
+  status     String    @default("hadir") // hadir | telat | izin | sakit | alpa
+  keterangan String?   @db.VarChar(255)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@unique([pegawaiId, tanggal])
+  @@index([tanggal])
+  @@map("absensi_kerja")
+}
+
+/// Pengaturan absensi kerja (singleton, id = 1): jam kerja, toleransi telat,
+/// titik koordinat ma'had + radius GPS, dan daftar IP Wi-Fi yang diizinkan.
+model PengaturanAbsensi {
+  id             Int      @id @default(1)
+  jamMasuk       String   @default("07:00:00") @map("jam_masuk")
+  jamPulang      String   @default("15:00:00") @map("jam_pulang")
+  toleransiMenit Int      @default(5) @map("toleransi_menit")
+  latitude       Decimal  @default(-6.3951467) @db.Decimal(10, 7)
+  longitude      Decimal  @default(106.9622492) @db.Decimal(10, 7)
+  radiusMeter    Int      @default(200) @map("radius_meter")
+  wifiIps        String   @default("103.178.146.98") @map("wifi_ips")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("pengaturan_absensi")
 }
 
 model Program {

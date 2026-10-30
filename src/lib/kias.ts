@@ -16,19 +16,9 @@ export const KIAS_REKENING = {
   atasNama: 'Yayasan Cahaya Sunnah',
 }
 
-export function formatRupiah(n: number) {
-  return `Rp ${n.toLocaleString('id-ID')}`
-}
-
-/** Ringkas nominal untuk tampilan harga besar: 250000 → "250rb", 3000000 → "3 jt". */
-export function formatRupiahShort(n: number) {
-  if (n >= 1_000_000) {
-    const jt = n / 1_000_000
-    return `${jt.toLocaleString('id-ID', { maximumFractionDigits: 2 })} jt`
-  }
-  if (n >= 1_000) return `${Math.round(n / 1_000)}rb`
-  return n.toLocaleString('id-ID')
-}
+// Format nominal dipindah ke modul client-safe (tidak mengimpor prisma).
+// Diekspor ulang di sini supaya import lama `@/lib/kias` tetap jalan.
+export { formatRupiah, formatRupiahShort } from './rupiah'
 
 type InfoWindow = { statusPsb: string; datetimeOpen: Date | null; datetimeClosed: Date | null }
 
@@ -70,6 +60,16 @@ export async function getKiasJenisPrograms() {
     orderBy: { urutan: 'asc' },
     include: { programs: { orderBy: { id: 'asc' } } },
   })
+}
+
+/**
+ * Jenjang KIAS yang punya minimal satu kelas dengan status 'Buka'.
+ * Jenjang yang seluruh kelasnya ditutup (mis. dinonaktifkan admin) disembunyikan dari
+ * halaman publik supaya tidak muncul sebagai "Belum dibuka".
+ * Data historis (peserta, kitab, pengajar) tetap utuh di database.
+ */
+export function jenisDenganKelasAktif<T extends { programs: { statusPsb: string }[] }>(jenis: T[]): T[] {
+  return jenis.filter((j) => j.programs.some((p) => p.statusPsb === 'Buka'))
 }
 
 /** Kode registrasi format KIAS lama: yy + menit + detik + urutan pendaftar tahun itu. Dipakai juga sebagai password awal. */

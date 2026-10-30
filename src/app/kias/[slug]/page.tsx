@@ -23,8 +23,11 @@ async function getJenis(slug: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const jenis = await prisma.kiasJenisProgram.findUnique({ where: { slug } })
-  if (!jenis) return { title: 'Program tidak ditemukan' }
+  const jenis = await prisma.kiasJenisProgram.findUnique({
+    where: { slug },
+    include: { programs: { select: { statusPsb: true } } },
+  })
+  if (!jenis || !jenis.programs.some((p) => p.statusPsb === 'Buka')) return { title: 'Program tidak ditemukan' }
   return { title: `KIAS ${jenis.namaJenis} | Asy-Syathiby`, description: jenis.tagline ?? undefined }
 }
 
@@ -32,6 +35,8 @@ export default async function KiasJenisPage({ params }: Props) {
   const { slug } = await params
   const [jenis, info] = await Promise.all([getJenis(slug), getActiveKiasInfo()])
   if (!jenis) notFound()
+  // Jenjang tanpa kelas aktif (mis. dinonaktifkan admin) disembunyikan juga di halaman detailnya.
+  if (!jenis.programs.some((p) => p.statusPsb === 'Buka')) notFound()
 
   const buka = isKiasPsbOpen(info) && KIAS_JENIS_DAFTAR.includes(jenis.id) && jenis.programs.some((p) => p.statusPsb === 'Buka')
   const kitabPerKelas = new Map<number, typeof jenis.kitab>()
@@ -46,7 +51,7 @@ export default async function KiasJenisPage({ params }: Props) {
       <main>
         <section className="gradient-hero text-white py-16 px-4">
           <div className="max-w-4xl mx-auto">
-            <Link href="/kias" className="inline-flex items-center gap-2 text-sm text-blue-100 hover:text-white mb-6">
+            <Link href="/program/kias" className="inline-flex items-center gap-2 text-sm text-blue-100 hover:text-white mb-6">
               <ArrowLeft className="h-4 w-4" /> Semua program KIAS
             </Link>
             <h1 className="text-4xl md:text-5xl font-bold mb-3">{jenis.namaJenis}</h1>
@@ -121,7 +126,7 @@ export default async function KiasJenisPage({ params }: Props) {
                     Daftar Sekarang
                   </a>
                 )}
-                <Link href="/kias#kelas" className="border-2 border-white font-semibold px-8 py-3 rounded-xl hover:bg-white/10">
+                <Link href="/program/kias#kelas" className="border-2 border-white font-semibold px-8 py-3 rounded-xl hover:bg-white/10">
                   Lihat Jadwal Kelas
                 </Link>
               </div>

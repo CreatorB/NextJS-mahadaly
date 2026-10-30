@@ -38,6 +38,30 @@ export function Footer() {
               </span>
             </div>
           </div>
+          {/* Program Section */}
+          <div className="md:w-1/3">
+            <h4 className="font-semibold mb-3">Program</h4>
+            <div className="flex flex-col gap-2 text-sm text-blue-200">
+              <a href="/program/hki" className="hover:text-white">
+                Ma&apos;had Aly — Hukum Keluarga Islam (HKI) S1
+              </a>
+              <a href="/program/kias" className="hover:text-white">
+                KIAS — Kursus Ilmu Bahasa Arab &amp; Syar&apos;i
+              </a>
+              <a href="/psb" className="hover:text-white">
+                Pendaftaran Santri &amp; Mahasiswa Baru
+              </a>
+              <a href="/profil" className="hover:text-white">
+                Profil Ma&apos;had Aly
+              </a>
+              <a href="/berita" className="hover:text-white">
+                Berita &amp; Kabar Kegiatan
+              </a>
+              <a href="/events" className="hover:text-white">
+                Event &amp; Kajian
+              </a>
+            </div>
+          </div>
           {/* Alamat Section */}
           <div className="md:w-1/3">
             <h4 className="font-semibold mb-3">Alamat</h4>

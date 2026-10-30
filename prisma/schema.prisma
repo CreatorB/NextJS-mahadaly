@@ -32,8 +32,7 @@ model User {
   createdLinks RegistrationLink[]
   cardUpdates  CrossAppCardSetting[]
   posts        Post[]
-  /// Waktu password terakhir diganti (null = belum pernah). Dipakai untuk
-  /// membatalkan sesi lama setelah reset password.
+  profil       Profil[]
   passwordChangedAt DateTime? @map("password_changed_at")
   resetTokens       PasswordResetToken[] @relation("UserResetTokens")
   resetTokensCreated PasswordResetToken[] @relation("ResetCreatedBy")
@@ -43,9 +42,6 @@ model User {
   @@map("users")
 }
 
-/// Token reset password.
-/// type = 'request' -> permintaan dari pengguna (belum ada link, admin yang menerbitkan).
-/// type = 'reset'   -> link set password baru yang dibuat admin (berlaku sekali).
 model PasswordResetToken {
   id          Int       @id @default(autoincrement())
   token       String    @unique
@@ -407,7 +403,6 @@ model Post {
   @@map("posts")
 }
 
-/// Akun Instagram publik; postingan diambil dari halaman embed profil (tanpa token).
 model InstagramAccount {
   id         Int             @id @default(autoincrement())
   username   String          @unique
@@ -424,7 +419,6 @@ model InstagramAccount {
   @@map("instagram_accounts")
 }
 
-/// Hanya metadata; tampilan memakai embed resmi Instagram (iframe), gambar tidak disimpan.
 model InstagramPost {
   id        Int              @id @default(autoincrement())
   shortcode String
@@ -449,7 +443,6 @@ model KiasPekerjaan {
   @@map("kias_pekerjaan")
 }
 
-/// Pendaftar/santri KIAS. Berkas (photo/ktp/transfer) = path relatif di UPLOAD_DIR (folder kias/).
 model KiasSantri {
   id                Int                @id @default(autoincrement())
   kodeRegistrasi    String             @unique @map("kode_registrasi")
@@ -605,4 +598,47 @@ model EventInternalLink {
   updatedAt     DateTime            @updatedAt @map("updated_at")
 
   @@map("event_internal_links")
+}
+
+/// Katalog program publik — sumber kebenaran untuk halaman /psb, /program/[slug],
+/// navigasi, sitemap, dan rekap jumlah pendaftar.
+///
+/// Kenapa tabel terpisah (bukan memakai tabel `program` atau `kias_program`)?
+/// - `program` dipakai form Ma'had Aly (relasi Santri.programId) dan tidak boleh
+///   dicampur program KIAS karena akan muncul di dropdown form.
+/// - `kias_program` berjenjang dua tingkat (KiasJenisProgram -> KiasProgram).
+///
+/// Katalog ini sengaja DATAR: satu baris = satu program yang tampil di web publik.
+/// Data & daftarSantri tetap di tabel aslinya (tidak digabung), jadi risiko
+/// migrasi data 361 baris menjadi nol — cukup tambah baris di sini untuk program baru.
+model ProgramCatalog {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  nama        String
+  jenjang     String?
+  ringkasan   String?  @db.Text @map("ringkasan")
+  jenisSistem String   @default("mahadaly") @map("jenis_sistem")
+  daftarPath  String?  @map("daftar_path")
+  labelFilter String?  @map("label_filter")
+  urutan      Int      @default(0)
+  tampilDiPsb Boolean  @default(true) @map("tampil_di_psb")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([tampilDiPsb, urutan])
+  @@map("program_katalog")
+}
+
+/// Profil lembaga (halaman /profil) — tabel SINGLETON: hanya satu baris
+/// (id = 1) berisi profil yang disunting dari panel admin lewat editor WYSIWYG.
+/// `konten` = HTML tersanitasi, `video_url` = URL YouTube untuk video utama.
+model Profil {
+  id          Int      @id @default(1)
+  konten      String   @db.LongText
+  videoUrl    String?  @map("video_url")
+  updatedById Int?     @map("updated_by_id")
+  updatedBy   User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("profil")
 }

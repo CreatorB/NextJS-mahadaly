@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Download } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { eventQuota } from '@/lib/events'
+import { suggestPrefix } from '@/lib/export'
+import { ExportLink, VcfExportButton } from '@/components/admin/ExportButtons'
 import { PesertaRowActions, TambahPeserta } from './PesertaClient'
 
 export const dynamic = 'force-dynamic'
@@ -36,6 +37,15 @@ export default async function PesertaPage({
     eventQuota(event),
   ])
   const pages = Math.max(1, Math.ceil(total / PER_PAGE))
+  // Export selalu mengikuti filter yang sedang aktif (q / gender / status).
+  const exportUrl = (format: string) => {
+    const q = new URLSearchParams({ format })
+    for (const k of ['q', 'gender', 'status'] as const) {
+      const v = sp[k]
+      if (v) q.set(k, v)
+    }
+    return `/api/admin/events/${id}/export?${q.toString()}`
+  }
   const qs = (extra: Record<string, string | number | undefined>) => {
     const q = new URLSearchParams()
     for (const [k, v] of Object.entries({ q: sp.q, gender: sp.gender, status: sp.status, ...extra })) if (v !== undefined && v !== '') q.set(k, String(v))
@@ -53,12 +63,17 @@ export default async function PesertaPage({
             Ikhwan {quota.ikhwan}{event.quotaIkhwan != null && ` / ${event.quotaIkhwan}`} · Akhwat {quota.akhwat}{event.quotaAkhwat != null && ` / ${event.quotaAkhwat}`} · {total} hasil filter
           </p>
         </div>
-        <div className="flex gap-2">
-          {(['csv', 'xls'] as const).map((f) => (
-            <a key={f} href={`/api/admin/events/${id}/export?format=${f}`} className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium hover:bg-gray-50">
-              <Download className="h-4 w-4" /> {f === 'xls' ? 'Excel' : 'CSV'}
-            </a>
-          ))}
+        <div className="flex flex-wrap gap-2">
+          <ExportLink href={exportUrl('xls')} label="Excel" kind="excel" />
+          <ExportLink href={exportUrl('csv')} label="CSV" kind="csv" />
+          <VcfExportButton
+            url={`/api/admin/events/${id}/export`}
+            params={{ q: sp.q, gender: sp.gender, status: sp.status }}
+            storageKey={`event-${id}`}
+            suggestedPrefix={suggestPrefix(event.title, event.startDate)}
+            defaultTahun={String(event.startDate.getFullYear())}
+            previewNames={rows.map((r) => r.name)}
+          />
         </div>
       </div>
 

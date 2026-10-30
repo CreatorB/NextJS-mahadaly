@@ -51,3 +51,7 @@ body {
 .prose-berita pre { background: #0f172a; color: #e2e8f0; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; }
 .prose-berita code { font-family: ui-monospace, monospace; font-size: 0.9em; }
 .prose-berita hr { border-color: #e2e8f0; }
+/* Embed video YouTube (halaman Profil & editor admin) — responsif 16:9 */
+.prose-berita iframe { width: 100%; aspect-ratio: 16 / 9; height: auto; border: 0; border-radius: 0.75rem; background: #000; }
+.prose-berita figure { margin: 0; }
+.prose-berita figcaption { font-size: 0.875rem; color: #64748b; margin-top: 0.5rem; }

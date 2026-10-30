@@ -27,7 +27,8 @@ interface Quota {
 
 interface Props {
   info: InfoPsb
-  quota: Quota
+  /** Kuota boleh null bila data info PSB tersedia tapi rekap belum bisa dihitung. */
+  quota: Quota | null
 }
 
 function Countdown({ target }: { target: Date }) {
@@ -242,7 +243,7 @@ export function PsbStatusBanner({ info, quota }: Props) {
           </button>
         </div>
 
-        {(quota.quotaIkhwan != null || quota.quotaAkhwat != null) && (
+        {quota && (quota.quotaIkhwan != null || quota.quotaAkhwat != null) && (
           <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {quota.quotaIkhwan != null && (
               <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">

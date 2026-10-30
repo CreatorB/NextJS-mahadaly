@@ -3,6 +3,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { KeyRound, Link2, Copy, Check, Search, RefreshCw, ShieldAlert, UserCheck, UserX, X } from 'lucide-react'
 import type { ManagedUserDTO } from '@/lib/event-users'
+import { suggestPrefix } from '@/lib/export'
+import { ExportLink, VcfExportButton } from '@/components/admin/ExportButtons'
 
 type Row = ManagedUserDTO
 
@@ -78,6 +80,20 @@ export function EventUsersClient({ initialRows }: { initialRows: Row[] }) {
   }, [q, type, load])
 
   const requests = useMemo(() => rows.filter((r) => r.adaRequest), [rows])
+
+  // Export mengikuti filter aktif (pencarian + jenis akun).
+  const exportParams = useMemo(() => ({ q, type }), [q, type])
+  const exportHref = (format: string) => {
+    const p = new URLSearchParams({ format })
+    if (q) p.set('q', q)
+    if (type && type !== 'all') p.set('type', type)
+    return `/api/admin/events/pengguna/export?${p.toString()}`
+  }
+  // Saran prefix VCF: dari judul event pertama yang muncul di daftar.
+  const prefixSaran = useMemo(() => {
+    const judul = rows.find((r) => r.eventList.length > 0)?.eventList[0]
+    return judul ? suggestPrefix(judul, new Date()) : ''
+  }, [rows])
 
   const run = async (
     user: Row,
@@ -174,6 +190,18 @@ export function EventUsersClient({ initialRows }: { initialRows: Row[] }) {
         >
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> Muat ulang
         </button>
+        <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+          <ExportLink href={exportHref('xls')} label="Excel" kind="excel" />
+          <ExportLink href={exportHref('csv')} label="CSV" kind="csv" />
+          <VcfExportButton
+            url="/api/admin/events/pengguna/export"
+            params={exportParams}
+            storageKey="pengguna"
+            suggestedPrefix={prefixSaran}
+            defaultTahun={String(new Date().getFullYear())}
+            previewNames={rows.map((r) => r.nama)}
+          />
+        </div>
       </div>
 
       {/* Tabel */}

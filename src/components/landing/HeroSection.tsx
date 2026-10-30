@@ -28,18 +28,12 @@ export async function HeroSection() {
               <br />
               <span className="text-brand-accent">Al-Imam Asy-Syathiby</span>
             </h1>
-            <p className="text-xl font-semibold text-blue-200 mb-2">
-              Kajian ilmu syar&apos;i &amp; bahasa Arab untuk Santri dan mahasiswa/mahasiswi
-            </p>
             <p className="text-2xl font-bold text-brand-accent mb-4">
               Belajar 4 Tahun &amp; Berijazah S1
             </p>
-            <p className="text-blue-100 mb-2">
+            <p className="text-blue-100 mb-8">
               Hukum Keluarga Islam (HKI) S1 — program belajar ilmu-ilmu syar&apos;i{' '}
               <em>(bagi yang sudah bisa berbahasa arab pasif)</em>
-            </p>
-            <p className="text-blue-100 font-medium mb-8">
-              📚 Kajian rutin Jum&apos;at online &amp; Sabtu offline
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link

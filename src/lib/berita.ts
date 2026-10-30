@@ -102,9 +102,14 @@ export type BeritaItem =
     }
 
 /** Feed gabungan artikel (terbit) + postingan Instagram, terbaru dulu. */
-export async function getBeritaFeed(opts: { kategori?: string; limit?: number } = {}): Promise<BeritaItem[]> {
+export async function getBeritaFeed(opts: { kategori?: string | string[]; limit?: number } = {}): Promise<BeritaItem[]> {
   const limit = opts.limit ?? 9
-  const kategoriFilter = opts.kategori ? { kategori: { slug: opts.kategori } } : {}
+  const kategoriList = opts.kategori
+    ? (Array.isArray(opts.kategori) ? opts.kategori : [opts.kategori])
+    : []
+  const kategoriFilter = kategoriList.length
+    ? { kategori: { slug: { in: kategoriList } } }
+    : {}
 
   const [posts, igPosts] = await Promise.all([
     prisma.post.findMany({

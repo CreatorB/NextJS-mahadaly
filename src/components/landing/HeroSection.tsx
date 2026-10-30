@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { UserRound, PlayCircle } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { getProfil } from '@/lib/profil'
-import { YouTubeEmbed } from '@/components/YouTubeEmbed'
+import { HeroVideo } from '@/components/landing/HeroVideo'
 
 /**
  * Hero landing page — TANPA nuansa PMB.
@@ -62,16 +62,14 @@ export async function HeroSection() {
             </div>
           </div>
 
-          {/* Video profil (YouTube) — autoplay muted + loop */}
+          {/* Video profil (YouTube) — autoplay muted + loop; suara dinyalakan
+              otomatis setelah jendela sambutan ditutup. */}
           <div>
             <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-black shadow-2xl">
               <div className="aspect-video w-full">
-                <YouTubeEmbed
+                <HeroVideo
                   videoUrl={profil.videoUrl}
                   title="Video Profil Ma'had Aly Al-Imam Asy-Syathiby"
-                  autoplay
-                  loop
-                  hideRelated
                   className="h-full w-full"
                 />
               </div>
@@ -79,7 +77,7 @@ export async function HeroSection() {
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-blue-100">
               <span className="inline-flex items-center gap-1.5">
                 <PlayCircle className="h-4 w-4 text-brand-accent" />
-                Video profil — suara dimatikan otomatis, bisa dinyalakan lewat tombol player.
+                Video profil — diputar otomatis, bersuara setelah jendela sambutan ditutup.
               </span>
               <Link href="/profil" className="font-semibold text-brand-accent hover:underline">
                 Baca halaman Profil →

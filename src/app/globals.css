@@ -12,6 +12,7 @@
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-arabic: var(--font-amiri);
 }
 
 :root {
@@ -35,6 +36,21 @@ body {
 
 .gradient-hero {
   background: linear-gradient(135deg, #00367c 0%, #00709f 60%, #35a2c9 100%);
+}
+
+/* Modal sambutan landing page (salam + ucapan selamat datang) */
+.syathiby-modal-in {
+  animation: syathiby-modal-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes syathiby-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* Konten artikel berita (HTML dari editor) */

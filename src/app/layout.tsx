@@ -75,7 +75,7 @@ export const metadata: Metadata = {
 // kita skip render komponen ini — kalau tidak, prod akan redirect loop ke /?key=bismillah.
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" className={`${geist.variable} ${amiri.variable} h-full`}>
+    <html lang="id" className={`${geist.variable} ${amiri.variable} h-full scroll-smooth`}>
       <body className="min-h-full flex flex-col antialiased">
         {isStaging && <StagingCookieScript />}
         {children}

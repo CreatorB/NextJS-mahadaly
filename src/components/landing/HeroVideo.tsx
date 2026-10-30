@@ -1,7 +1,12 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { youtubeId, youtubeEmbedUrlWith } from '@/lib/youtube'
+import {
+  getWelcomeState,
+  subscribeWelcome,
+  type WelcomeState,
+} from '@/lib/welcome-modal-state'
 import { WELCOME_CLOSED_EVENT } from './WelcomeModal'
 
 /**
@@ -87,9 +92,18 @@ export function HeroVideo({
   const wantSoundRef = useRef(false)
   const unmuteAtRef = useRef(0)
   const [fallbackSrc, setFallbackSrc] = useState<string | null>(null)
+  // Status modal sambutan: video baru boleh dibuat setelah modal ditutup
+  // (atau memang tidak ada modal), supaya tidak autoplay selama modal terbuka.
+  const welcome = useSyncExternalStore(
+    subscribeWelcome,
+    getWelcomeState,
+    () => 'pending' as WelcomeState,
+  )
 
   useEffect(() => {
     if (!id) return
+    // Modal masih terbuka -> jangan muat/putar video dulu.
+    if (welcome !== 'closed') return
     let cancelled = false
 
     loadYouTubeApi()
@@ -102,7 +116,10 @@ export function HeroVideo({
           videoId: id,
           playerVars: {
             autoplay: 1,
-            mute: 1,
+            // Kalau modal baru saja ditutup (pengguna menekan X) -> langsung
+            // berbunyi; kalau tanpa modal -> mulai muted, suara nyala saat
+            // pengunjung berinteraksi.
+            mute: wantSoundRef.current ? 0 : 1,
             loop: 1,
             playlist: id,
             rel: 0,
@@ -112,8 +129,9 @@ export function HeroVideo({
           events: {
             onReady: (e: { target: Player & { getIframe?: () => HTMLIFrameElement } }) => {
               try {
-                // Kalau pengunjung sudah berinteraksi sungguhan, langsung berbunyi.
-                if (wantSoundRef.current && hasUserActivation()) {
+                // wantSoundRef hanya true setelah gesture pengguna (tutup modal
+                // atau interaksi pertama) -> aman untuk berbunyi.
+                if (wantSoundRef.current) {
                   unmuteAtRef.current = Date.now()
                   e.target.unMute?.()
                 } else {
@@ -165,7 +183,7 @@ export function HeroVideo({
     return () => {
       cancelled = true
     }
-  }, [id, videoUrl])
+  }, [id, videoUrl, welcome])
 
   // Nyalakan suara + pastikan video berjalan.
   const unmuteAndPlay = useCallback(() => {
@@ -187,6 +205,9 @@ export function HeroVideo({
   useEffect(() => {
     const onWelcomeClosed = () => {
       wantSoundRef.current = true
+      // Player belum dibuat (baru dibuat setelah modal tertutup) -> cukup tandai
+      // flag; pembuatan player memakai mute=0 sehingga langsung berbunyi.
+      if (!playerRef.current) return
       if (unmuteAndPlay()) return
       // Fallback: ganti src iframe ke versi tanpa mute.
       setFallbackSrc(
@@ -214,6 +235,12 @@ export function HeroVideo({
       if (!hasUserActivation()) return
       done = true
       wantSoundRef.current = true
+      // Player belum ada (mis. masih menunggu modal ditutup) -> pembuatan
+      // player nanti memakai mute=0.
+      if (!playerRef.current) {
+        cleanup()
+        return
+      }
       if (!unmuteAndPlay()) {
         setFallbackSrc(
           youtubeEmbedUrlWith(videoUrl, {

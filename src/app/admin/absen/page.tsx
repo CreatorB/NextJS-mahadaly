@@ -2,6 +2,7 @@ import Link from 'next/link'
 import prisma from '@/lib/prisma'
 import { ExportLink } from '@/components/admin/ExportButtons'
 import { ambilRekap } from '@/lib/rekap-absensi'
+import { tanggalStringWib } from '@/lib/wib'
 import { AbsenClient } from './AbsenClient'
 
 export const dynamic = 'force-dynamic'
@@ -138,6 +139,7 @@ export default async function AdminAbsenPage({
             <option value="telat">Telat</option>
             <option value="izin">Izin</option>
             <option value="sakit">Sakit</option>
+            <option value="cuti">Cuti</option>
             <option value="alpa">Alpa</option>
           </select>
         </div>
@@ -184,7 +186,7 @@ export default async function AdminAbsenPage({
         summary={summary}
         termasukTanpaAbsen={termasukTanpaAbsen}
         daftarPegawai={daftarPegawai.map((p) => ({ id: p.id, nama: p.nama }))}
-        tanggalDefault={new Date().toISOString().slice(0, 10)}
+        tanggalDefault={tanggalStringWib()}
       />
     </div>
   )

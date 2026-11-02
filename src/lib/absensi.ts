@@ -7,8 +7,12 @@
 
 import prisma from '@/lib/prisma'
 import { NAMA_HARI } from '@/lib/hari'
+import { menitWib, tanggalHariIniWib, tanggalStringWib } from '@/lib/wib'
 
 export { NAMA_HARI }
+// Helper waktu WIB dipisah ke `lib/wib.ts` (tanpa Prisma) agar bisa dipakai
+// juga di client component. Diekspor ulang di sini demi kompatibilitas.
+export { menitWib, tanggalHariIniWib, tanggalStringWib }
 
 export const METODE_GPS = 'gps'
 export const METODE_WIFI = 'wifi'
@@ -68,31 +72,11 @@ export interface OverridesJamKerja {
   toleransiMenit?: number | null
 }
 
-const WIB_OFFSET_MS = 7 * 3600 * 1000
-
-/** Tanggal hari ini di WIB, dinormalisasi ke UTC tengah malam (untuk kolom DATE). */
-export function tanggalHariIniWib(now: Date = new Date()): Date {
-  const wib = new Date(now.getTime() + WIB_OFFSET_MS)
-  return new Date(Date.UTC(wib.getUTCFullYear(), wib.getUTCMonth(), wib.getUTCDate()))
-}
-
-/** Tanggal (YYYY-MM-DD) hari ini di WIB. */
-export function tanggalStringWib(now: Date = new Date()): string {
-  const wib = new Date(now.getTime() + WIB_OFFSET_MS)
-  return wib.toISOString().slice(0, 10)
-}
-
 /** Ubah string "HH:MM" / "HH:MM:SS" menjadi-menit sejak tengah malam. */
 export function jamKeMenit(jam: string): number {
   const [h, m] = jam.split(':').map((x) => Number.parseInt(x, 10))
   if (!Number.isFinite(h)) return 0
   return h * 60 + (Number.isFinite(m) ? m : 0)
-}
-
-/** Menit sejak tengah malam dari sebuah objek Date, dalam zona WIB. */
-export function menitWib(date: Date): number {
-  const wib = new Date(date.getTime() + WIB_OFFSET_MS)
-  return wib.getUTCHours() * 60 + wib.getUTCMinutes()
 }
 
 /** "07:00:00" -> "07:00" */

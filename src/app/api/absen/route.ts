@@ -15,6 +15,7 @@ import {
 } from '@/lib/absensi'
 import { jamKerjaUntuk, muatKonteksJadwal } from '@/lib/jadwal'
 import { pengajuanDisetujuiPadaTanggal } from '@/lib/pengajuan'
+import { ipEfektif } from '@/lib/ip'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -83,6 +84,7 @@ export async function POST(req: NextRequest) {
     let longitude: number | null = null
     let jarak: number | null = null
     let ip: string | null = null
+    let catatanIp: string | null = null
 
     if (metode === METODE_GPS) {
       const lat = Number(body.latitude)
@@ -103,12 +105,31 @@ export async function POST(req: NextRequest) {
       longitude = lon
       jarak = hasil.jarak
     } else {
-      ip = body.ip?.trim() || null
-      if (!ipDiizinkan(ip, pengaturan)) {
+      // IP yang dipakai adalah IP yang dilihat server (dari proxy di depan
+      // aplikasi), bukan nilai yang dikirim browser, supaya absen Wi-Fi
+      // tidak bisa dipalsukan hanya dengan mengirim body `ip`.
+      const ipInfo = ipEfektif(req, body.ip)
+      ip = ipInfo.ip
+      if (!ip) {
         return Response.json(
-          fail("Wi-Fi ini bukan Wi-Fi ma'had. Hubungkan ke Wi-Fi ma'had lalu absen kembali."),
+          fail(
+            'IP perangkat tidak bisa diverifikasi. Absen Wi-Fi tidak tersedia, gunakan GPS atau hubungi admin.',
+          ),
           { status: 400 },
         )
+      }
+      if (!ipDiizinkan(ip, pengaturan)) {
+        return Response.json(
+          fail(
+            "Wi-Fi ini bukan Wi-Fi ma'had. Hubungkan ke Wi-Fi ma'had lalu absen kembali.",
+          ),
+          { status: 400 },
+        )
+      }
+      // Bila IP hanya bisa diambil dari BODY (server tanpa proxy di depannya),
+      // tandai agar admin bisa mengauditnya.
+      if (ipInfo.dariKlien) {
+        catatanIp = 'IP dibaca dari perangkat (server tidak menerima IP klien dari proxy)'
       }
     }
 
@@ -128,6 +149,7 @@ export async function POST(req: NextRequest) {
           jarakMeter: jarak,
           ip,
           status: statusByJamMasuk(now, pengaturan),
+          keterangan: catatanIp,
         },
       })
       return Response.json(ok(dibuat, 'Absen masuk berhasil dicatat.'))

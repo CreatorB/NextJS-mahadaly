@@ -642,7 +642,7 @@ export function AbsenClient({
                 {[
                   'Pegawai',
                   'Jabatan',
-                  'Jam Kerja',
+                  'Jam Kerja (hari ini)',
                   'Hadir',
                   'Telat',
                   'Izin',

@@ -6,25 +6,34 @@
  * POST body `ip` berisi IP Wi-Fi ma'had). IP yang dipakai server adalah
  * IP publik klien yang dilaporkan proxy di depan aplikasi.
  *
- * Urutan sumber (pertama yang tersedia dipakai):
- *   1. `cf-connecting-ip`  -> Cloudflare menimpanya dengan IP klien asli,
- *                              jadi tidak bisa dipalsukan browser.
- *   2. `x-real-ip`         -> diisi reverse proxy asal.
- *   3. `x-forwarded-for`   -> rantai proxy; entri pertama adalah klien asli
- *                              (entri berikutnya adalah proxy di antaranya).
- *   4. `x-client-ip`       -> dipakai beberapa reverse proxy lama.
+ * Rantai header pada deployment ini (Cloudflare -> proxy origin -> Next.js):
+ *
+ *   x-forwarded-for: <nilai dari browser, bisa dipalsukan>, <IP asli klien>,
+ *                    <IP edge Cloudflare>
+ *
+ * Cloudflare selalu menambahkan IP klien asli setelah nilai yang dikirim
+ * browser, dan proxy origin menambahkan satu hop (IP edge Cloudflare).
+ * Karena itu IP klien asli adalah entri KEDUA DARI KANAN. Contoh nyata dari
+ * log produksi: "10.254.168.6, 103.28.107.41, 104.22.80.137" -> IP asli
+ * klien adalah 103.28.107.41 (entri kedua dari kanan), bukan 10.254.168.6
+ * yang dipalsukan browser.
+ *
+ * Sumber yang dipakai berurutan:
+ *   1. `cf-connecting-ip` -> Cloudflare menimpanya dengan IP klien asli,
+ *      jadi tidak bisa dipalsukan browser.
+ *   2. `x-forwarded-for`  -> entri kedua dari kanan (lihat penjelasan di atas).
+ *   3. `x-real-ip`        -> dipakai kalau proxy tidak mengirim XFF.
+ *   4. Body request (`ip`) -> hanya cadangan bila server tidak menerima IP
+ *      klien dari proxy; ditandai agar bisa diaudit admin.
  *
  * Module ini tidak meng-import Prisma sehingga aman dipakai di client
  * component maupun route handler.
  */
 
 /** Header yang dipakai proxy untuk meneruskan IP klien. */
-const HEADER_IP = [
-  'cf-connecting-ip',
-  'x-real-ip',
-  'x-forwarded-for',
-  'x-client-ip',
-] as const
+const HEADER_CF_IP = 'cf-connecting-ip'
+const HEADER_XFF = 'x-forwarded-for'
+const HEADER_REAL_IP = 'x-real-ip'
 
 export type SumberIp = 'server' | 'klien' | 'tidak-ada'
 
@@ -39,16 +48,28 @@ export interface IpEfektif {
   dariKlien: boolean
 }
 
-/** Bersihkan satu nilai IP: potong spasi, port, dan tanda kutip. */
+/** Bersihkan satu nilai IP: potong spasi dan tanda kutip. */
 function bersihkanIp(nilai: string | null | undefined): string | null {
   if (!nilai) return null
-  let v = nilai.trim()
-  if (!v) return null
-  // Buang tanda kutip yang kadang ditambahkan proxy.
-  v = v.replace(/^"|"$/g, '').trim()
-  // "1.2.3.4:5678" -> "1.2.3.4" (header XFF tidak memakai port, tapi aman).
-  if (/^\d{1,3}(\.\d{1,3}){3}:\d+$/.test(v)) v = v.split(':')[0]
+  const v = nilai.trim().replace(/^"|"$/g, '').trim()
   return v || null
+}
+
+/**
+ * Ambil IP klien dari rantai XFF.
+ *
+ * Entri kedua dari kanan adalah IP klien asli: browser hanya bisa
+ * menyisipkan nilai di depan, sedangkan proxy menambahkan hop di belakang.
+ */
+function ipDariXff(mentah: string | null): string | null {
+  if (!mentah) return null
+  const bagian = mentah
+    .split(',')
+    .map((b) => bersihkanIp(b))
+    .filter((b): b is string => !!b)
+  if (bagian.length === 0) return null
+  if (bagian.length === 1) return bagian[0]
+  return bagian[bagian.length - 2]
 }
 
 /**
@@ -57,13 +78,19 @@ function bersihkanIp(nilai: string | null | undefined): string | null {
  */
 export function ipDariRequest(req: Request): string | null {
   const headers = req.headers
-  for (const nama of HEADER_IP) {
-    const mentah = headers.get(nama)
-    if (!mentah) continue
-    // XFF bisa berisi rantai "klien, proxy1, proxy2"; entri pertama = klien.
-    const kandidat = bersihkanIp(mentah.split(',')[0])
-    if (kandidat) return kandidat
-  }
+
+  // 1. Cloudflare: nilai ini ditimpanya Cloudflare, tidak bisa dipalsukan.
+  const cf = bersihkanIp(headers.get(HEADER_CF_IP))
+  if (cf) return cf
+
+  // 2. Rantai proxy: ambil entri kedua dari kanan.
+  const xff = ipDariXff(headers.get(HEADER_XFF))
+  if (xff) return xff
+
+  // 3. Fallback proxy lama.
+  const real = bersihkanIp(headers.get(HEADER_REAL_IP))
+  if (real) return real
+
   return null
 }
 

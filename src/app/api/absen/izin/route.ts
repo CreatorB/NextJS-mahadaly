@@ -3,14 +3,17 @@ import prisma from '@/lib/prisma'
 import { verifyTokenFromRequest } from '@/lib/auth'
 import { fail, ok } from '@/types/api'
 import { ambilPegawaiDariUserId } from '@/lib/pegawai'
-import { STATUS_IZIN, tanggalHariIniWib } from '@/lib/absensi'
+import { tanggalHariIniWib } from '@/lib/absensi'
+import { LABEL_JENIS } from '@/lib/pengajuan'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 /**
  * POST /api/absen/izin
- * Pegawai mengajukan izin (tidak masuk kerja) untuk hari ini.
+ * Endpoint ringkas: mengajukan izin untuk hari ini.
+ * Alur STANDAR: pengajuan masuk antrean admin (status `menunggu`), baru
+ * setelah disetujui menjadi catatan izin.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -38,18 +41,35 @@ export async function POST(req: NextRequest) {
       return Response.json(fail('Anda sudah absen masuk hari ini, izin tidak bisa diajukan.'), { status: 400 })
     }
 
-    const data = await prisma.absensiKerja.upsert({
-      where: { pegawaiId_tanggal: { pegawaiId: pegawai.id, tanggal } },
-      create: {
+    const bentrok = await prisma.pengajuan.findFirst({
+      where: {
         pegawaiId: pegawai.id,
-        tanggal,
-        status: STATUS_IZIN,
-        keterangan,
+        status: 'menunggu',
+        tanggalMulai: { lte: tanggal },
+        tanggalSelesai: { gte: tanggal },
       },
-      update: { status: STATUS_IZIN, keterangan },
+    })
+    if (bentrok) {
+      return Response.json(fail('Sudah ada pengajuan menunggu untuk hari ini.'), { status: 400 })
+    }
+
+    const pengajuan = await prisma.pengajuan.create({
+      data: {
+        pegawaiId: pegawai.id,
+        jenis: 'izin',
+        tanggalMulai: tanggal,
+        tanggalSelesai: tanggal,
+        keterangan,
+        status: 'menunggu',
+      },
     })
 
-    return Response.json(ok(data, 'Pengajuan izin terkirim.'))
+    return Response.json(
+      ok(
+        { id: pengajuan.id, status: pengajuan.status },
+        `Pengajuan ${LABEL_JENIS.izin} terkirim, menunggu persetujuan admin.`,
+      ),
+    )
   } catch (e) {
     console.error(e)
     return Response.json(fail('Terjadi kesalahan saat mengirim izin.'), { status: 500 })

@@ -17,6 +17,7 @@ export const STATUS_HADIR = 'hadir'
 export const STATUS_TELAT = 'telat'
 export const STATUS_IZIN = 'izin'
 export const STATUS_SAKIT = 'sakit'
+export const STATUS_CUTI = 'cuti'
 export const STATUS_ALPA = 'alpa'
 
 export const SEMUA_STATUS = [
@@ -24,7 +25,18 @@ export const SEMUA_STATUS = [
   STATUS_TELAT,
   STATUS_IZIN,
   STATUS_SAKIT,
+  STATUS_CUTI,
   STATUS_ALPA,
+] as const
+
+/** Status yang boleh diisi oleh admin / hasil persetujuan pengajuan. */
+export const STATUS_ADMIN = [
+  STATUS_IZIN,
+  STATUS_SAKIT,
+  STATUS_CUTI,
+  STATUS_ALPA,
+  STATUS_HADIR,
+  STATUS_TELAT,
 ] as const
 
 export type MetodeAbsen = typeof METODE_GPS | typeof METODE_WIFI
@@ -39,6 +51,14 @@ export interface PengaturanAbsensi {
   wifiIps: string[]
   /** Hari kerja: 0=Minggu ... 6=Sabtu. Dipakai untuk hitung otomatis "tanpa absen". */
   hariKerja: number[]
+  /** Batas keterlambatan (menit) sebelum absen otomatis dihitung alpa. 0 = tidak otomatis. */
+  batasTelatMenit: number
+  /** Berapa hari setelah tanggal kerja, "tanpa absen" otomatis disimpan sebagai alpa. */
+  batasAlpaHari: number
+  /** Simpan otomatis catatan alpa untuk hari yang lewat tanpa keterangan. */
+  autoSimpanAlpa: boolean
+  /** Shift default bila pegawai tidak punya jadwal shift per hari. */
+  defaultShiftId: number | null
 }
 
 /** Bagian pegawai yang boleh overriding jam kerja global. */
@@ -114,6 +134,10 @@ export async function ambilPengaturanAbsensi(): Promise<PengaturanAbsensi> {
       radiusMeter: 200,
       wifiIps: ['103.178.146.98'],
       hariKerja: [0, 1, 2, 3, 4, 5, 6],
+      batasTelatMenit: 0,
+      batasAlpaHari: 1,
+      autoSimpanAlpa: false,
+      defaultShiftId: null,
     }
   }
   return {
@@ -128,6 +152,10 @@ export async function ambilPengaturanAbsensi(): Promise<PengaturanAbsensi> {
       .map((ip) => ip.trim())
       .filter(Boolean),
     hariKerja: parseHariKerja(row.hariKerja),
+    batasTelatMenit: row.batasTelatMenit,
+    batasAlpaHari: row.batasAlpaHari,
+    autoSimpanAlpa: row.autoSimpanAlpa,
+    defaultShiftId: row.defaultShiftId,
   }
 }
 
@@ -150,16 +178,67 @@ export function pengaturanEfektif(
 }
 
 /**
+ * Menit keterlambatan compared terhadap jam mulai kerja + toleransi.
+ * 0 = tidak terlambat.
+ */
+export function menitKeterlambatan(jamMasuk: Date, pengaturan: PengaturanAbsensi): number {
+  const batas = jamKeMenit(pengaturan.jamMasuk) + pengaturan.toleransiMenit
+  const selisih = menitWib(jamMasuk) - batas
+  return selisih > 0 ? selisih : 0
+}
+
+/**
  * Status kehadiran berdasarkan jam masuk (dibandingkan dengan jam mulai kerja
  * + toleransi keterlambatan).
+ *
+ * Bila `batasTelatMenit` > 0, keterlambatan yang melebihi batas tersebut
+ * otomatis berstatus alpa (aturan standar: telat lebih dari batas = tidak hadir).
  */
 export function statusByJamMasuk(
   jamMasuk: Date,
   pengaturan: PengaturanAbsensi,
 ): string {
-  const mulai = jamKeMenit(pengaturan.jamMasuk)
-  const telat = mulai + pengaturan.toleransiMenit
-  return menitWib(jamMasuk) > telat ? STATUS_TELAT : STATUS_HADIR
+  const terlambat = menitKeterlambatan(jamMasuk, pengaturan)
+  if (terlambat <= 0) return STATUS_HADIR
+  if (pengaturan.batasTelatMenit > 0 && terlambat > pengaturan.batasTelatMenit) {
+    return STATUS_ALPA
+  }
+  return STATUS_TELAT
+}
+
+/**
+ * Durasi kerja(target) dalam menit, dikurangi waktu istirahat bila ada.
+ */
+export function durasiTargetMenit(
+  jamMasuk: string,
+  jamPulang: string,
+  jamIstirahatMulai?: string | null,
+  jamIstirahatSelesai?: string | null,
+): number {
+  const mulai = jamKeMenit(jamMasuk)
+  const selesai = jamKeMenit(jamPulang)
+  let durasi = selesai - mulai
+  if (durasi < 0) durasi += 24 * 60
+  if (jamIstirahatMulai && jamIstirahatSelesai) {
+    const istirahat = jamKeMenit(jamIstirahatSelesai) - jamKeMenit(jamIstirahatMulai)
+    durasi -= istirahat > 0 ? istirahat : 0
+  }
+  return durasi > 0 ? durasi : 0
+}
+
+/**
+ * Hitung menit lembur: durasi kerja nyata dikurangi durasi target.
+ * Nol bila kerja nyata tidak lebih dari target.
+ */
+export function hitungLemburMenit(
+  jamMasuk: Date | null,
+  jamPulang: Date | null,
+  targetMenit: number,
+): number {
+  if (!jamMasuk || !jamPulang) return 0
+  const durasi = Math.round((jamPulang.getTime() - jamMasuk.getTime()) / 60000)
+  const lembur = durasi - targetMenit
+  return lembur > 0 ? lembur : 0
 }
 
 /** Daftar IP Wi-Fi yang diizinkan (dari pengaturan). */

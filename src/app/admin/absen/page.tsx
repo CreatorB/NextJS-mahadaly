@@ -59,6 +59,8 @@ export default async function AdminAbsenPage({
       jarakMeter: r.jarakMeter,
       status: r.status,
       keterangan: r.keterangan,
+      menitTelat: r.menitTelat,
+      lemburMenit: r.lemburMenit,
     })),
     ...tanpaAbsen.map((t) => ({
       id: null as number | null,
@@ -164,19 +166,25 @@ export default async function AdminAbsenPage({
           jamMasuk: p.jamMasuk,
           jamPulang: p.jamPulang,
           jamKerjaManual: p.jamKerjaManual,
+          namaShift: p.namaShift,
           hadir: p.hadir,
           telat: p.telat,
           izin: p.izin,
           sakit: p.sakit,
+          cuti: p.cuti,
           alpa: p.alpa,
           hariMasuk: p.hariMasuk,
           totalCatatan: p.totalCatatan,
           rataRataJam: p.rataRataJam,
           durasiTargetJam: p.durasiTargetJam,
+          menitTelat: p.menitTelat,
+          lemburMenit: p.lemburMenit,
           belumPulang: p.belumPulang,
         }))}
         summary={summary}
         termasukTanpaAbsen={termasukTanpaAbsen}
+        daftarPegawai={daftarPegawai.map((p) => ({ id: p.id, nama: p.nama }))}
+        tanggalDefault={new Date().toISOString().slice(0, 10)}
       />
     </div>
   )

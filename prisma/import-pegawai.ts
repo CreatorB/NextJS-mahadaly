@@ -2,11 +2,12 @@
  * Import data pegawai dari prisma/data/pegawai.json (hasil konversi
  * "DATA PEGAWAI MAHAD ALY.xlsx" oleh prisma/import-pegawai-xlsx.py).
  *
- * Pakai:  npx tsx prisma/import-pegawai.ts
+ * Pakai:  npm run db:import-pegawai
  *
  * Sifat: idempoten — boleh dijalankan berkali-kali. Data pegawai dicocokkan
  * dengan urutan: NIK -> (nama + noHp) -> nama. Akun `users` hanya dibuat
  * bila belum ada; password awal = 123456 (bisa diganti pegawai sendiri).
+ * Nomor WhatsApp, email, dan seluruh detail profil ikut diperbarui.
  */
 
 import 'dotenv/config'
@@ -18,11 +19,14 @@ import { PrismaClient } from '../src/generated/prisma/client'
 
 const PASSWORD_AWAL = '123456'
 const ROLE_ID_PEGAWAI = 5
+const SUMBER = 'DATA PEGAWAI MAHAD ALY.xlsx'
 
 interface DataPegawai {
+  kode: string | null
   nama: string
   jabatan: string | null
   noHp: string | null
+  noHpMentah: string | null
   email: string | null
   nik: string | null
   jk: string | null
@@ -35,6 +39,11 @@ interface DataPegawai {
   kontakKeluarga: string | null
   fotoUrl: string | null
   ijazahUrl: string | null
+}
+
+interface IsiFile {
+  catatan: string[]
+  pegawai: DataPegawai[]
 }
 
 const adapter = new PrismaMariaDb(process.env.DATABASE_URL!)
@@ -60,16 +69,18 @@ async function cariPegawai(d: DataPegawai) {
 
 async function main() {
   const file = join(process.cwd(), 'prisma', 'data', 'pegawai.json')
-  let daftar: DataPegawai[]
+  let isi: IsiFile
   try {
-    daftar = JSON.parse(readFileSync(file, 'utf8')) as DataPegawai[]
+    const mentah = JSON.parse(readFileSync(file, 'utf8')) as IsiFile | DataPegawai[]
+    isi = Array.isArray(mentah)
+      ? { catatan: [], pegawai: mentah as DataPegawai[] }
+      : { catatan: mentah.catatan ?? [], pegawai: mentah.pegawai ?? [] }
   } catch (e) {
     console.error(`Gagal membaca ${file}. Jalankan dulu: python prisma/import-pegawai-xlsx.py`)
     console.error(e)
     process.exit(1)
   }
 
-  // Pastikan role pegawai ada.
   await prisma.role.upsert({
     where: { namaRole: 'pegawai' },
     update: {},
@@ -79,13 +90,15 @@ async function main() {
   let dibuat = 0
   let diperbarui = 0
   let akunBaru = 0
-  const catatan: string[] = []
+  let akunDiperbarui = 0
+  const catatan: string[] = [...isi.catatan]
 
-  for (const d of daftar) {
+  for (const d of isi.pegawai) {
     const nama = (d.nama ?? '').trim()
     if (!nama) continue
 
     const data = {
+      kode: teks(d.kode),
       nama,
       jabatan: teks(d.jabatan),
       noHp: teks(d.noHp),
@@ -100,6 +113,7 @@ async function main() {
       tahunBergabung: teks(d.tahunBergabung),
       kontakKeluarga: teks(d.kontakKeluarga),
       fotoUrl: teks(d.fotoUrl),
+      ijazahUrl: teks(d.ijazahUrl),
       isActive: true,
     }
 
@@ -110,6 +124,20 @@ async function main() {
 
     if (lama) diperbarui++
     else dibuat++
+
+    // Nomor WhatsApp bentrok dengan pegawai lain -> cari yang sama-sama bentrok.
+    if (data.noHp) {
+      const bentrok = await prisma.pegawai.findFirst({
+        where: { noHp: data.noHp, NOT: { id: pegawai.id } },
+        select: { nama: true },
+      })
+      if (bentrok) {
+        catatan.push(
+          `DB: nomor ${data.noHp} milik ${pegawai.nama} juga dipakai ${bentrok.nama}. Nomor ${pegawai.nama} dikosongkan.`,
+        )
+        await prisma.pegawai.update({ where: { id: pegawai.id }, data: { noHp: null } })
+      }
+    }
 
     // Akun login.
     if (!pegawai.userId) {
@@ -125,6 +153,7 @@ async function main() {
               where: { id: userAda.id },
               data: { nama, isActive: true },
             })
+            akunDiperbarui++
           } else {
             catatan.push(
               `${nama}: email ${emailDiminta} sudah dipakai akun ber-role lain (id ${userAda.id}). Akun email internal dipakai.`,
@@ -159,13 +188,44 @@ async function main() {
       if (userId) {
         await prisma.pegawai.update({ where: { id: pegawai.id }, data: { userId } })
       }
+    } else {
+      // Akun sudah ada -> sinkronkan nama & email bila Excel berubah.
+      const user = await prisma.user.findUnique({
+        where: { id: pegawai.userId },
+        select: { id: true, nama: true, email: true, roleId: true },
+      })
+      if (user && data.email && data.email !== user.email) {
+        const bentrok = await prisma.user.findUnique({
+          where: { email: data.email },
+          select: { id: true },
+        })
+        if (!bentrok || bentrok.id === user.id) {
+          await prisma.user.update({ where: { id: user.id }, data: { nama, email: data.email } })
+          akunDiperbarui++
+        }
+      } else if (user && user.nama !== nama) {
+        await prisma.user.update({ where: { id: user.id }, data: { nama } })
+      }
     }
   }
 
-  console.log(`Selesai. Total data: ${daftar.length}`)
+  await prisma.riwayatImportPegawai.create({
+    data: {
+      sumber: SUMBER,
+      jumlahPegawai: isi.pegawai.length,
+      jumlahBaru: dibuat,
+      jumlahUpdate: diperbarui,
+      catatan: catatan.length ? catatan.join('\n') : null,
+    },
+  })
+
+  console.log(`Selesai. Total data: ${isi.pegawai.length}`)
   console.log(`  pegawai baru   : ${dibuat}`)
   console.log(`  pegawai update : ${diperbarui}`)
   console.log(`  akun dibuat    : ${akunBaru} (password awal ${PASSWORD_AWAL})`)
+  console.log(`  akun update    : ${akunDiperbarui}`)
+  const tanpaWa = isi.pegawai.filter((p) => !p.noHp).length
+  console.log(`  tanpa nomor WA : ${tanpaWa}`)
   if (catatan.length) {
     console.log('Catatan:')
     for (const c of catatan) console.log(`  - ${c}`)

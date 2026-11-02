@@ -2,36 +2,32 @@ import Link from 'next/link'
 import prisma from '@/lib/prisma'
 import { ExportLink } from '@/components/admin/ExportButtons'
 import { ambilRekap } from '@/lib/rekap-absensi'
+import { AbsenClient } from './AbsenClient'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Absen Kerja — Admin' }
 
-const STATUS_LABEL: Record<string, string> = {
-  hadir: 'Hadir',
-  telat: 'Telat',
-  izin: 'Izin',
-  sakit: 'Sakit',
-  alpa: 'Alpa',
-}
-
-function jamWib(d: Date | null): string {
-  if (!d) return '-'
-  return new Date(d.getTime() + 7 * 3600000).toISOString().slice(11, 16)
-}
-
 export default async function AdminAbsenPage({
   searchParams,
 }: {
-  searchParams: Promise<{ dari?: string; sampai?: string; pegawaiId?: string; status?: string }>
+  searchParams: Promise<{
+    dari?: string
+    sampai?: string
+    pegawaiId?: string
+    status?: string
+    tanpaAbsen?: string
+  }>
 }) {
   const sp = await searchParams
   const pegawaiId = sp.pegawaiId ? Number(sp.pegawaiId) : undefined
+  const termasukTanpaAbsen = sp.tanpaAbsen === '1'
 
-  const { dari, sampai, rows, summary } = await ambilRekap({
+  const { dari, sampai, rows, summary, perPegawai, tanpaAbsen } = await ambilRekap({
     dari: sp.dari,
     sampai: sp.sampai,
     pegawaiId: Number.isFinite(pegawaiId) ? pegawaiId : undefined,
     status: sp.status,
+    includeTanpaAbsen: termasukTanpaAbsen,
   })
 
   const daftarPegawai = await prisma.pegawai.findMany({
@@ -50,13 +46,33 @@ export default async function AdminAbsenPage({
     return `/api/admin/absen/export?${q.toString()}`
   }
 
-  const kartu = [
-    { label: 'Total Catatan', value: summary.total, warna: 'text-gray-900' },
-    { label: 'Hadir', value: summary.hadir, warna: 'text-emerald-600' },
-    { label: 'Telat', value: summary.telat, warna: 'text-amber-600' },
-    { label: 'Izin', value: summary.izin, warna: 'text-blue-600' },
-    { label: 'Sakit', value: summary.sakit, warna: 'text-violet-600' },
-    { label: 'Belum Pulang', value: summary.belumPulang, warna: 'text-rose-600' },
+  const baris = [
+    ...rows.map((r) => ({
+      id: r.id,
+      tanggal: new Date(r.tanggal.getTime() + 7 * 3600000).toISOString().slice(0, 10),
+      pegawaiId: r.pegawai.id,
+      nama: r.pegawai.nama,
+      jabatan: r.pegawai.jabatan,
+      jamMasuk: r.jamMasuk ? r.jamMasuk.toISOString() : null,
+      jamPulang: r.jamPulang ? r.jamPulang.toISOString() : null,
+      metode: r.metode,
+      jarakMeter: r.jarakMeter,
+      status: r.status,
+      keterangan: r.keterangan,
+    })),
+    ...tanpaAbsen.map((t) => ({
+      id: null as number | null,
+      tanggal: new Date((t.tanggal as Date).getTime() + 7 * 3600000).toISOString().slice(0, 10),
+      pegawaiId: t.pegawaiId as number,
+      nama: t.nama as string,
+      jabatan: t.jabatan as string | null,
+      jamMasuk: null,
+      jamPulang: null,
+      metode: null,
+      jarakMeter: null,
+      status: t.status as string,
+      keterangan: t.keterangan as string | null,
+    })),
   ]
 
   return (
@@ -69,6 +85,8 @@ export default async function AdminAbsenPage({
             {dari.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'long', year: 'numeric' })}
             {' - '}
             {sampai.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'long', year: 'numeric' })}
+            {' · '}
+            {summary.hariKerja} hari kerja
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -79,6 +97,12 @@ export default async function AdminAbsenPage({
             className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             Data Pegawai
+          </Link>
+          <Link
+            href="/admin/pengaturan-absensi"
+            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Pengaturan
           </Link>
         </div>
       </div>
@@ -108,86 +132,52 @@ export default async function AdminAbsenPage({
           <label className="text-xs text-gray-500" htmlFor="f-status">Status</label>
           <select id="f-status" name="status" defaultValue={sp.status ?? ''} className={sel}>
             <option value="">Semua status</option>
-            {Object.entries(STATUS_LABEL).map(([v, l]) => (
-              <option key={v} value={v}>{l}</option>
-            ))}
+            <option value="hadir">Hadir</option>
+            <option value="telat">Telat</option>
+            <option value="izin">Izin</option>
+            <option value="sakit">Sakit</option>
+            <option value="alpa">Alpa</option>
           </select>
         </div>
+        <label className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm">
+          <input
+            type="checkbox"
+            name="tanpaAbsen"
+            value="1"
+            defaultChecked={termasukTanpaAbsen}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          Tampilkan tanpa absen
+        </label>
         <button className="rounded-lg bg-brand-primary px-4 py-2 text-sm font-medium text-white">Terapkan</button>
         <Link href="/admin/absen" className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600">
           Reset
         </Link>
       </form>
 
-      {/* Ringkasan */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {kartu.map((k) => (
-          <div key={k.label} className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-            <p className="text-xs text-gray-500">{k.label}</p>
-            <p className={`mt-1 text-2xl font-bold ${k.warna}`}>{k.value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Tabel */}
-      <div className="overflow-x-auto rounded-xl border border-gray-100 bg-white shadow-sm">
-        <table className="w-full text-sm">
-          <thead className="border-b border-gray-200 bg-brand-surface">
-            <tr>
-              {['Tanggal', 'Pegawai', 'Jabatan', 'Masuk', 'Pulang', 'Durasi', 'Metode', 'Jarak', 'Status'].map((h) => (
-                <th key={h} className="px-4 py-2 text-left font-semibold text-gray-700">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={9} className="px-4 py-10 text-center text-gray-500">
-                  Belum ada data absensi pada rentang ini.
-                </td>
-              </tr>
-            )}
-            {rows.map((r) => {
-              const durasi =
-                r.jamMasuk && r.jamPulang
-                  ? `${((r.jamPulang.getTime() - r.jamMasuk.getTime()) / 3600000).toFixed(1)} jam`
-                  : '-'
-              return (
-                <tr key={r.id}>
-                  <td className="px-4 py-2 text-gray-700">
-                    {new Date(r.tanggal.getTime() + 7 * 3600000).toISOString().slice(0, 10)}
-                  </td>
-                  <td className="px-4 py-2 font-medium text-gray-900">{r.pegawai.nama}</td>
-                  <td className="px-4 py-2 text-gray-600">{r.pegawai.jabatan ?? '-'}</td>
-                  <td className="px-4 py-2 text-gray-600">{jamWib(r.jamMasuk)}</td>
-                  <td className="px-4 py-2 text-gray-600">{jamWib(r.jamPulang)}</td>
-                  <td className="px-4 py-2 text-gray-600">{durasi}</td>
-                  <td className="px-4 py-2 text-gray-600">
-                    {r.metode === 'wifi' ? 'Wi-Fi' : r.metode === 'gps' ? 'GPS' : '-'}
-                  </td>
-                  <td className="px-4 py-2 text-gray-600">{r.jarakMeter != null ? `${r.jarakMeter} m` : '-'}</td>
-                  <td className="px-4 py-2">
-                    <span
-                      className={`rounded-full px-2 py-1 text-xs font-medium ${
-                        r.status === 'telat'
-                          ? 'bg-amber-100 text-amber-800'
-                          : r.status === 'izin'
-                            ? 'bg-blue-100 text-blue-800'
-                            : r.status === 'sakit'
-                              ? 'bg-violet-100 text-violet-800'
-                              : 'bg-emerald-100 text-emerald-800'
-                      }`}
-                    >
-                      {STATUS_LABEL[r.status] ?? r.status}
-                    </span>
-                    {r.keterangan && <span className="ml-2 text-xs text-gray-500">{r.keterangan}</span>}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+      <AbsenClient
+        baris={baris}
+        perPegawai={perPegawai.map((p) => ({
+          pegawaiId: p.pegawaiId,
+          nama: p.nama,
+          jabatan: p.jabatan,
+          jamMasuk: p.jamMasuk,
+          jamPulang: p.jamPulang,
+          jamKerjaManual: p.jamKerjaManual,
+          hadir: p.hadir,
+          telat: p.telat,
+          izin: p.izin,
+          sakit: p.sakit,
+          alpa: p.alpa,
+          hariMasuk: p.hariMasuk,
+          totalCatatan: p.totalCatatan,
+          rataRataJam: p.rataRataJam,
+          durasiTargetJam: p.durasiTargetJam,
+          belumPulang: p.belumPulang,
+        }))}
+        summary={summary}
+        termasukTanpaAbsen={termasukTanpaAbsen}
+      />
     </div>
   )
 }

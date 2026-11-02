@@ -66,6 +66,7 @@ model Pegawai {
   id               Int       @id @default(autoincrement())
   userId           Int?      @unique @map("user_id")
   user             User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  kode             String?   @map("kode")
   nama             String
   jabatan          String?
   noHp             String?   @map("no_hp")
@@ -80,6 +81,11 @@ model Pegawai {
   tahunBergabung   String?   @map("tahun_bergabung")
   kontakKeluarga   String?   @map("kontak_keluarga")
   fotoUrl          String?   @map("foto_url")
+  ijazahUrl        String?   @map("ijazah_url")
+  /// Jam kerja manual pegawai (NULL = pakai pengaturan global).
+  jamMasuk         String?   @map("jam_masuk")
+  jamPulang        String?   @map("jam_pulang")
+  toleransiMenit   Int?      @map("toleransi_menit")
   isActive         Boolean   @default(true) @map("is_active")
   absensi          AbsensiKerja[]
   createdAt        DateTime  @default(now()) @map("created_at")
@@ -87,6 +93,7 @@ model Pegawai {
 
   @@index([noHp])
   @@index([nama])
+  @@index([kode])
   @@map("pegawai")
 }
 
@@ -125,9 +132,25 @@ model PengaturanAbsensi {
   longitude      Decimal  @default(106.9622492) @db.Decimal(10, 7)
   radiusMeter    Int      @default(200) @map("radius_meter")
   wifiIps        String   @default("103.178.146.98") @map("wifi_ips")
+  /// Hari kerja (0=Minggu ... 6=Sabtu), dipakai untuk hitung otomatis "tanpa absen".
+  hariKerja      String   @default("0,1,2,3,4,5,6") @map("hari_kerja")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   @@map("pengaturan_absensi")
+}
+
+/// Jejak import data pegawai dari Excel (audit).
+model RiwayatImportPegawai {
+  id            Int      @id @default(autoincrement())
+  sumber        String?
+  jumlahPegawai Int      @default(0) @map("jumlah_pegawai")
+  jumlahBaru    Int      @default(0) @map("jumlah_baru")
+  jumlahUpdate  Int      @default(0) @map("jumlah_diperbarui")
+  catatan       String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("riwayat_import_pegawai")
 }
 
 model Program {

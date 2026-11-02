@@ -58,27 +58,37 @@ export async function PUT(req: NextRequest) {
     return Response.json(fail('Isi minimal satu IP Wi-Fi ma\'had.'), { status: 400 })
   }
 
+  // Hari kerja: array angka 0=Minggu ... 6=Sabtu.
+  const hariKerjaRaw = Array.isArray(body.hariKerja)
+    ? body.hariKerja.map((n: unknown) => Number(n))
+    : String(body.hariKerja ?? '')
+        .split(',')
+        .map((x) => Number.parseInt(x.trim(), 10))
+  const hariKerja = hariKerjaRaw
+    .filter((n: number) => Number.isFinite(n) && n >= 0 && n <= 6)
+    .filter((n: number, i: number, arr: number[]) => arr.indexOf(n) === i)
+    .sort((a: number, b: number) => a - b)
+
+  if (hariKerja.length === 0) {
+    return Response.json(fail('Pilih minimal satu hari kerja.'), { status: 400 })
+  }
+  const hariKerjaStr = hariKerja.join(',')
+
+  const data = {
+    jamMasuk: jamMasuk.length === 5 ? `${jamMasuk}:00` : jamMasuk,
+    jamPulang: jamPulang.length === 5 ? `${jamPulang}:00` : jamPulang,
+    toleransiMenit: Math.round(toleransiMenit),
+    latitude,
+    longitude,
+    radiusMeter: Math.round(radiusMeter),
+    wifiIps: wifiIps.join(','),
+    hariKerja: hariKerjaStr,
+  }
+
   const row = await prisma.pengaturanAbsensi.upsert({
     where: { id: 1 },
-    create: {
-      id: 1,
-      jamMasuk: jamMasuk.length === 5 ? `${jamMasuk}:00` : jamMasuk,
-      jamPulang: jamPulang.length === 5 ? `${jamPulang}:00` : jamPulang,
-      toleransiMenit: Math.round(toleransiMenit),
-      latitude,
-      longitude,
-      radiusMeter: Math.round(radiusMeter),
-      wifiIps: wifiIps.join(','),
-    },
-    update: {
-      jamMasuk: jamMasuk.length === 5 ? `${jamMasuk}:00` : jamMasuk,
-      jamPulang: jamPulang.length === 5 ? `${jamPulang}:00` : jamPulang,
-      toleransiMenit: Math.round(toleransiMenit),
-      latitude,
-      longitude,
-      radiusMeter: Math.round(radiusMeter),
-      wifiIps: wifiIps.join(','),
-    },
+    create: { id: 1, ...data },
+    update: data,
   })
 
   return Response.json(ok(row, 'Pengaturan absensi berhasil disimpan.'))

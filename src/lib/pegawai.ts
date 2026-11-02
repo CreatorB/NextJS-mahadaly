@@ -13,6 +13,7 @@ export const ROLE_ID_PEGAWAI = 5
 
 export interface DataPegawaiInput {
   nama: string
+  kode?: string | null
   jabatan?: string | null
   noHp?: string | null
   email?: string | null
@@ -26,6 +27,10 @@ export interface DataPegawaiInput {
   tahunBergabung?: string | null
   kontakKeluarga?: string | null
   fotoUrl?: string | null
+  ijazahUrl?: string | null
+  jamMasuk?: string | null
+  jamPulang?: string | null
+  toleransiMenit?: number | null
   isActive?: boolean
 }
 
@@ -55,7 +60,24 @@ export function bersihkanDataPegawai(data: DataPegawaiInput) {
     return s.length ? s : null
   }
 
+  const jam = (v: unknown) => {
+    const s = kosong(v)
+    if (!s) return null
+    const m = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(s)
+    if (!m) return null
+    const h = Number(m[1])
+    const mm = Number(m[2])
+    if (h > 23 || mm > 59) return null
+    return `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}:00`
+  }
+
+  const toleransi =
+    data.toleransiMenit != null && Number.isFinite(Number(data.toleransiMenit))
+      ? Math.max(0, Math.min(240, Math.round(Number(data.toleransiMenit))))
+      : null
+
   return {
+    kode: kosong(data.kode),
     nama: String(data.nama).trim(),
     jabatan: kosong(data.jabatan),
     noHp: kosong(data.noHp) ? normalisasiHp(data.noHp) : null,
@@ -63,13 +85,16 @@ export function bersihkanDataPegawai(data: DataPegawaiInput) {
     nik: kosong(data.nik),
     jk: kosong(data.jk),
     tmpLahir: kosong(data.tmpLahir),
-    tglLahir: data.tglLahir ?? null,
     pendidikan: kosong(data.pendidikan),
     statusPernikahan: kosong(data.statusPernikahan),
     alamat: kosong(data.alamat),
     tahunBergabung: kosong(data.tahunBergabung),
     kontakKeluarga: kosong(data.kontakKeluarga),
     fotoUrl: kosong(data.fotoUrl),
+    ijazahUrl: kosong(data.ijazahUrl),
+    jamMasuk: jam(data.jamMasuk),
+    jamPulang: jam(data.jamPulang),
+    toleransiMenit: toleransi,
     isActive: data.isActive ?? true,
   }
 }

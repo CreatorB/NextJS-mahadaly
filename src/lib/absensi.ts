@@ -6,6 +6,9 @@
  */
 
 import prisma from '@/lib/prisma'
+import { NAMA_HARI } from '@/lib/hari'
+
+export { NAMA_HARI }
 
 export const METODE_GPS = 'gps'
 export const METODE_WIFI = 'wifi'
@@ -15,6 +18,14 @@ export const STATUS_TELAT = 'telat'
 export const STATUS_IZIN = 'izin'
 export const STATUS_SAKIT = 'sakit'
 export const STATUS_ALPA = 'alpa'
+
+export const SEMUA_STATUS = [
+  STATUS_HADIR,
+  STATUS_TELAT,
+  STATUS_IZIN,
+  STATUS_SAKIT,
+  STATUS_ALPA,
+] as const
 
 export type MetodeAbsen = typeof METODE_GPS | typeof METODE_WIFI
 
@@ -26,6 +37,15 @@ export interface PengaturanAbsensi {
   longitude: number
   radiusMeter: number
   wifiIps: string[]
+  /** Hari kerja: 0=Minggu ... 6=Sabtu. Dipakai untuk hitung otomatis "tanpa absen". */
+  hariKerja: number[]
+}
+
+/** Bagian pegawai yang boleh overriding jam kerja global. */
+export interface OverridesJamKerja {
+  jamMasuk?: string | null
+  jamPulang?: string | null
+  toleransiMenit?: number | null
 }
 
 const WIB_OFFSET_MS = 7 * 3600 * 1000
@@ -55,6 +75,32 @@ export function menitWib(date: Date): number {
   return wib.getUTCHours() * 60 + wib.getUTCMinutes()
 }
 
+/** "07:00:00" -> "07:00" */
+export function jamPendek(jam: string | null | undefined): string {
+  if (!jam) return '-'
+  return jam.slice(0, 5)
+}
+
+/** Parse daftar hari kerja "0,1,2" -> [0,1,2] */
+export function parseHariKerja(v: string | null | undefined): number[] {
+  if (!v) return [0, 1, 2, 3, 4, 5, 6]
+  const hasil = v
+    .split(',')
+    .map((x) => Number.parseInt(x.trim(), 10))
+    .filter((n) => Number.isFinite(n) && n >= 0 && n <= 6)
+  return hasil.length ? Array.from(new Set(hasil)).sort() : [0, 1, 2, 3, 4, 5, 6]
+}
+
+/** Tanggal (UTC tengah malam) -> index hari (0=Minggu). */
+export function indexHari(date: Date): number {
+  return date.getUTCDay()
+}
+
+/** Apakah tanggal tersebut termasuk hari kerja. */
+export function adalahHariKerja(date: Date, hariKerja: number[]): boolean {
+  return hariKerja.includes(indexHari(date))
+}
+
 /** Ambil pengaturan absensi (dengan nilai bawaan bila tabel kosong). */
 export async function ambilPengaturanAbsensi(): Promise<PengaturanAbsensi> {
   const row = await prisma.pengaturanAbsensi.findUnique({ where: { id: 1 } })
@@ -67,6 +113,7 @@ export async function ambilPengaturanAbsensi(): Promise<PengaturanAbsensi> {
       longitude: 106.9622492,
       radiusMeter: 200,
       wifiIps: ['103.178.146.98'],
+      hariKerja: [0, 1, 2, 3, 4, 5, 6],
     }
   }
   return {
@@ -80,6 +127,25 @@ export async function ambilPengaturanAbsensi(): Promise<PengaturanAbsensi> {
       .split(',')
       .map((ip) => ip.trim())
       .filter(Boolean),
+    hariKerja: parseHariKerja(row.hariKerja),
+  }
+}
+
+/**
+ * Pengaturan efektif untuk seorang pegawai: jam kerja manual pegawai
+ * (bila diisi) menggantikan pengaturan global.
+ */
+export function pengaturanEfektif(
+  global: PengaturanAbsensi,
+  overrides: OverridesJamKerja | null | undefined,
+): PengaturanAbsensi {
+  if (!overrides) return global
+  return {
+    ...global,
+    jamMasuk: overrides.jamMasuk ?? global.jamMasuk,
+    jamPulang: overrides.jamPulang ?? global.jamPulang,
+    toleransiMenit:
+      overrides.toleransiMenit != null ? overrides.toleransiMenit : global.toleransiMenit,
   }
 }
 

@@ -20,7 +20,12 @@ export async function POST(req: NextRequest) {
   if (!(await requireAdminApi(req))) return Response.json(fail('Akses ditolak'), { status: 401 })
 
   try {
-    const form = await req.formData()
+    let form: FormData
+    try {
+      form = await req.formData()
+    } catch {
+      return Response.json(fail('File Excel belum dipilih.'), { status: 400 })
+    }
     const file = form.get('file')
     if (!file || typeof file === 'string') {
       return Response.json(fail('File Excel belum dipilih.'), { status: 400 })

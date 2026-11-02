@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma'
 import { signToken } from '@/lib/auth'
 import { loginSchema } from '@/lib/validations/auth'
 import { normalisasiHp } from '@/lib/phone'
+import { ipDariRequest } from '@/lib/ip'
 import { ok, fail } from '@/types/api'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -12,7 +13,7 @@ import * as path from 'path'
 const COOKIE_NAME = 'mahadaly_session'
 const LOG_FILE = path.join(process.cwd(), 'logs', 'login.log')
 
-function logToServer(msg: string, data?: any) {
+function logToServer(msg: string, data?: unknown) {
   const timestamp = new Date().toISOString()
   const logLine = `[${timestamp}] ${msg}${data ? ' | ' + JSON.stringify(data) : ''}\n`
   try {
@@ -41,7 +42,7 @@ function cookieOptions() {
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now()
-  const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+  const clientIP = ipDariRequest(req) || req.headers.get('x-forwarded-for') || 'unknown'
   const contentType = req.headers.get('content-type') || ''
   const host = req.headers.get('host') || 'unknown'
 
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
   const isFormPost = contentType.includes('application/x-www-form-urlencoded') ||
                      contentType.includes('multipart/form-data')
 
-  let body: any = {}
+  let body: Record<string, unknown> = {}
   try {
     if (contentType.includes('application/json')) {
       body = await req.json()

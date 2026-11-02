@@ -15,6 +15,7 @@ import {
   CalendarOff,
 } from 'lucide-react'
 import { NAMA_HARI } from '@/lib/hari'
+import { tanggalStringWib } from '@/lib/wib'
 
 interface ShiftItem {
   id: number
@@ -89,7 +90,7 @@ export function PengaturanClient({ awal, shift, hariLibur, pegawai, jadwal }: Pr
 
   // Form hari libur
   const [liburForm, setLiburForm] = useState({
-    tanggal: new Date().toISOString().slice(0, 10),
+    tanggal: tanggalStringWib(),
     tanggalSelesai: '',
     nama: '',
     jenis: 'libur',

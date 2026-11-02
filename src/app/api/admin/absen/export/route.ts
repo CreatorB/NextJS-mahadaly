@@ -14,9 +14,12 @@ const HEADER = [
   'Jam Masuk',
   'Jam Pulang',
   'Durasi Kerja (jam)',
+  'Menit Telat',
+  'Lembur (jam)',
   'Metode',
   'Jarak (meter)',
   'Status',
+  'Sumber',
   'Keterangan',
 ]
 
@@ -25,7 +28,16 @@ const STATUS_LABEL: Record<string, string> = {
   telat: 'Telat',
   izin: 'Izin',
   sakit: 'Sakit',
+  cuti: 'Cuti',
   alpa: 'Alpa',
+}
+
+const SUMBER_LABEL: Record<string, string> = {
+  absen: 'Absen',
+  pengajuan: 'Pengajuan',
+  manual: 'Manual',
+  otomatis: 'Otomatis',
+  virtual: 'Tanpa catatan',
 }
 
 function jamWib(d: Date | null): string {
@@ -67,9 +79,12 @@ export async function GET(req: NextRequest) {
     jamWib(r.jamMasuk),
     jamWib(r.jamPulang),
     durasiJam(r.jamMasuk, r.jamPulang),
+    String(r.menitTelat ?? 0),
+    ((r.lemburMenit ?? 0) / 60).toFixed(2),
     r.metode === 'wifi' ? 'Wi-Fi' : r.metode === 'gps' ? 'GPS' : '',
     r.jarakMeter != null ? String(r.jarakMeter) : '',
     STATUS_LABEL[r.status] ?? r.status,
+    SUMBER_LABEL[r.sumber] ?? r.sumber ?? '',
     r.keterangan ?? '',
   ])
 

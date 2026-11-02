@@ -6,8 +6,8 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 
 const ERROR_MESSAGES: Record<string, string> = {
-  invalid_credentials: 'Email atau password salah. Silakan periksa kembali.',
-  invalid: 'Data tidak valid. Pastikan email dan password terisi dengan benar.',
+  invalid_credentials: 'Email/nomor WhatsApp atau password salah. Silakan periksa kembali.',
+  invalid: 'Data tidak valid. Pastikan email/nomor WhatsApp dan password terisi dengan benar.',
 }
 
 export default async function LoginPage({
@@ -66,19 +66,21 @@ export default async function LoginPage({
             <form method="POST" action="/api/auth/login" className="space-y-4">
               {safeNext && <input type="hidden" name="next" value={safeNext} />}
               <Input
-                label="Email"
-                type="email"
+                label="Email atau Nomor WhatsApp"
+                type="text"
                 name="email"
                 required
-                placeholder="email@contoh.com"
+                autoComplete="username"
+                placeholder="email@contoh.com atau 081234567890"
               />
               <Input
                 label="Password"
                 type="password"
                 name="password"
                 required
+                autoComplete="current-password"
                 placeholder="Masukkan password"
-                helpText="Untuk santri baru: gunakan Kode Registrasi sebagai password"
+                helpText="UntukSantri baru: gunakan Kode Registrasi sebagai password. Untuk pegawai: password awal 123456."
               />
               <Button type="submit" className="w-full" size="lg">
                 Login

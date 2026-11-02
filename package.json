@@ -11,6 +11,7 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:prod": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
+    "db:import-pegawai": "tsx prisma/import-pegawai.ts",
     "db:studio": "prisma studio"
   },
   "dependencies": {

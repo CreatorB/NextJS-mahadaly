@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs'
 import prisma from '@/lib/prisma'
 import { signToken } from '@/lib/auth'
 import { loginSchema } from '@/lib/validations/auth'
+import { normalisasiHp } from '@/lib/phone'
 import { ok, fail } from '@/types/api'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -73,25 +74,41 @@ export async function POST(req: NextRequest) {
 
   const { email, password } = parsed.data
 
-  const user = await prisma.user.findUnique({ where: { email }, include: { role: true } })
+  // Login menerima email ATAU nomor WhatsApp (khusus pegawai).
+  const input = email.trim()
+  const hp = normalisasiHp(input)
+  const user = input.includes('@')
+    ? await prisma.user.findUnique({ where: { email: input }, include: { role: true } })
+    : hp
+      ? await prisma.user.findFirst({
+          where: { role: { namaRole: 'pegawai' }, pegawai: { noHp: hp } },
+          include: { role: true },
+        })
+      : null
   if (!user || !user.isActive) {
-    logToServer('User not found or inactive', { email })
+    logToServer('User not found or inactive', { email: input })
     if (isFormPost) return NextResponse.redirect(buildUrl(req, '/login?error=invalid_credentials'))
-    return NextResponse.json(fail('Email atau password salah'), { status: 401 })
+    return NextResponse.json(fail('Email/nomor WhatsApp atau password salah'), { status: 401 })
   }
 
   const valid = await bcrypt.compare(password, user.password)
   if (!valid) {
-    logToServer('Password invalid', { email })
+    logToServer('Password invalid', { email: input })
     if (isFormPost) return NextResponse.redirect(buildUrl(req, '/login?error=invalid_credentials'))
-    return NextResponse.json(fail('Email atau password salah'), { status: 401 })
+    return NextResponse.json(fail('Email/nomor WhatsApp atau password salah'), { status: 401 })
   }
 
   const token = await signToken({ userId: user.id, roleId: user.roleId, email: user.email, nama: user.nama })
   // Kembali ke halaman asal (mis. halaman event) bila `next` adalah path internal yang aman.
   const next = safeRedirectPath(body.next)
-  const targetPath = next ?? (user.roleId <= 2 ? '/admin/dashboard' : '/dashboard')
-  logToServer('Login success', { roleId: user.roleId, target: targetPath, isFormPost })
+  const targetPath =
+    next ??
+    (user.role.namaRole === 'pegawai'
+      ? '/absen'
+      : user.roleId <= 2
+        ? '/admin/dashboard'
+        : '/dashboard')
+  logToServer('Login success', { roleId: user.roleId, role: user.role.namaRole, target: targetPath, isFormPost })
 
   if (isFormPost) {
     const response = NextResponse.redirect(buildUrl(req, targetPath))

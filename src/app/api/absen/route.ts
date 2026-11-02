@@ -13,6 +13,8 @@ import {
   statusByJamMasuk,
   tanggalHariIniWib,
 } from '@/lib/absensi'
+import { jamKerjaUntuk, muatKonteksJadwal } from '@/lib/jadwal'
+import { pengajuanDisetujuiPadaTanggal } from '@/lib/pengajuan'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -45,14 +47,36 @@ export async function POST(req: NextRequest) {
     const body = (await req.json().catch(() => ({}))) as BodyAbsen
     const metode = body.metode === METODE_WIFI ? METODE_WIFI : METODE_GPS
     const global = await ambilPengaturanAbsensi()
-    // Jam kerja manual pegawai (bila diisi) menggantikan pengaturan global.
-    const pengaturan = pengaturanEfektif(global, {
-      jamMasuk: pegawai.jamMasuk,
-      jamPulang: pegawai.jamPulang,
-      toleransiMenit: pegawai.toleransiMenit,
-    })
     const now = new Date()
     const tanggal = tanggalHariIniWib(now)
+
+    // Jam kerja efektif: jam manual pegawai > jadwal shift per hari >
+    // shift default > jam kerja global.
+    const konteks = await muatKonteksJadwal(global, { dari: tanggal, sampai: tanggal })
+    const jamKerja = jamKerjaUntuk(konteks, pegawai, tanggal)
+    const pengaturan = pengaturanEfektif(global, {
+      jamMasuk: jamKerja.jamMasuk,
+      jamPulang: jamKerja.jamPulang,
+      toleransiMenit: jamKerja.toleransiMenit,
+    })
+
+    // Pengajuan izin / sakit / cuti yang sudah disetujui untuk hari ini
+    // menutup hak absen pada hari tersebut.
+    const pengajuan = await pengajuanDisetujuiPadaTanggal(pegawai.id, tanggal)
+    if (pengajuan && pengajuan.jenis !== 'izin') {
+      return Response.json(
+        fail(
+          `Ada pengajuan ${pengajuan.jenis} yang disetujui untuk hari ini, absen tidak diizinkan.`,
+        ),
+        { status: 400 },
+      )
+    }
+    if (pengajuan?.jenis === 'izin') {
+      return Response.json(
+        fail('Ada pengajuan izin yang disetujui untuk hari ini, absen tidak diizinkan.'),
+        { status: 400 },
+      )
+    }
 
     // Validasi lokasi / jaringan.
     let latitude: number | null = null
@@ -137,16 +161,25 @@ export async function GET(req: NextRequest) {
     const hariIni = tanggalHariIniWib()
     const dari = new Date(hariIni.getTime() - 30 * 86400000)
     const global = await ambilPengaturanAbsensi()
+    const konteks = await muatKonteksJadwal(global, { dari, sampai: hariIni })
+    const jamKerja = jamKerjaUntuk(konteks, pegawai, hariIni)
     const pengaturan = pengaturanEfektif(global, {
-      jamMasuk: pegawai.jamMasuk,
-      jamPulang: pegawai.jamPulang,
-      toleransiMenit: pegawai.toleransiMenit,
+      jamMasuk: jamKerja.jamMasuk,
+      jamPulang: jamKerja.jamPulang,
+      toleransiMenit: jamKerja.toleransiMenit,
     })
 
-    const rows = await prisma.absensiKerja.findMany({
-      where: { pegawaiId: pegawai.id, tanggal: { gte: dari, lte: hariIni } },
-      orderBy: { tanggal: 'desc' },
-    })
+    const [rows, pengajuan] = await Promise.all([
+      prisma.absensiKerja.findMany({
+        where: { pegawaiId: pegawai.id, tanggal: { gte: dari, lte: hariIni } },
+        orderBy: { tanggal: 'desc' },
+      }),
+      prisma.pengajuan.findMany({
+        where: { pegawaiId: pegawai.id },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      }),
+    ])
 
     return Response.json(
       ok({
@@ -163,6 +196,8 @@ export async function GET(req: NextRequest) {
           toleransiMenit: pengaturan.toleransiMenit,
           radiusMeter: pengaturan.radiusMeter,
           jamKerjaManual: Boolean(pegawai.jamMasuk || pegawai.jamPulang),
+          sumberJamKerja: jamKerja.sumber,
+          namaShift: jamKerja.namaShift,
         },
         absensi: rows.map((r) => ({
           id: r.id,
@@ -173,6 +208,16 @@ export async function GET(req: NextRequest) {
           jarakMeter: r.jarakMeter,
           status: r.status,
           keterangan: r.keterangan,
+        })),
+        pengajuan: pengajuan.map((p) => ({
+          id: p.id,
+          jenis: p.jenis,
+          tanggalMulai: p.tanggalMulai.toISOString().slice(0, 10),
+          tanggalSelesai: p.tanggalSelesai.toISOString().slice(0, 10),
+          keterangan: p.keterangan,
+          status: p.status,
+          alasanVerifikasi: p.alasanVerifikasi,
+          createdAt: p.createdAt,
         })),
       }),
     )

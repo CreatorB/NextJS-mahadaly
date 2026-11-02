@@ -47,6 +47,7 @@ export async function GET(req: NextRequest) {
         const telat = p.absensi.filter((a) => a.status === 'telat').length
         return {
           id: p.id,
+          kode: p.kode,
           nama: p.nama,
           jabatan: p.jabatan,
           noHp: p.noHp,
@@ -60,6 +61,9 @@ export async function GET(req: NextRequest) {
           alamat: p.alamat,
           tahunBergabung: p.tahunBergabung,
           kontakKeluarga: p.kontakKeluarga,
+          jamMasuk: p.jamMasuk,
+          jamPulang: p.jamPulang,
+          toleransiMenit: p.toleransiMenit,
           isActive: p.isActive,
           akun: p.user
             ? {
@@ -92,6 +96,7 @@ export async function POST(req: NextRequest) {
 
   const data = bersihkanDataPegawai({
     nama,
+    kode: body.kode as string,
     jabatan: body.jabatan as string,
     noHp: body.noHp as string,
     email: body.email as string,
@@ -103,6 +108,9 @@ export async function POST(req: NextRequest) {
     alamat: body.alamat as string,
     tahunBergabung: body.tahunBergabung as string,
     kontakKeluarga: body.kontakKeluarga as string,
+    jamMasuk: body.jamMasuk as string,
+    jamPulang: body.jamPulang as string,
+    toleransiMenit: body.toleransiMenit as number,
   })
 
   if (!data.noHp && !data.email) {

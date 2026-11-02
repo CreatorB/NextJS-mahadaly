@@ -29,6 +29,7 @@ export function AdminSidebar({ nama, roleId }: Props) {
     { href: '/admin/events/pengguna', label: 'Pengguna & Reset', icon: KeyRound },
     { href: '/admin/absen', label: 'Absen Kerja', icon: ClipboardCheck },
     { href: '/admin/pegawai', label: 'Pegawai', icon: Briefcase },
+    { href: '/admin/pengaturan-absensi', label: 'Pengaturan Absen', icon: SlidersHorizontal },
     ...(roleId === 1 ? [
       { href: '/admin/wilayah', label: 'Wilayah', icon: MapPin },
       { href: '/admin/superadmin/users', label: 'Kelola User', icon: Shield },

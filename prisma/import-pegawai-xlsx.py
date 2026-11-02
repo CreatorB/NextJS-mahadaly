@@ -8,6 +8,20 @@ Pakai:  python prisma/import-pegawai-xlsx.py [path_xlsx] [path_json]
 Skrip ini idempoten: boleh dijalankan ulang setiap kali admin memperbarui
 Excel. Hasilnya dipakai oleh `prisma/import-pegawai.ts` (tsx) untuk
 menyuntik data ke database.
+
+Aturan nomor WhatsApp
+---------------------
+Sumber utama: kolom "No Whatsapp" (format +62). Kolom "Nomor WA aktif"
+dipakai sebagai cadangan bila kolom utama kosong.
+
+Bila satu nomor dipakai lebih dari satu pegawai, nomor tersebut TIDAK
+dipakai untuk semuanya (nomor WA dipakai sebagai identitas login, jadi
+harus unik). Untuk pegawai yang bentrok:
+  1. pakai nomor lama (kolom "Nomor WA aktif") bila kolom itu punya nomor
+     unik di seluruh sheet;
+  2. bila tidak ada nomor unik, nomor dikosongkan (pegawai tetap bisa
+     login lewat email, dan admin bisa mengisinya lewat Panel Admin).
+Semua bentrok dicatat di "catatan" pada hasil JSON.
 """
 
 import json
@@ -39,11 +53,11 @@ BULAN = {
 
 
 def bersih(v):
-    """Nilai sel -> string rapi; None jadi None."""
+    """Nilai sel -> string rapi; None/kosong/"-" jadi None."""
     if v is None:
         return None
     s = str(v).strip()
-    if not s or s in {"-", "--", "N/A", "n/a"}:
+    if not s or s in {"-", "--", "N/A", "n/a", "null", "None"}:
         return None
     return s
 
@@ -52,10 +66,10 @@ def nomor_wa(v):
     """Nomor WA -> bentuk kanonik 08xxxxxxxxx."""
     s = bersih(v)
     if not s:
-        return None
+        return ""
     digits = re.sub(r"\D", "", s)
     if not digits:
-        return None
+        return ""
     if digits.startswith("00"):
         digits = digits[2:]
     if digits.startswith("62"):
@@ -70,29 +84,22 @@ def parse_lahir(v):
     s = bersih(v)
     if not s:
         return None, None
-    tempat = None
-    tanggal = None
-
     if "," in s:
         bagian = [b.strip() for b in s.split(",", 1)]
         tempat = bagian[0] or None
-        sisa = bagian[1]
+        sisa = bagian[1].strip()
     else:
-        sisa = s
+        tempat = None
+        sisa = s.strip()
 
-    sisa = sisa.strip()
-
-    # Format 1: DD/MM/YYYY atau DD-MM-YYYY
     m = re.match(r"^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})$", sisa)
     if m:
         d, mo, y = int(m.group(1)), int(m.group(2)), int(m.group(3))
         try:
-            tanggal = datetime(y, mo, d).strftime("%Y-%m-%d")
+            return tempat, datetime(y, mo, d).strftime("%Y-%m-%d")
         except ValueError:
-            tanggal = None
-        return tempat, tanggal
+            return tempat, None
 
-    # Format 2: "27 Agustus 1986" / "1 Januari 2003"
     m = re.match(r"^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$", sisa)
     if m:
         d = int(m.group(1))
@@ -100,14 +107,9 @@ def parse_lahir(v):
         y = int(m.group(3))
         if mo:
             try:
-                tanggal = datetime(y, mo, d).strftime("%Y-%m-%d")
+                return tempat, datetime(y, mo, d).strftime("%Y-%m-%d")
             except ValueError:
-                tanggal = None
-        return tempat, tanggal
-
-    # Format 3: hanya tahun, mis. "Bogor, 1994"
-    m = re.search(r"\b(19\d{2}|20\d{2})\b", sisa)
-    if m:
+                return tempat, None
         return tempat, None
 
     return tempat, None
@@ -123,35 +125,39 @@ def main():
 
     wb = openpyxl.load_workbook(xlsx, data_only=True)
     ws = wb[wb.sheetnames[0]]
-
     rows = list(ws.iter_rows(values_only=True))
+
     if len(rows) < HEADER_ROW:
         sys.stderr.write("ERROR: baris judul kolom tidak ditemukan.\n")
         sys.exit(1)
 
     header = [bersih(h) for h in rows[HEADER_ROW - 1]]
 
-    def col(name_prefix):
-        for i, h in enumerate(header):
-            if h and h.lower().startswith(name_prefix.lower()):
-                return i
+    def find(*prefixes):
+        """Cari indeks kolom berdasarkan awalan nama kolom (case-insensitive)."""
+        for pref in prefixes:
+            for i, h in enumerate(header):
+                if h and h.lower().startswith(pref.lower()):
+                    return i
         return None
 
     idx = {
-        "nama": col("Nama (sesuai KTP)"),
-        "foto": col("Pas Foto"),
-        "jabatan": col("Posisi dan Jabatan"),
-        "wa": col("Nomor WA"),
-        "email": col("Email"),
-        "nik": col("Nomor KTP"),
-        "jk": col("Jenis Kelamin"),
-        "lahir": col("Tempat, Tanggal Lahir"),
-        "pendidikan": col("Pendidikan Terakhir"),
-        "ijazah": col("Upload Ijazah"),
-        "nikah": col("Status Pernikahan"),
-        "alamat": col("Alamat Domisili"),
-        "bergabung": col("Tahun Bergabung"),
-        "keluarga": col("Anggota Keluarga"),
+        "kode": find("No"),
+        "nama": find("Nama (sesuai KTP)"),
+        "foto": find("Pas Foto"),
+        "jabatan": find("Posisi dan Jabatan"),
+        "wa_lama": find("Nomor WA"),
+        "email": find("Email"),
+        "nik": find("Nomor KTP"),
+        "jk": find("Jenis Kelamin"),
+        "lahir": find("Tempat, Tanggal Lahir"),
+        "wa_baru": find("No Whatsapp", "No WhatsApp", "Nomor Whatsapp"),
+        "pendidikan": find("Pendidikan Terakhir"),
+        "ijazah": find("Upload Ijazah"),
+        "nikah": find("Status Pernikahan"),
+        "alamat": find("Alamat Domisili"),
+        "bergabung": find("Tahun Bergabung"),
+        "keluarga": find("Anggota Keluarga"),
     }
 
     if idx["nama"] is None:
@@ -164,17 +170,21 @@ def main():
             return None
         return row[i]
 
-    hasil = []
+    # --- Kumpulkan baris mentah ---
+    mentah = []
     for row in rows[HEADER_ROW:]:
         nama = bersih(val(row, "nama"))
         if not nama:
             continue
         tempat, tgl_lahir = parse_lahir(val(row, "lahir"))
-        hasil.append(
+        mentah.append(
             {
+                "kode": bersih(val(row, "kode")),
                 "nama": nama,
                 "jabatan": bersih(val(row, "jabatan")),
-                "noHp": nomor_wa(val(row, "wa")),
+                "noHp": nomor_wa(val(row, "wa_baru")),
+                "noHpCadangan": nomor_wa(val(row, "wa_lama")),
+                "noHpMentah": bersih(val(row, "wa_baru")),
                 "email": bersih(val(row, "email")),
                 "nik": bersih(val(row, "nik")),
                 "jk": bersih(val(row, "jk")),
@@ -190,14 +200,58 @@ def main():
             }
         )
 
+    # --- Resolusi nomor WA yang bentrok ---
+    # Nomor WA dipakai sebagai identitas login, jadi harus unik.
+    # Frekuensi dihitung dari SELURUH nomor yang muncul di sheet (kolom baru + kolom lama).
+    catatan = []
+    semua = {}
+    for d in mentah:
+        for no in (d["noHp"], d["noHpCadangan"]):
+            if no:
+                semua[no] = semua.get(no, 0) + 1
+
+    dipakai = set()
+    for d in mentah:
+        no = d["noHp"]
+        if not no:
+            continue
+        if no in dipakai:
+            # Nomor ini sudah dipakai pegawai sebelumnya -> cari nomor cadangan unik.
+            cadangan = d["noHpCadangan"]
+            if cadangan and semua.get(cadangan, 0) == 1 and cadangan not in dipakai:
+                catatan.append(
+                    f"{d['nama']}: nomor {no} dipakai lebih dari satu pegawai. "
+                    f"Dipakai nomor lama {cadangan} agar tetap unik. Mohon koreksi Excel."
+                )
+                d["noHp"] = cadangan
+            else:
+                catatan.append(
+                    f"{d['nama']}: nomor {no} dipakai lebih dari satu pegawai dan tidak ada nomor "
+                    f"cadangan yang unik. Nomor dikosongkan (login pakai email). Mohon koreksi Excel."
+                )
+                d["noHp"] = ""
+        dipakai.add(d["noHp"])
+
+    hasil = []
+    for d in mentah:
+        d.pop("noHpCadangan", None)
+        if not d["noHp"]:
+            d["noHp"] = None
+        hasil.append(d)
+
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", encoding="utf-8", newline="\n") as f:
-        json.dump(hasil, f, ensure_ascii=False, indent=2)
+        json.dump({"catatan": catatan, "pegawai": hasil}, f, ensure_ascii=False, indent=2)
         f.write("\n")
 
     print(f"SOURCE : {xlsx}")
     print(f"OUTPUT : {out}")
     print(f"PEGAWAI: {len(hasil)}")
+    print(f"NO WA  : {sum(1 for d in hasil if d['noHp'])} dari {len(hasil)} terisi")
+    if catatan:
+        print("CATATAN:")
+        for c in catatan:
+            print(f"  - {c}")
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ import {
   METODE_WIFI,
   ambilPengaturanAbsensi,
   ipDiizinkan,
+  pengaturanEfektif,
   statusByJamMasuk,
   tanggalHariIniWib,
 } from '@/lib/absensi'
@@ -43,7 +44,13 @@ export async function POST(req: NextRequest) {
 
     const body = (await req.json().catch(() => ({}))) as BodyAbsen
     const metode = body.metode === METODE_WIFI ? METODE_WIFI : METODE_GPS
-    const pengaturan = await ambilPengaturanAbsensi()
+    const global = await ambilPengaturanAbsensi()
+    // Jam kerja manual pegawai (bila diisi) menggantikan pengaturan global.
+    const pengaturan = pengaturanEfektif(global, {
+      jamMasuk: pegawai.jamMasuk,
+      jamPulang: pegawai.jamPulang,
+      toleransiMenit: pegawai.toleransiMenit,
+    })
     const now = new Date()
     const tanggal = tanggalHariIniWib(now)
 
@@ -129,7 +136,12 @@ export async function GET(req: NextRequest) {
 
     const hariIni = tanggalHariIniWib()
     const dari = new Date(hariIni.getTime() - 30 * 86400000)
-    const pengaturan = await ambilPengaturanAbsensi()
+    const global = await ambilPengaturanAbsensi()
+    const pengaturan = pengaturanEfektif(global, {
+      jamMasuk: pegawai.jamMasuk,
+      jamPulang: pegawai.jamPulang,
+      toleransiMenit: pegawai.toleransiMenit,
+    })
 
     const rows = await prisma.absensiKerja.findMany({
       where: { pegawaiId: pegawai.id, tanggal: { gte: dari, lte: hariIni } },
@@ -150,6 +162,7 @@ export async function GET(req: NextRequest) {
           jamPulang: pengaturan.jamPulang,
           toleransiMenit: pengaturan.toleransiMenit,
           radiusMeter: pengaturan.radiusMeter,
+          jamKerjaManual: Boolean(pegawai.jamMasuk || pegawai.jamPulang),
         },
         absensi: rows.map((r) => ({
           id: r.id,

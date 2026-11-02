@@ -26,6 +26,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
 
   const data = bersihkanDataPegawai({
     nama: (body.nama as string) ?? pegawai.nama,
+    kode: (body.kode as string) ?? pegawai.kode,
     jabatan: (body.jabatan as string) ?? pegawai.jabatan,
     noHp: (body.noHp as string) ?? pegawai.noHp,
     email: (body.email as string) ?? pegawai.email,
@@ -38,6 +39,12 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     tahunBergabung: (body.tahunBergabung as string) ?? pegawai.tahunBergabung,
     kontakKeluarga: (body.kontakKeluarga as string) ?? pegawai.kontakKeluarga,
     fotoUrl: (body.fotoUrl as string) ?? pegawai.fotoUrl,
+    jamMasuk: body.jamMasuk !== undefined ? (body.jamMasuk as string) : pegawai.jamMasuk,
+    jamPulang: body.jamPulang !== undefined ? (body.jamPulang as string) : pegawai.jamPulang,
+    toleransiMenit:
+      body.toleransiMenit !== undefined
+        ? (body.toleransiMenit as number)
+        : pegawai.toleransiMenit,
     isActive: body.isActive === undefined ? pegawai.isActive : Boolean(body.isActive),
   })
 
@@ -59,6 +66,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     where: { id },
     data: {
       nama: data.nama,
+      kode: data.kode,
       jabatan: data.jabatan,
       noHp: data.noHp,
       email: data.email,
@@ -71,6 +79,9 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       tahunBergabung: data.tahunBergabung,
       kontakKeluarga: data.kontakKeluarga,
       fotoUrl: data.fotoUrl,
+      jamMasuk: data.jamMasuk,
+      jamPulang: data.jamPulang,
+      toleransiMenit: data.toleransiMenit,
       isActive: data.isActive,
     },
   })

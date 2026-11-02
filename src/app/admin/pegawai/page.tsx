@@ -10,7 +10,7 @@ export default async function AdminPegawaiPage() {
   const sejak30Hari = new Date(hariIni.getTime() - 30 * 86400000)
 
   const pegawai = await prisma.pegawai.findMany({
-    orderBy: { nama: 'asc' },
+    orderBy: [{ kode: 'asc' }, { nama: 'asc' }],
     include: {
       user: { select: { id: true, email: true, isActive: true, passwordChangedAt: true } },
       absensi: {
@@ -22,6 +22,7 @@ export default async function AdminPegawaiPage() {
 
   const data: BarisPegawai[] = pegawai.map((p) => ({
     id: p.id,
+    kode: p.kode,
     nama: p.nama,
     jabatan: p.jabatan,
     noHp: p.noHp,
@@ -34,6 +35,9 @@ export default async function AdminPegawaiPage() {
     alamat: p.alamat,
     tahunBergabung: p.tahunBergabung,
     kontakKeluarga: p.kontakKeluarga,
+    jamMasuk: p.jamMasuk,
+    jamPulang: p.jamPulang,
+    toleransiMenit: p.toleransiMenit,
     isActive: p.isActive,
     akun: p.user
       ? {

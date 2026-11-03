@@ -28,7 +28,7 @@ export function AbsenNav({ nama }: { nama: string }) {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-3 py-3">
           <div className="min-w-0">
-            <p className="text-xs text-gray-500">Halo,</p>
+            <p className="text-xs text-gray-500">Assalamualaikum</p>
             <p className="font-semibold text-brand-primary truncate">{nama}</p>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">

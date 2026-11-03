@@ -130,7 +130,7 @@ export function WelcomeModal() {
 
           {/* Indonesia */}
           <p className="mx-auto max-w-xl text-pretty text-base leading-relaxed text-blue-50 sm:text-lg">
-            Selamat datang di official website Ma&apos;had Aly Syathiby (MAISy) dan sekedar
+            Assalamualaikum, welcome di official website Ma&apos;had Aly Syathiby (MAISy) dan sekedar
             himbauan kami tidak bertanggung jawab atas informasi lain diluar sana yang tidak
             tercantum di situs ini.
           </p>

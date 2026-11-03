@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { MapPin, Wifi, CheckCircle2, Clock, LogIn, LogOut, CalendarOff, Loader2, TriangleAlert } from 'lucide-react'
+import { tanggalStringWib } from '@/lib/wib'
 
 export interface BarisAbsensi {
   id: number
@@ -20,6 +21,17 @@ export interface PengaturanView {
   jamPulang: string
   toleransiMenit: number
   radiusMeter: number
+  namaShift?: string | null
+}
+
+export interface PengajuanView {
+  id: number
+  jenis: string
+  tanggalMulai: string
+  tanggalSelesai: string
+  keterangan: string
+  status: string
+  alasanVerifikasi: string | null
 }
 
 interface Props {
@@ -28,17 +40,36 @@ interface Props {
   pengaturan: PengaturanView
   hariIni: BarisAbsensi | null
   riwayat: BarisAbsensi[]
+  pengajuan: PengajuanView[]
 }
 
 type Metode = 'gps' | 'wifi'
+type JenisPengajuan = 'izin' | 'sakit' | 'cuti'
 
 const STATUS_LABEL: Record<string, string> = {
   hadir: 'Hadir',
   telat: 'Telat',
   izin: 'Izin',
   sakit: 'Sakit',
+  cuti: 'Cuti',
   alpa: 'Alpa',
 }
+
+const JENIS_LABEL: Record<string, string> = {
+  izin: 'Izin',
+  sakit: 'Sakit',
+  cuti: 'Cuti',
+}
+
+const STATUS_PENGAJUAN_LABEL: Record<string, string> = {
+  menunggu: 'Menunggu persetujuan',
+  disetujui: 'Disetujui',
+  ditolak: 'Ditolak',
+  dibatalkan: 'Dibatalkan',
+}
+
+/** Status yang menandai hari ini sudah diizinkan (tidak bisa absen / ajukan lagi). */
+const STATUS_TERTUTUP = ['izin', 'sakit', 'cuti']
 
 function jamWib(iso: string | null): string {
   if (!iso) return '-'
@@ -59,15 +90,26 @@ function tanggalPanjang(iso: string): string {
   })
 }
 
-export function AbsenClient({ nama, jabatan, pengaturan, hariIni, riwayat }: Props) {
+export function AbsenClient({
+  nama,
+  jabatan,
+  pengaturan,
+  hariIni,
+  riwayat,
+  pengajuan,
+}: Props) {
   const router = useRouter()
   const [metode, setMetode] = useState<Metode>('gps')
   const [loading, setLoading] = useState(false)
-  const [izinOpen, setIzinOpen] = useState(false)
+  const [formOpen, setFormOpen] = useState(false)
+  const [jenis, setJenis] = useState<JenisPengajuan>('izin')
+  const [tanggalMulai, setTanggalMulai] = useState(tanggalStringWib())
+  const [tanggalSelesai, setTanggalSelesai] = useState(tanggalStringWib())
   const [alasan, setAlasan] = useState('')
 
   const sudahMasuk = Boolean(hariIni?.jamMasuk)
   const sudahPulang = Boolean(hariIni?.jamPulang)
+  const hariTertutup = STATUS_TERTUTUP.includes(hariIni?.status ?? '')
   const labelTombol = useMemo(() => {
     if (!sudahMasuk) return 'Absen Masuk'
     if (!sudahPulang) return 'Absen Pulang'
@@ -142,25 +184,34 @@ export function AbsenClient({ nama, jabatan, pengaturan, hariIni, riwayat }: Pro
     }
   }
 
-  const handleIzin = async () => {
+  const handlePengajuan = async () => {
     if (alasan.trim().length < 3) {
-      toast.error('Tuliskan alasan izin (minimal 3 karakter).')
+      toast.error('Tuliskan keterangan (minimal 3 karakter).')
+      return
+    }
+    if (tanggalSelesai < tanggalMulai) {
+      toast.error('Tanggal selesai tidak boleh sebelum tanggal mulai.')
       return
     }
     setLoading(true)
     try {
-      const res = await fetch('/api/absen/izin', {
+      const res = await fetch('/api/absen/pengajuan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keterangan: alasan.trim() }),
+        body: JSON.stringify({
+          jenis,
+          tanggalMulai,
+          tanggalSelesai,
+          keterangan: alasan.trim(),
+        }),
       })
       const data = await res.json()
       if (!res.ok || !data.success) {
-        toast.error(data?.message ?? 'Izin gagal dikirim.')
+        toast.error(data?.message ?? 'Pengajuan gagal dikirim.')
         return
       }
-      toast.success(data.message ?? 'Izin terkirim.')
-      setIzinOpen(false)
+      toast.success(data.message ?? 'Pengajuan terkirim.')
+      setFormOpen(false)
       setAlasan('')
       router.refresh()
     } catch (e) {
@@ -170,6 +221,28 @@ export function AbsenClient({ nama, jabatan, pengaturan, hariIni, riwayat }: Pro
     }
   }
 
+  const batalkan = async (id: number) => {
+    if (!confirm('Batalkan pengajuan ini?')) return
+    setLoading(true)
+    try {
+      const res = await fetch('/api/absen/pengajuan', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        toast.error(data?.message ?? 'Pengajuan tidak bisa dibatalkan.')
+        return
+      }
+      toast.success(data.message ?? 'Pengajuan dibatalkan.')
+      router.refresh()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Terjadi kesalahan jaringan.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-5">
@@ -185,12 +258,15 @@ export function AbsenClient({ nama, jabatan, pengaturan, hariIni, riwayat }: Pro
       <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-sm text-gray-500">{tanggalPanjang(hariIni?.tanggal ?? new Date().toISOString().slice(0, 10))}</p>
+            <p className="text-sm text-gray-500">{tanggalPanjang(hariIni?.tanggal ?? tanggalStringWib())}</p>
             <p className="mt-1 text-lg font-semibold text-gray-900">
               Jam kerja: {pengaturan.jamMasuk.slice(0, 5)} - {pengaturan.jamPulang.slice(0, 5)} WIB
               <span className="ml-2 text-sm font-normal text-gray-500">
                 (toleransi telat {pengaturan.toleransiMenit} menit)
               </span>
+              {pengaturan.namaShift && (
+                <span className="ml-2 text-sm font-normal text-brand-primary">{pengaturan.namaShift}</span>
+              )}
             </p>
           </div>
           {hariIni ? (
@@ -198,12 +274,18 @@ export function AbsenClient({ nama, jabatan, pengaturan, hariIni, riwayat }: Pro
               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${
                 hariIni.status === 'telat'
                   ? 'bg-amber-100 text-amber-800'
-                  : hariIni.status === 'izin'
+                  : STATUS_TERTUTUP.includes(hariIni.status)
                     ? 'bg-blue-100 text-blue-800'
-                    : 'bg-emerald-100 text-emerald-800'
+                    : hariIni.status === 'alpa'
+                      ? 'bg-rose-100 text-rose-800'
+                      : 'bg-emerald-100 text-emerald-800'
               }`}
             >
-              {hariIni.status === 'izin' ? <CalendarOff className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+              {STATUS_TERTUTUP.includes(hariIni.status) ? (
+                <CalendarOff className="h-4 w-4" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4" />
+              )}
               {STATUS_LABEL[hariIni.status] ?? hariIni.status}
             </span>
           ) : (
@@ -240,8 +322,8 @@ export function AbsenClient({ nama, jabatan, pengaturan, hariIni, riwayat }: Pro
         )}
       </div>
 
-      {/* Pilihan metode + tombol */}
-      {!sudahPulang && (
+      {/* Metode absen */}
+      {!sudahPulang && !hariTertutup && (
         <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm space-y-4">
           <div>
             <h2 className="font-semibold text-gray-900">Metode absen</h2>
@@ -303,40 +385,7 @@ export function AbsenClient({ nama, jabatan, pengaturan, hariIni, riwayat }: Pro
               )}
               {labelTombol}
             </button>
-
-            {!sudahMasuk && hariIni?.status !== 'izin' && (
-              <button
-                onClick={() => setIzinOpen((v) => !v)}
-                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-5 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-              >
-                <CalendarOff className="h-4 w-4" />
-                Ajukan Izin
-              </button>
-            )}
           </div>
-
-          {izinOpen && (
-            <div className="rounded-xl border border-gray-200 bg-brand-surface p-4">
-              <label htmlFor="alasan-izin" className="text-sm font-medium text-gray-700">
-                Alasan izin
-              </label>
-              <textarea
-                id="alasan-izin"
-                value={alasan}
-                onChange={(e) => setAlasan(e.target.value)}
-                rows={3}
-                placeholder="Contoh: acara keluarga di luar kota"
-                className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-              />
-              <button
-                onClick={handleIzin}
-                disabled={loading}
-                className="mt-3 inline-flex items-center gap-2 rounded-lg bg-brand-primary px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-              >
-                Kirim Izin
-              </button>
-            </div>
-          )}
 
           <p className="flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
             <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -347,6 +396,157 @@ export function AbsenClient({ nama, jabatan, pengaturan, hariIni, riwayat }: Pro
           </p>
         </div>
       )}
+
+      {/* Pengajuan izin / sakit / cuti */}
+      <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm space-y-4">
+        <div>
+          <h2 className="font-semibold text-gray-900">Pengajuan Izin / Sakit / Cuti</h2>
+          <p className="text-sm text-gray-500">
+            Pengajuan menunggu persetujuan admin. Setelah disetujui, catatan izin / sakit / cuti
+            otomatis masuk ke rekap absensi.
+          </p>
+        </div>
+
+        {hariTertutup ? (
+          <p className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800">
+            Hari ini tercatat sebagai <b>{STATUS_LABEL[hariIni?.status ?? ''] ?? hariIni?.status}</b>{' '}
+            sehingga absen dan pengajuan baru tidak diizinkan.
+          </p>
+        ) : (
+          <button
+            onClick={() => setFormOpen((v) => !v)}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-5 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+          >
+            <CalendarOff className="h-4 w-4" />
+            Ajukan Izin / Sakit / Cuti
+          </button>
+        )}
+
+        {formOpen && !hariTertutup && (
+          <div className="rounded-xl border border-gray-200 bg-brand-surface p-4 space-y-3">
+            <div>
+              <span className="text-sm font-medium text-gray-700">Jenis pengajuan</span>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {(['izin', 'sakit', 'cuti'] as JenisPengajuan[]).map((j) => (
+                  <button
+                    key={j}
+                    type="button"
+                    onClick={() => setJenis(j)}
+                    className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                      jenis === j
+                        ? 'border-brand-primary bg-brand-primary text-white'
+                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {JENIS_LABEL[j]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label htmlFor="tgl-mulai" className="text-sm font-medium text-gray-700">
+                  Tanggal mulai
+                </label>
+                <input
+                  id="tgl-mulai"
+                  type="date"
+                  value={tanggalMulai}
+                  onChange={(e) => {
+                    setTanggalMulai(e.target.value)
+                    if (tanggalSelesai < e.target.value) setTanggalSelesai(e.target.value)
+                  }}
+                  className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                />
+              </div>
+              <div>
+                <label htmlFor="tgl-selesai" className="text-sm font-medium text-gray-700">
+                  Tanggal selesai
+                </label>
+                <input
+                  id="tgl-selesai"
+                  type="date"
+                  min={tanggalMulai}
+                  value={tanggalSelesai}
+                  onChange={(e) => setTanggalSelesai(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="alasan-izin" className="text-sm font-medium text-gray-700">
+                Keterangan
+              </label>
+              <textarea
+                id="alasan-izin"
+                value={alasan}
+                onChange={(e) => setAlasan(e.target.value)}
+                rows={3}
+                placeholder="Contoh: acara keluarga di luar kota"
+                className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              />
+            </div>
+
+            <button
+              onClick={handlePengajuan}
+              disabled={loading}
+              className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+            >
+              Kirim Pengajuan
+            </button>
+          </div>
+        )}
+
+        {pengajuan.length > 0 && (
+          <ul className="divide-y divide-gray-100 rounded-xl border border-gray-100">
+            {pengajuan.map((p) => (
+              <li key={p.id} className="flex flex-wrap items-start justify-between gap-3 px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    {JENIS_LABEL[p.jenis] ?? p.jenis}
+                    <span className="ml-2 text-xs font-normal text-gray-500">
+                      {p.tanggalMulai === p.tanggalSelesai
+                        ? p.tanggalMulai
+                        : `${p.tanggalMulai} s.d. ${p.tanggalSelesai}`}
+                    </span>
+                  </p>
+                  <p className="mt-1 text-sm text-gray-600">{p.keterangan}</p>
+                  {p.alasanVerifikasi && (
+                    <p className="mt-1 text-xs text-gray-500">Catatan admin: {p.alasanVerifikasi}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                      p.status === 'disetujui'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : p.status === 'menunggu'
+                          ? 'bg-amber-100 text-amber-800'
+                          : p.status === 'ditolak'
+                            ? 'bg-rose-100 text-rose-800'
+                            : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {STATUS_PENGAJUAN_LABEL[p.status] ?? p.status}
+                  </span>
+                  {p.status === 'menunggu' && (
+                    <button
+                      type="button"
+                      onClick={() => void batalkan(p.id)}
+                      disabled={loading}
+                      className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-60"
+                    >
+                      Batalkan
+                    </button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       {/* Riwayat */}
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
@@ -387,9 +587,11 @@ export function AbsenClient({ nama, jabatan, pengaturan, hariIni, riwayat }: Pro
                           className={`rounded-full px-2 py-1 text-xs font-medium ${
                             r.status === 'telat'
                               ? 'bg-amber-100 text-amber-800'
-                              : r.status === 'izin'
+                              : STATUS_TERTUTUP.includes(r.status)
                                 ? 'bg-blue-100 text-blue-800'
-                                : 'bg-emerald-100 text-emerald-800'
+                                : r.status === 'alpa'
+                                  ? 'bg-rose-100 text-rose-800'
+                                  : 'bg-emerald-100 text-emerald-800'
                           }`}
                         >
                           {STATUS_LABEL[r.status] ?? r.status}

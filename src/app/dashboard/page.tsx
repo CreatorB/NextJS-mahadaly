@@ -63,7 +63,7 @@ export default async function DashboardPage() {
     <div className="p-6 sm:p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-brand-primary">Dashboard Peserta</h1>
-        <p className="text-gray-500 text-sm">Selamat datang, <strong>{siswa.nama}</strong></p>
+        <p className="text-gray-500 text-sm">Assalamualaikum, <strong>{siswa.nama}</strong></p>
       </div>
 
       {/* Banner: transfer ditolak */}
@@ -136,16 +136,16 @@ export default async function DashboardPage() {
             </span>
             <div>
               <h2 className="text-lg font-bold text-brand-primary">Hasil Kelulusan</h2>
-              <p className="text-xs text-gray-500">Pengumuman kelulusan Ma'had Aly Imam Syathiby</p>
+              <p className="text-xs text-gray-500">Pengumuman kelulusan Ma&apos;had Aly Imam Syathiby</p>
             </div>
           </div>
 
           <div className="space-y-2 text-sm">
             <p className="text-gray-800">
               {siswa.kelulusan === 'lulus' ? (
-                <>Selamat, Antum telah diterima di <strong>Ma'had Aly Imam Syathiby</strong></>
+                <>Assalamualaikum, Antum telah diterima di <strong>Ma&apos;had Aly Imam Syathiby</strong></>
               ) : (
-                <>Terima kasih atas partisipasi Antum dalam seleksi masuk Ma'had Aly Imam Syathiby.</>
+                <>Terima kasih atas partisipasi Antum dalam seleksi masuk Ma&apos;had Aly Imam Syathiby.</>
               )}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 pt-1.5">

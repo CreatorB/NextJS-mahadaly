@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma'
 import { requireAdminApi } from '@/lib/kias-admin'
 import { fail, ok } from '@/types/api'
 import { ambilPengaturanAbsensi } from '@/lib/absensi'
+import { catatRiwayat } from '@/lib/riwayat'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -20,7 +21,8 @@ export async function GET(req: NextRequest) {
  * Simpan jam kerja, toleransi telat, titik koordinat + radius GPS, dan IP Wi-Fi.
  */
 export async function PUT(req: NextRequest) {
-  if (!(await requireAdminApi(req))) return Response.json(fail('Akses ditolak'), { status: 401 })
+  const session = await requireAdminApi(req)
+  if (!session) return Response.json(fail('Akses ditolak'), { status: 401 })
 
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>
 
@@ -74,6 +76,22 @@ export async function PUT(req: NextRequest) {
   }
   const hariKerjaStr = hariKerja.join(',')
 
+  // Aturan otomatis (standar absensi).
+  const batasTelatMenit = Number(body.batasTelatMenit ?? 0)
+  if (!Number.isFinite(batasTelatMenit) || batasTelatMenit < 0 || batasTelatMenit > 240) {
+    return Response.json(fail('Batas keterlambatan harus antara 0-240 menit.'), { status: 400 })
+  }
+  const batasAlpaHari = Number(body.batasAlpaHari ?? 1)
+  if (!Number.isFinite(batasAlpaHari) || batasAlpaHari < 0 || batasAlpaHari > 30) {
+    return Response.json(fail('Batas konfirmasi alpa harus antara 0-30 hari.'), { status: 400 })
+  }
+  const autoSimpanAlpa = Boolean(body.autoSimpanAlpa)
+  const defaultShiftId = body.defaultShiftId ? Number(body.defaultShiftId) : null
+  if (defaultShiftId != null) {
+    const shift = await prisma.shift.findUnique({ where: { id: defaultShiftId } })
+    if (!shift) return Response.json(fail('Shift default tidak ditemukan.'), { status: 404 })
+  }
+
   const data = {
     jamMasuk: jamMasuk.length === 5 ? `${jamMasuk}:00` : jamMasuk,
     jamPulang: jamPulang.length === 5 ? `${jamPulang}:00` : jamPulang,
@@ -83,12 +101,26 @@ export async function PUT(req: NextRequest) {
     radiusMeter: Math.round(radiusMeter),
     wifiIps: wifiIps.join(','),
     hariKerja: hariKerjaStr,
+    batasTelatMenit: Math.round(batasTelatMenit),
+    batasAlpaHari: Math.round(batasAlpaHari),
+    autoSimpanAlpa,
+    defaultShiftId,
   }
 
   const row = await prisma.pengaturanAbsensi.upsert({
     where: { id: 1 },
     create: { id: 1, ...data },
     update: data,
+  })
+
+  await catatRiwayat({
+    aksi: 'atur-pengaturan',
+    entitas: 'pengaturan',
+    entitasId: 1,
+    sesudah: data,
+    keterangan: 'Pengaturan absensi diperbarui',
+    actorId: session.userId,
+    actorNama: session.nama,
   })
 
   return Response.json(ok(row, 'Pengaturan absensi berhasil disimpan.'))

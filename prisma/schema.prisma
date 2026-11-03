@@ -88,6 +88,9 @@ model Pegawai {
   toleransiMenit   Int?      @map("toleransi_menit")
   isActive         Boolean   @default(true) @map("is_active")
   absensi          AbsensiKerja[]
+  pengajuan        Pengajuan[]
+  jadwalShift      JadwalShift[]
+  riwayatAbsensi   RiwayatAbsensi[]
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
 
@@ -111,8 +114,10 @@ model AbsensiKerja {
   longitude  Decimal?  @db.Decimal(10, 7)
   jarakMeter Int?      @map("jarak_meter")
   ip         String?
-  status     String    @default("hadir") // hadir | telat | izin | sakit | alpa
+  status     String    @default("hadir") // hadir | telat | izin | sakit | cuti | alpa
   keterangan String?   @db.VarChar(255)
+  /// Sumber catatan: absen | pengajuan | manual | otomatis
+  sumber     String    @default("absen")
   createdAt  DateTime  @default(now()) @map("created_at")
   updatedAt  DateTime  @updatedAt @map("updated_at")
 
@@ -134,9 +139,101 @@ model PengaturanAbsensi {
   wifiIps        String   @default("103.178.146.98") @map("wifi_ips")
   /// Hari kerja (0=Minggu ... 6=Sabtu), dipakai untuk hitung otomatis "tanpa absen".
   hariKerja      String   @default("0,1,2,3,4,5,6") @map("hari_kerja")
+  /// Batas keterlambatan (menit) sebelum absen otomatis dihitung alpa. 0 = tidak otomatis.
+  batasTelatMenit Int     @default(0) @map("batas_telat_menit")
+  /// Berapa hari setelah tanggal kerja, "tanpa absen" otomatis disimpan sebagai alpa.
+  batasAlpaHari  Int       @default(1) @map("batas_alpa_hari")
+  /// Simpan otomatis catatan alpa untuk hari yang lewat tanpa keterangan.
+  autoSimpanAlpa Boolean  @default(false) @map("auto_simpan_alpa")
+  /// Shift default bila pegawai tidak punya jadwal shift per hari.
+  defaultShiftId Int?      @map("default_shift_id")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   @@map("pengaturan_absensi")
+}
+
+/// Shift kerja: template jam kerja (bisa berbeda tiap hari / pegawai).
+model Shift {
+  id                  Int      @id @default(autoincrement())
+  nama                String   @unique
+  jamMasuk            String   @map("jam_masuk")
+  jamPulang           String   @map("jam_pulang")
+  toleransiMenit      Int      @default(5) @map("toleransi_menit")
+  jamIstirahatMulai   String?  @map("jam_istirahat_mulai")
+  jamIstirahatSelesai String?  @map("jam_istirahat_selesai")
+  isActive            Boolean  @default(true) @map("is_active")
+  jadwal              JadwalShift[]
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @default(now()) @map("updated_at") @updatedAt
+
+  @@map("shift")
+}
+
+/// Jadwal shift mingguan per pegawai (hari: 0=Minggu ... 6=Sabtu).
+model JadwalShift {
+  id        Int     @id @default(autoincrement())
+  pegawaiId Int     @map("pegawai_id")
+  pegawai   Pegawai @relation(fields: [pegawaiId], references: [id], onDelete: Cascade)
+  hari      Int
+  shiftId   Int     @map("shift_id")
+  shift     Shift   @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([pegawaiId, hari])
+  @@map("jadwal_shift")
+}
+
+/// Hari libur / tanggal merah: tidak dihitung sebagai alpa.
+model HariLibur {
+  id        Int      @id @default(autoincrement())
+  tanggal   DateTime @unique @db.Date
+  nama      String
+  jenis     String   @default("libur") // libur | nasional | cuti_umum
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("hari_libur")
+}
+
+/// Pengajuan izin / sakit / cuti oleh staf, menunggu persetujuan admin.
+model Pengajuan {
+  id               Int      @id @default(autoincrement())
+  pegawaiId        Int      @map("pegawai_id")
+  pegawai          Pegawai  @relation(fields: [pegawaiId], references: [id], onDelete: Cascade)
+  jenis            String   // izin | sakit | cuti
+  tanggalMulai     DateTime @map("tanggal_mulai") @db.Date
+  tanggalSelesai   DateTime @map("tanggal_selesai") @db.Date
+  keterangan       String   @db.Text
+  buktiUrl         String?  @map("bukti_url")
+  status           String   @default("menunggu") // menunggu | disetujui | ditolak | dibatalkan
+  alasanVerifikasi String?  @map("alasan_verifikasi") @db.Text
+  reviewedAt       DateTime? @map("reviewed_at")
+  reviewedBy       Int?     @map("reviewed_by")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @default(now()) @map("updated_at") @updatedAt
+
+  @@index([pegawaiId])
+  @@index([status])
+  @@map("pengajuan")
+}
+
+/// Jejak perubahan data absensi (audit trail) oleh admin.
+model RiwayatAbsensi {
+  id         Int      @id @default(autoincrement())
+  aksi       String   // set-status | buat-catatan | hapus | setujui | tolak | jadwal | pengaturan
+  entitas    String   // absensi | pengajuan | pegawai | pengaturan | jadwal
+  entitasId  Int?     @map("entitas_id")
+  pegawaiId  Int?     @map("pegawai_id")
+  sebelum    String?  @db.Text
+  sesudah   String?  @db.Text
+  keterangan String?  @db.Text
+  actorId    Int?     @map("actor_id")
+  actorNama  String?  @map("actor_nama")
+  createdAt  DateTime @default(now()) @map("created_at")
+  pegawai    Pegawai? @relation(fields: [pegawaiId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([pegawaiId])
+  @@map("riwayat_absensi")
 }
 
 /// Jejak import data pegawai dari Excel (audit).

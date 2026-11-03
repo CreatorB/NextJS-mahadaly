@@ -43,7 +43,7 @@ export function LupaPasswordForm() {
           </p>
         </div>
         <a
-          href={`https://wa.me/${WA_ADMIN}?text=${encodeURIComponent('Halo Admin Ma\'had Aly Syathiby, saya lupa password akun saya. Mohon bantu reset password.')}`}
+          href={`https://wa.me/${WA_ADMIN}?text=${encodeURIComponent('Assalamualaikum Admin Ma\'had Aly Syathiby, saya lupa password akun saya. Mohon bantu reset password.')}`}
           target="_blank"
           rel="noopener noreferrer"
           className="flex w-full items-center justify-center gap-2 rounded-lg border border-green-600 bg-white px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50"
@@ -70,7 +70,7 @@ export function LupaPasswordForm() {
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Kirim permintaan reset
       </Button>
       <a
-        href={`https://wa.me/${WA_ADMIN}?text=${encodeURIComponent('Halo Admin Ma\'had Aly Syathiby, saya lupa password akun saya. Mohon bantu reset password.')}`}
+        href={`https://wa.me/${WA_ADMIN}?text=${encodeURIComponent('Assalamualaikum Admin Ma\'had Aly Syathiby, saya lupa password akun saya. Mohon bantu reset password.')}`}
         target="_blank"
         rel="noopener noreferrer"
         className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"

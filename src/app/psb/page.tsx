@@ -8,6 +8,7 @@ import type { Metadata } from 'next'
 import prisma from '@/lib/prisma'
 import { validateRegistrationLink } from '@/lib/registration-link'
 import { getCatalogRekap } from '@/lib/program-catalog'
+import { getKontenMap } from '@/lib/konten'
 
 export const dynamic = 'force-dynamic'
 
@@ -62,7 +63,7 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
  */
 export default async function PsbHubPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams
-  const rekap = await getCatalogRekap()
+  const [rekap, konten] = await Promise.all([getCatalogRekap(), getKontenMap()])
 
   let specialLink: Awaited<ReturnType<typeof validateRegistrationLink>> | null = null
   if (params.id) {
@@ -93,7 +94,7 @@ export default async function PsbHubPage({ searchParams }: { searchParams: Searc
           <div className="relative mx-auto max-w-3xl px-4 pt-14 pb-14 text-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-brand-primary/15 bg-white/70 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.25em] text-brand-secondary shadow-sm backdrop-blur">
               <span className="h-1.5 w-1.5 rounded-full bg-brand-light" />
-              Penerimaan Santri &amp; Mahasiswa/Mahasiswi Baru
+              {konten['psb.hero.badge']}
             </span>
 
             <div className="mt-4 flex items-center justify-center gap-3">
@@ -103,17 +104,14 @@ export default async function PsbHubPage({ searchParams }: { searchParams: Searc
             </div>
 
             <h1 className="mt-4 text-3xl md:text-4xl font-bold text-brand-primary leading-tight">
-              Ma&apos;had Aly Al-Imam Asy-Syathiby
+              {konten['psb.hero.judul']}
             </h1>
 
             <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-brand-primary px-4 py-1.5 text-sm font-medium text-white shadow-md shadow-brand-primary/20">
               <CalendarDays className="h-4 w-4 text-brand-accent" /> Tahun Ajaran {tahun}
             </div>
 
-            <p className="mt-5 mx-auto max-w-2xl text-slate-600">
-              Pilih program yang sesuai dengan kebutuhan belajar Anda. Setiap program punya kurikulum,
-              jadwal, dan biaya sendiri.
-            </p>
+            <p className="mt-5 mx-auto max-w-2xl text-slate-600">{konten['psb.hero.deskripsi']}</p>
           </div>
         </section>
 
@@ -160,12 +158,12 @@ export default async function PsbHubPage({ searchParams }: { searchParams: Searc
             />
 
             <div className="mt-12 flex flex-col items-center justify-center gap-1.5 text-sm text-gray-500">
-              Sudah mendaftar?
+              {konten['psb.daftarLabel']}
               <Link
                 href="/login"
                 className="group inline-flex items-center gap-1 font-semibold text-brand-primary transition-colors hover:text-brand-secondary"
               >
-                Login ke Dashboard
+                {konten['psb.daftarLink']}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
             </div>

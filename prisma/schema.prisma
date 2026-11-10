@@ -34,6 +34,8 @@ model User {
   posts        Post[]
   profil       Profil[]
   halamanInfos HalamanInfo[]
+  kontens      Konten[]
+  kontenItems  KontenItem[]
   pegawai      Pegawai?
   passwordChangedAt DateTime? @map("password_changed_at")
   resetTokens       PasswordResetToken[] @relation("UserResetTokens")
@@ -862,4 +864,61 @@ model HalamanInfo {
 
   @@index([kategori, urutan])
   @@map("halaman_info")
+}
+
+/// Teks statis situs publik yang disunting dari panel admin.
+///
+/// Satu baris = satu "key" (mis. `hero.judul1`, `footer.alamat`). Nilai disimpan
+/// apa adanya supaya halaman publik cukup membaca key-nya — tidak ada teks
+/// naratif yang tertanam di komponen.
+///
+/// `grup` dipakai untuk mengelompokkan di panel admin (Beranda, Program HKI,
+/// Program KIAS, PSB, Profil, Footer). `tipe` menentukan jenis form yang
+/// dipakai admin: teks | textarea | wysiwyg | url.
+model Konten {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique @map("kunci")
+  label       String
+  tipe        String   @default("teks")
+  grup        String
+  nilai       String   @db.LongText
+  urutan      Int      @default(0)
+  tampil      Boolean  @default(true)
+  updatedById Int?     @map("updated_by_id")
+  updatedBy   User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([grup, urutan])
+  @@map("konten")
+}
+
+/// Baris daftar pada halaman publik (pengajar, profil lulusan, kontak, materi,
+/// fitur kartu program).
+///
+/// Satu tabel untuk semua daftar supaya panel admin cukup satu CRUD generik.
+/// Field yang dipakai tiap daftar berbeda, diatur di `src/lib/konten-shared.ts`:
+/// - pengajar : judul = nama
+/// - lulusan  : judul = nama profesi, deskripsi = keterangan
+/// - kontak   : judul = label, deskripsi = nilai, url = tautan
+/// - materi   : judul = judul dokumen, deskripsi = keterangan, fileUrl = berkas
+/// - fitur-*  : judul = butir fitur kartu program
+model KontenItem {
+  id          Int      @id @default(autoincrement())
+  grup        String
+  judul       String
+  deskripsi   String?  @db.Text
+  url         String?
+  ikon        String?
+  fileUrl     String?  @map("file_url")
+  fileName    String?  @map("file_name")
+  urutan      Int      @default(0)
+  tampil      Boolean  @default(true)
+  updatedById Int?     @map("updated_by_id")
+  updatedBy   User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([grup, urutan])
+  @@map("konten_item")
 }

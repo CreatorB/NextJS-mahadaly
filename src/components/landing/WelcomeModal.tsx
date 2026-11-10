@@ -18,7 +18,17 @@ export const WELCOME_CLOSED_EVENT = 'mahadaly:welcome-closed'
  */
 const STORAGE_KEY = 'mahadaly:welcome-dismissed'
 
-export function WelcomeModal() {
+export function WelcomeModal({
+  salam,
+  teks,
+  doa,
+  catatan,
+}: {
+  salam: string
+  teks: string
+  doa: string
+  catatan: string
+}) {
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
@@ -119,7 +129,7 @@ export function WelcomeModal() {
             lang="ar"
             className="font-arabic text-3xl leading-[1.9] font-bold text-brand-accent drop-shadow-[0_2px_12px_rgba(0,0,0,0.35)] sm:text-4xl"
           >
-            مَرْحَبًا بِكُمْ فِي مَوْقِعِنَا الرَّسْمِيِّ
+            {salam}
           </p>
 
           <div className="mx-auto my-5 flex w-fit items-center gap-3">
@@ -130,9 +140,7 @@ export function WelcomeModal() {
 
           {/* Indonesia */}
           <p className="mx-auto max-w-xl text-pretty text-base leading-relaxed text-blue-50 sm:text-lg">
-            Assalamualaikum, welcome di official website Ma&apos;had Aly Syathiby (MAISy) dan sekedar
-            himbauan kami tidak bertanggung jawab atas informasi lain diluar sana yang tidak
-            tercantum di situs ini.
+            {teks}
           </p>
 
           {/* Arab: doa penutup */}
@@ -141,13 +149,12 @@ export function WelcomeModal() {
             lang="ar"
             className="font-arabic mt-5 text-2xl leading-[1.9] font-semibold text-white/95 sm:text-3xl"
           >
-            وَفَّقَنَا اللَّهُ جَمِيعًا
+            {doa}
           </p>
 
           <p className="mt-7 inline-flex items-center gap-2 text-xs text-blue-100/80">
             <Volume2 className="h-4 w-4 text-brand-accent" />
-            Klik ikon × di pojok kanan atas untuk menutup jendela ini dan memutar video profil
-            dengan suara.
+            {catatan}
           </p>
         </div>
       </div>

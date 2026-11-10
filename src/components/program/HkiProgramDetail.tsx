@@ -18,6 +18,8 @@ import {
 } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { validateRegistrationLink } from '@/lib/registration-link'
+import { getKontenMap, getKontenTag } from '@/lib/konten'
+import { applyTag } from '@/lib/konten-shared'
 
 type Props = {
   searchParams: Promise<{ id?: string }>
@@ -36,7 +38,11 @@ export async function HkiProgramDetail({ searchParams }: Props) {
   }
   const linkData = specialLink && specialLink.ok ? specialLink : null
 
-  const info = await prisma.infoPsb.findFirst({ orderBy: { tahunAjaran: 'desc' } })
+  const [info, konten, tag] = await Promise.all([
+    prisma.infoPsb.findFirst({ orderBy: { tahunAjaran: 'desc' } }),
+    getKontenMap(),
+    getKontenTag(),
+  ])
 
   let quota: {
     tahunAjaran: string
@@ -106,14 +112,14 @@ export async function HkiProgramDetail({ searchParams }: Props) {
     {
       icon: ClipboardCheck,
       label: 'Tes Masuk',
-      value: 'Sabtu, 22 Agustus 2026',
+      value: applyTag(konten['hki.info.tesMasuk'], tag),
       tint: 'bg-brand-light/15',
       color: 'text-brand-light',
     },
     {
       icon: Phone,
       label: 'Narahubung',
-      value: '0811-1516-756',
+      value: applyTag(konten['hki.info.narahubung'], tag),
       tint: 'bg-brand-secondary/10',
       color: 'text-brand-secondary',
       href: 'https://api.whatsapp.com/send?phone=628111516756',
@@ -148,9 +154,8 @@ export async function HkiProgramDetail({ searchParams }: Props) {
 
           <span className="inline-flex items-center gap-2 rounded-full border border-brand-primary/15 bg-white/70 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.25em] text-brand-secondary shadow-sm backdrop-blur">
             <span className="h-1.5 w-1.5 rounded-full bg-brand-light" />
-            Program 1 &middot; Hukum Keluarga Islam (HKI)
+            {konten['hki.hero.badge']}
           </span>
-
           <div className="mt-4 flex items-center justify-center gap-3">
             <span className="h-px w-10 bg-gradient-to-r from-transparent to-brand-primary/40" />
             <span className="h-2 w-2 rotate-45 bg-brand-accent ring-1 ring-brand-primary/25" />
@@ -158,7 +163,7 @@ export async function HkiProgramDetail({ searchParams }: Props) {
           </div>
 
           <p className="mt-4 text-lg font-semibold text-brand-secondary sm:text-xl">
-            Ma&apos;had Aly Al-Imam Asy-Syathiby
+            {konten['hki.hero.subjudul']}
           </p>
 
           <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-brand-primary px-4 py-1.5 text-sm font-medium text-white shadow-md shadow-brand-primary/20">
@@ -167,9 +172,7 @@ export async function HkiProgramDetail({ searchParams }: Props) {
           </div>
 
           <p className="mt-5 mx-auto max-w-2xl text-slate-600">
-            Ma&apos;had Aly — S1 Ahwal Syakhsiyyah: belajar ilmu-ilmu syar&apos;i selama 4 tahun
-            (8 semester) untuk Santri &amp; mahasiswa/i yang sudah bisa berbahasa Arab pasif, dengan
-            ijazah S1.
+            {konten['hki.hero.deskripsi']}
           </p>
 
           <div className="mt-7 flex flex-col sm:flex-row gap-4 justify-center">
@@ -177,13 +180,13 @@ export async function HkiProgramDetail({ searchParams }: Props) {
               href="/psb/daftar"
               className="bg-brand-primary text-white font-bold px-8 py-3.5 rounded-xl text-center hover:opacity-90 transition-opacity shadow-lg"
             >
-              Daftar Program HKI
+              {konten['hki.hero.tombol1']}
             </Link>
             <a
               href="#materi"
               className="border-2 border-brand-primary/25 text-brand-primary font-semibold px-8 py-3.5 rounded-xl text-center hover:bg-brand-primary/5 transition-colors"
             >
-              Unduh Panduan &amp; Kalender
+              {konten['hki.hero.tombol2']}
             </a>
           </div>
         </div>
@@ -232,8 +235,8 @@ export async function HkiProgramDetail({ searchParams }: Props) {
               <Info className="h-5 w-5 text-brand-primary" />
             </span>
             <div>
-              <h3 className="font-bold leading-tight text-brand-primary">Informasi Penting</h3>
-              <p className="text-xs text-gray-400">Jadwal &amp; ketentuan pendaftaran</p>
+              <h3 className="font-bold leading-tight text-brand-primary">{konten['hki.info.judul']}</h3>
+              <p className="text-xs text-gray-400">{konten['hki.info.subjudul']}</p>
             </div>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -276,8 +279,8 @@ export async function HkiProgramDetail({ searchParams }: Props) {
             <Compass className="h-5 w-5 text-brand-primary" />
           </span>
           <div>
-            <h2 className="font-bold leading-tight text-brand-primary">Informasi Program</h2>
-            <p className="text-xs text-gray-400">Program belajar, jadwal, jumlah pendaftar &amp; kontak</p>
+            <h2 className="font-bold leading-tight text-brand-primary">{konten['hki.kartu.judul']}</h2>
+            <p className="text-xs text-gray-400">{konten['hki.kartu.subjudul']}</p>
           </div>
         </div>
         <ProgramInfoCards />
@@ -292,16 +295,10 @@ export async function HkiProgramDetail({ searchParams }: Props) {
         ) : (
           <div className="rounded-2xl border border-gray-100 bg-white py-10 text-center text-gray-500 shadow-sm">
             <p>
-              Informasi PSB belum tersedia. Hubungi panitia di{' '}
-              <a
-                href="https://api.whatsapp.com/send?phone=628111516756"
-                className="text-brand-secondary font-medium hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                0811-1516-756
-              </a>
-              .
+              {applyTag(konten['hki.info.kosong'], {
+                ...tag,
+                narahubung: applyTag(konten['hki.info.narahubung'], tag),
+              })}
             </p>
           </div>
         )}

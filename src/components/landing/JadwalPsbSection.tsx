@@ -1,21 +1,75 @@
 import Link from 'next/link'
 import { Calendar, DollarSign } from 'lucide-react'
 import prisma from '@/lib/prisma'
+import { getKontenMap, getKontenTag } from '@/lib/konten'
+import { applyTag } from '@/lib/konten-shared'
 
+/**
+ * Section "Jadwal & Biaya PMB".
+ *
+ * Tanggal & nominal tetap dari tabel PSB (dikelola di Pengaturan PSB),
+ * sedangkan LABEL, tanggal tes masuk, dan catatan cicilan bisa disunting
+ * dari panel admin (tabel `konten`).
+ */
 export async function JadwalPsbSection({ showCta = true }: { showCta?: boolean } = {}) {
-  const info = await prisma.infoPsb.findFirst({ orderBy: { tahunAjaran: 'desc' } })
+  const [info, konten, tag] = await Promise.all([
+    prisma.infoPsb.findFirst({ orderBy: { tahunAjaran: 'desc' } }),
+    getKontenMap(),
+    getKontenTag(),
+  ])
 
   const jadwal = [
-    { kegiatan: 'Pendaftaran Dibuka', tanggal: info?.datetimeOpen ? new Date(info.datetimeOpen).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-' },
-    { kegiatan: 'Pendaftaran Ditutup', tanggal: info?.datetimeClosed ? new Date(info.datetimeClosed).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-' },
-    { kegiatan: 'Tes Masuk', tanggal: 'Sabtu, 22 Agustus 2026' },
+    {
+      kegiatan: applyTag(konten['jadwal.labelBuka'], tag),
+      tanggal: info?.datetimeOpen
+        ? new Date(info.datetimeOpen).toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+          })
+        : '-',
+    },
+    {
+      kegiatan: applyTag(konten['jadwal.labelTutup'], tag),
+      tanggal: info?.datetimeClosed
+        ? new Date(info.datetimeClosed).toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+          })
+        : '-',
+    },
+    {
+      kegiatan: applyTag(konten['jadwal.labelTes'], tag),
+      tanggal: applyTag(konten['jadwal.tesMasuk'], tag),
+    },
   ]
 
   const biaya = [
-    { item: 'Uang Pendaftaran', nominal: info?.biayaPendaftaran ? `Rp ${Number(info.biayaPendaftaran).toLocaleString('id-ID')}` : 'Rp 150.000' },
-    { item: 'Uang Pangkal', nominal: info?.biayaPangkal ? `Rp ${Number(info.biayaPangkal).toLocaleString('id-ID')}` : 'Rp 5.250.000' },
-    { item: 'Biaya Kuliah/Semester', nominal: info?.biayaKuliahSemester ? `Rp ${Number(info.biayaKuliahSemester).toLocaleString('id-ID')}` : 'Rp 3.000.000' },
-    { item: 'Cicilan/Bulan', nominal: info?.biayaCicilanBulanan ? `Rp ${Number(info.biayaCicilanBulanan).toLocaleString('id-ID')}` : 'Rp 500.000' },
+    {
+      item: applyTag(konten['jadwal.biayaDaftar'], tag),
+      nominal: info?.biayaPendaftaran
+        ? `Rp ${Number(info.biayaPendaftaran).toLocaleString('id-ID')}`
+        : 'Rp 150.000',
+    },
+    {
+      item: applyTag(konten['jadwal.biayaPangkal'], tag),
+      nominal: info?.biayaPangkal
+        ? `Rp ${Number(info.biayaPangkal).toLocaleString('id-ID')}`
+        : 'Rp 5.250.000',
+    },
+    {
+      item: applyTag(konten['jadwal.biayaSemester'], tag),
+      nominal: info?.biayaKuliahSemester
+        ? `Rp ${Number(info.biayaKuliahSemester).toLocaleString('id-ID')}`
+        : 'Rp 3.000.000',
+    },
+    {
+      item: applyTag(konten['jadwal.biayaCicilan'], tag),
+      nominal: info?.biayaCicilanBulanan
+        ? `Rp ${Number(info.biayaCicilanBulanan).toLocaleString('id-ID')}`
+        : 'Rp 500.000',
+    },
   ]
 
   const cicilan = info?.biayaCicilanBulanan ?? 500000
@@ -24,15 +78,19 @@ export async function JadwalPsbSection({ showCta = true }: { showCta?: boolean }
     <section id="jadwal" className="py-16 px-4 bg-white">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-brand-primary mb-3">Jadwal & Biaya PMB {info?.tahunAjaran ?? '2026'}</h2>
-          <p className="text-gray-600">Tahun Ajaran {info?.tahunAjaran ? `${info.tahunAjaran}/${Number(info.tahunAjaran) + 1}` : '2026/2027'}</p>
+          <h2 className="text-3xl font-bold text-brand-primary mb-3">
+            {applyTag(konten['jadwal.judul'], tag)}
+          </h2>
+          <p className="text-gray-600">{applyTag(konten['jadwal.subjudul'], tag)}</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
           <div className="bg-brand-surface rounded-2xl p-6 border border-gray-100">
             <div className="flex items-center gap-3 mb-4">
               <Calendar className="h-6 w-6 text-brand-primary" />
-              <h3 className="font-bold text-brand-primary text-lg">Jadwal PMB</h3>
+              <h3 className="font-bold text-brand-primary text-lg">
+                {konten['jadwal.judulTabel']}
+              </h3>
             </div>
             <table className="w-full text-sm">
               <tbody>
@@ -49,7 +107,7 @@ export async function JadwalPsbSection({ showCta = true }: { showCta?: boolean }
           <div className="bg-brand-surface rounded-2xl p-6 border border-gray-100">
             <div className="flex items-center gap-3 mb-4">
               <DollarSign className="h-6 w-6 text-brand-primary" />
-              <h3 className="font-bold text-brand-primary text-lg">Biaya</h3>
+              <h3 className="font-bold text-brand-primary text-lg">{konten['jadwal.biayaJudul']}</h3>
             </div>
             <table className="w-full text-sm">
               <tbody>
@@ -61,15 +119,22 @@ export async function JadwalPsbSection({ showCta = true }: { showCta?: boolean }
                 ))}
               </tbody>
             </table>
-            <p className="text-xs text-gray-500 mt-3">*Biaya kuliah bisa dicicil Rp {cicilan.toLocaleString('id-ID')}/bulan</p>
+            <p className="text-xs text-gray-500 mt-3">
+              {applyTag(konten['jadwal.catatanBiaya'], { ...tag, biayaCicilan: cicilan.toLocaleString('id-ID') })}
+            </p>
           </div>
         </div>
 
-        {showCta && <div className="text-center">
-          <Link href="/psb" className="inline-block bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold px-10 py-4 rounded-xl text-lg hover:opacity-90 transition-opacity shadow-lg">
-            Daftar Sekarang
-          </Link>
-        </div>}
+        {showCta && (
+          <div className="text-center">
+            <Link
+              href="/psb"
+              className="inline-block bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold px-10 py-4 rounded-xl text-lg hover:opacity-90 transition-opacity shadow-lg"
+            >
+              {konten['jadwal.cta']}
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   )

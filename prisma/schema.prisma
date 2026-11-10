@@ -33,6 +33,7 @@ model User {
   cardUpdates  CrossAppCardSetting[]
   posts        Post[]
   profil       Profil[]
+  halamanInfos HalamanInfo[]
   pegawai      Pegawai?
   passwordChangedAt DateTime? @map("password_changed_at")
   resetTokens       PasswordResetToken[] @relation("UserResetTokens")
@@ -823,13 +824,42 @@ model ProgramCatalog {
 /// Profil lembaga (halaman /profil) — tabel SINGLETON: hanya satu baris
 /// (id = 1) berisi profil yang disunting dari panel admin lewat editor WYSIWYG.
 /// `konten` = HTML tersanitasi, `video_url` = URL YouTube untuk video utama.
+/// `visi` & `misi` = HTML untuk section "Visi & Misi" di beranda dan halaman /visi-misi.
 model Profil {
   id          Int      @id @default(1)
   konten      String   @db.LongText
+  visi        String?  @db.LongText
+  misi        String?  @db.LongText
   videoUrl    String?  @map("video_url")
   updatedById Int?     @map("updated_by_id")
   updatedBy   User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("profil")
+}
+
+/// Halaman informasi publik yang disunting dari panel admin lewat editor WYSIWYG.
+///
+/// Dipakai untuk info KIAS (Profil KIAS, Profil Tajwid, Bahasa Arab & Takmili,
+/// Panduan Santri, Panduan Ustadz, Info PSB) yang ditayangkan pada
+/// /program/kias/[slug].
+///
+/// `kategori` mengelompokkan halaman: "KIAS" (bawah /program/kias) atau
+/// "MAHADALY" (halaman umum). `slug` dipakai pada URL, jadi harus unik.
+model HalamanInfo {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  judul       String   @map("judul")
+  kategori    String   @default("KIAS")
+  ringkasan   String?
+  konten      String   @db.LongText
+  urutan      Int      @default(0)
+  tampil      Boolean  @default(true)
+  updatedById Int?     @map("updated_by_id")
+  updatedBy   User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([kategori, urutan])
+  @@map("halaman_info")
 }

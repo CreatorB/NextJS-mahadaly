@@ -31,6 +31,8 @@ export async function PUT(req: NextRequest) {
   const d = parsed.data
   const saved = await saveProfil({
     konten: sanitizeProfilKonten(d.konten),
+    visi: d.visi ? sanitizeProfilKonten(d.visi) : null,
+    misi: d.misi ? sanitizeProfilKonten(d.misi) : null,
     videoUrl: d.videoUrl || null,
     updatedById: session.userId,
   })

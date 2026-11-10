@@ -1,14 +1,19 @@
 import Link from 'next/link'
-import { ArrowRight, CalendarDays, Clock, MapPin, Timer } from 'lucide-react'
+import { ArrowRight, CalendarDays, Clock, MapPin, Timer, FileText } from 'lucide-react'
 import { ContactSection } from '@/components/landing/ContactSection'
 import { formatRupiah, getActiveKiasInfo, getKiasJenisPrograms, isKiasPsbOpen, jenisDenganKelasAktif, KIAS_DAFTAR_URL } from '@/lib/kias'
+import { KATEGORI_KIAS, getHalamanInfoList } from '@/lib/halaman-info'
 
 /**
  * Detail program KIAS — dipakai oleh /program/kias.
  * Form pendaftarannya tetap di /kias/daftar.
  */
 export async function KiasProgramDetail() {
-  const [info, semuaJenis] = await Promise.all([getActiveKiasInfo(), getKiasJenisPrograms()])
+  const [info, semuaJenis, halamanInfo] = await Promise.all([
+    getActiveKiasInfo(),
+    getKiasJenisPrograms(),
+    getHalamanInfoList({ kategori: KATEGORI_KIAS, hanyaTampil: true }),
+  ])
   // Jenjang tanpa kelas aktif (mis. Ulum Asy-Syariah) tidak ditampilkan.
   const jenis = jenisDenganKelasAktif(semuaJenis)
   const buka = isKiasPsbOpen(info)
@@ -187,6 +192,36 @@ export async function KiasProgramDetail() {
           </div>
         </div>
       </section>
+
+      {halamanInfo.length > 0 && (
+        <section id="info-kias" className="py-16 px-4 bg-brand-surface">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-3xl font-bold text-brand-primary text-center mb-3">Info &amp; Panduan KIAS</h2>
+            <p className="text-slate-600 text-center mb-10">
+              Profil, panduan, dan informasi pendaftaran KIAS.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {halamanInfo.map((h) => (
+                <Link
+                  key={h.id}
+                  href={`/program/kias/${h.slug}`}
+                  className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-brand-secondary hover:shadow-md"
+                >
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-primary/10 mb-4">
+                    <FileText className="h-5 w-5 text-brand-primary" />
+                  </span>
+                  <h3 className="font-bold text-brand-primary mb-2">{h.judul}</h3>
+                  {h.ringkasan && <p className="text-sm text-slate-600 flex-1">{h.ringkasan}</p>}
+                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-brand-primary">
+                    Baca selengkapnya
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <ContactSection />
     </>

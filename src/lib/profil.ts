@@ -73,6 +73,8 @@ export async function getProfil() {
   return {
     id: row?.id ?? PROFIL_ID,
     konten: row?.konten || PROFIL_DEFAULT_KONTEN,
+    visi: row?.visi ?? null,
+    misi: row?.misi ?? null,
     videoUrl: row?.videoUrl ?? null,
     updatedAt: row?.updatedAt ?? null,
     updatedBy: row?.updatedById ?? null,
@@ -82,6 +84,8 @@ export async function getProfil() {
 /** Simpan profil (upsert baris singleton). */
 export async function saveProfil(data: {
   konten: string
+  visi?: string | null
+  misi?: string | null
   videoUrl: string | null
   updatedById: number | null
 }) {
@@ -91,11 +95,15 @@ export async function saveProfil(data: {
     create: {
       id: PROFIL_ID,
       konten: data.konten,
+      visi: data.visi ?? null,
+      misi: data.misi ?? null,
       videoUrl,
       updatedById: data.updatedById,
     },
     update: {
       konten: data.konten,
+      visi: data.visi ?? null,
+      misi: data.misi ?? null,
       videoUrl,
       updatedById: data.updatedById,
     },

@@ -3,16 +3,20 @@ import { ArrowRight, CalendarDays, Clock, MapPin, Timer, FileText } from 'lucide
 import { ContactSection } from '@/components/landing/ContactSection'
 import { formatRupiah, getActiveKiasInfo, getKiasJenisPrograms, isKiasPsbOpen, jenisDenganKelasAktif, KIAS_DAFTAR_URL } from '@/lib/kias'
 import { KATEGORI_KIAS, getHalamanInfoList } from '@/lib/halaman-info'
+import { getKontenMap, getKontenTag } from '@/lib/konten'
+import { applyTag } from '@/lib/konten-shared'
 
 /**
  * Detail program KIAS — dipakai oleh /program/kias.
  * Form pendaftarannya tetap di /kias/daftar.
  */
 export async function KiasProgramDetail() {
-  const [info, semuaJenis, halamanInfo] = await Promise.all([
+  const [info, semuaJenis, halamanInfo, konten, tag] = await Promise.all([
     getActiveKiasInfo(),
     getKiasJenisPrograms(),
     getHalamanInfoList({ kategori: KATEGORI_KIAS, hanyaTampil: true }),
+    getKontenMap(),
+    getKontenTag(),
   ])
   // Jenjang tanpa kelas aktif (mis. Ulum Asy-Syariah) tidak ditampilkan.
   const jenis = jenisDenganKelasAktif(semuaJenis)
@@ -40,29 +44,26 @@ export async function KiasProgramDetail() {
               buka ? 'bg-brand-accent text-brand-primary' : 'bg-white/15 text-white'
             }`}
           >
-            {buka ? `PENDAFTARAN ${info?.tahunAjaran ?? ''} DIBUKA` : 'PENDAFTARAN BELUM DIBUKA'}
+            {buka ? applyTag(konten['kias.hero.bukaBadge'], tag) : konten['kias.hero.tutupBadge']}
           </span>
           <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-4">
-            KIAS <span className="text-brand-accent">Asy-Syathiby</span>
+            {konten['kias.hero.judul1']} <span className="text-brand-accent">{konten['kias.hero.judul2']}</span>
           </h1>
-          <p className="text-xl text-blue-100 mb-8">
-            Kursus Ilmu bahasa Arab &amp; Syar&apos;i — belajar bertahap dari tajwid hingga membaca
-            kitab ulama.
-          </p>
+          <p className="text-xl text-blue-100 mb-8">{konten['kias.hero.deskripsi']}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {buka && (
               <a
                 href={KIAS_DAFTAR_URL}
                 className="bg-brand-accent text-brand-primary font-bold px-8 py-4 rounded-xl text-lg hover:opacity-90 transition-opacity shadow-lg"
               >
-                Daftar KIAS
+                {konten['kias.hero.tombol1']}
               </a>
             )}
             <a
               href="#kelas"
               className="border-2 border-white text-white font-semibold px-8 py-4 rounded-xl text-lg hover:bg-white/10 transition-colors"
             >
-              Lihat Jadwal Kelas
+              {konten['kias.hero.tombol2']}
             </a>
           </div>
         </div>
@@ -70,10 +71,10 @@ export async function KiasProgramDetail() {
 
       <section className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-brand-primary text-center mb-3">Jenjang Program</h2>
-          <p className="text-slate-600 text-center mb-10">
-            Pilih jenjang sesuai kemampuan Anda saat ini.
-          </p>
+          <h2 className="text-3xl font-bold text-brand-primary text-center mb-3">
+            {konten['kias.jenjang.judul']}
+          </h2>
+          <p className="text-slate-600 text-center mb-10">{konten['kias.jenjang.subjudul']}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {jenis.map((j, idx) => {
               const kelasBuka = j.programs.filter((p) => p.statusPsb === 'Buka').length
@@ -105,9 +106,11 @@ export async function KiasProgramDetail() {
 
       <section id="biaya" className="py-16 px-4 bg-brand-surface">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-brand-primary text-center mb-3">Biaya KIAS</h2>
+          <h2 className="text-3xl font-bold text-brand-primary text-center mb-3">
+            {konten['kias.biaya.judul']}
+          </h2>
           <p className="text-slate-600 text-center mb-8">
-            Tahun ajaran {info?.tahunAjaran ?? 'berjalan'}
+            {applyTag(konten['kias.biaya.subjudul'], tag)}
           </p>
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm divide-y divide-slate-100">
             {biaya.map((b) => (
@@ -125,7 +128,10 @@ export async function KiasProgramDetail() {
 
       <section id="kelas" className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-brand-primary text-center mb-10">Jadwal Kelas</h2>
+          <h2 className="text-3xl font-bold text-brand-primary text-center mb-3">
+              {konten['kias.kelas.judul']}
+            </h2>
+            <p className="text-slate-600 text-center mb-10">{konten['kias.kelas.subjudul']}</p>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {jenis
               .flatMap((j) =>
@@ -196,10 +202,10 @@ export async function KiasProgramDetail() {
       {halamanInfo.length > 0 && (
         <section id="info-kias" className="py-16 px-4 bg-brand-surface">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold text-brand-primary text-center mb-3">Info &amp; Panduan KIAS</h2>
-            <p className="text-slate-600 text-center mb-10">
-              Profil, panduan, dan informasi pendaftaran KIAS.
-            </p>
+            <h2 className="text-3xl font-bold text-brand-primary text-center mb-3">
+              {konten['kias.info.judul']}
+            </h2>
+            <p className="text-slate-600 text-center mb-10">{konten['kias.info.subjudul']}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {halamanInfo.map((h) => (
                 <Link

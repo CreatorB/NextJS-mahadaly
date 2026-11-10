@@ -1,8 +1,17 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { MapPin, Phone, Globe, AtSign } from 'lucide-react'
+import { getKontenMap } from '@/lib/konten'
 
-export function Footer() {
+/**
+ * Footer situs.
+ *
+ * Semua teks (alamat, kontak, label menu, tahun hak cipta) disunting dari
+ * panel admin (tabel `konten`).
+ */
+export async function Footer() {
+  const konten = await getKontenMap()
+
   return (
     <footer className="bg-brand-primary text-white py-10 px-4">
       <div className="max-w-7xl mx-auto">
@@ -19,72 +28,93 @@ export function Footer() {
               />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-brand-accent text-sm sm:text-base lg:text-lg mb-1">Ma&apos;had Aly Al-Imam Asy-Syathiby</h3>
-              <p className="text-xs sm:text-sm text-blue-200 leading-tight">Program Studi Hukum Keluarga Islam (HKI) / Ahwal Syakhsiyyah S1</p>
-              <p className="text-xs sm:text-sm text-blue-200 mt-0.5 leading-tight">Penyelenggara: Yayasan Cahaya Sunnah</p>
+              <h3 className="font-bold text-brand-accent text-sm sm:text-base lg:text-lg mb-1">
+                Ma&apos;had Aly Al-Imam Asy-Syathiby
+              </h3>
+              <p className="text-xs sm:text-sm text-blue-200 leading-tight">
+                {konten['footer.programLabel']}
+              </p>
+              <p className="text-xs sm:text-sm text-blue-200 mt-0.5 leading-tight">
+                {konten['footer.penyelenggara']}
+              </p>
             </div>
           </div>
           {/* Kontak Section */}
           <div className="md:w-1/3">
-            <h4 className="font-semibold mb-3">Kontak</h4>
+            <h4 className="font-semibold mb-3">{konten['footer.judulKontak']}</h4>
             <div className="flex flex-col gap-2 text-sm text-blue-200">
-              <a href="https://api.whatsapp.com/send?phone=628111516756" className="flex items-center gap-2 hover:text-white">
-                <Phone className="h-4 w-4" /> 0811-1516-756
+              <a href={konten['footer.waUrl']} className="flex items-center gap-2 hover:text-white">
+                <Phone className="h-4 w-4" /> {konten['footer.wa']}
               </a>
-              <a href="https://www.mahadaly.syathiby.id" className="flex items-center gap-2 hover:text-white">
-                <Globe className="h-4 w-4" /> www.mahadaly.syathiby.id
+              <a
+                href={konten['footer.websiteUrl']}
+                className="flex items-center gap-2 hover:text-white"
+              >
+                <Globe className="h-4 w-4" /> {konten['footer.website']}
               </a>
               <span className="flex items-center gap-2">
-                <AtSign className="h-4 w-4" /> @mahadalysyathiby
+                <AtSign className="h-4 w-4" /> {konten['footer.instagram']}
               </span>
             </div>
           </div>
           {/* Program Section */}
           <div className="md:w-1/3">
-            <h4 className="font-semibold mb-3">Program</h4>
+            <h4 className="font-semibold mb-3">{konten['footer.judulProgram']}</h4>
             <div className="flex flex-col gap-2 text-sm text-blue-200">
               <Link href="/program/hki" className="hover:text-white">
-                Ma&apos;had Aly — Hukum Keluarga Islam (HKI) S1
+                {konten['footer.linkHki']}
               </Link>
               <Link href="/program/kias" className="hover:text-white">
-                KIAS — Kursus Ilmu Bahasa Arab &amp; Syar&apos;i
+                {konten['footer.linkKias']}
               </Link>
               <Link href="/program/kias#info-kias" className="hover:text-white">
-                Info &amp; Panduan KIAS
+                {konten['footer.linkKiasInfo']}
               </Link>
               <Link href="/visi-misi" className="hover:text-white">
-                Visi &amp; Misi
+                {konten['footer.linkVisiMisi']}
               </Link>
               <Link href="/psb" className="hover:text-white">
-                Pendaftaran Santri &amp; Mahasiswa Baru
+                {konten['footer.linkPsb']}
               </Link>
               <Link href="/profil" className="hover:text-white">
-                Profil Ma&apos;had Aly
+                {konten['footer.linkProfil']}
               </Link>
               <Link href="/berita" className="hover:text-white">
-                Berita &amp; Kabar Kegiatan
+                {konten['footer.linkBerita']}
               </Link>
               <Link href="/events" className="hover:text-white">
-                Event &amp; Kajian
+                {konten['footer.linkEvents']}
               </Link>
             </div>
           </div>
           {/* Alamat Section */}
           <div className="md:w-1/3">
-            <h4 className="font-semibold mb-3">Alamat</h4>
+            <h4 className="font-semibold mb-3">{konten['footer.judulAlamat']}</h4>
             <div className="flex gap-2 text-sm text-blue-200">
               <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
-              <p>Kp. Tengah RT 001 RW 005 (Komplek Mahad Imam Syathiby), Kel. Cileungsi, Kec. Cileungsi, Kab. Bogor, Jawa Barat 16820</p>
+              <p>{konten['footer.alamat']}</p>
             </div>
           </div>
         </div>
       </div>
       <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-blue-800 text-center text-xs text-blue-300">
         Made with <span className="text-red-400">&hearts;</span> by{' '}
-        <a href="https://syathiby.github.io" target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:text-white font-medium">IT Syathiby</a>
-        {' '}2024{' '}
+        <a
+          href="https://syathiby.github.io"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-300 hover:text-white font-medium"
+        >
+          IT Syathiby
+        </a>{' '}
+        {konten['footer.tahun']}{' '}
         <span className="mx-2">|</span>
-        <a href="https://github.com/CreatorB/NextJS-mahadaly" target="_blank" rel="noopener noreferrer" className="hover:text-white">
+        <a
+          href="https://github.com/CreatorB/NextJS-mahadaly"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-white"
+        >
           Open Source <i className="fab fa-github ml-1" />
         </a>
       </div>

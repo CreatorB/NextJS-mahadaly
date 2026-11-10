@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { Check, GraduationCap, BookOpenText, ArrowRight, type LucideIcon } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { formatRupiah, formatRupiahShort, getActiveKiasInfo, getKiasJenisPrograms, isKiasPsbOpen } from '@/lib/kias'
+import { getKontenItems, getKontenMap, getKontenTag } from '@/lib/konten'
+import { applyTag } from '@/lib/konten-shared'
 
 interface PlanCardProps {
   featured?: boolean
@@ -58,8 +60,12 @@ function PlanCard(p: PlanCardProps) {
         <span
           className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
             p.status === 'Buka'
-              ? dark ? 'bg-emerald-400/20 text-emerald-200' : 'bg-emerald-100 text-emerald-700'
-              : dark ? 'bg-white/10 text-blue-100' : 'bg-slate-100 text-slate-500'
+              ? dark
+                ? 'bg-emerald-400/20 text-emerald-200'
+                : 'bg-emerald-100 text-emerald-700'
+              : dark
+                ? 'bg-white/10 text-blue-100'
+                : 'bg-slate-100 text-slate-500'
           }`}
         >
           {p.status === 'Buka' ? 'Pendaftaran Dibuka' : 'Pendaftaran Ditutup'}
@@ -69,7 +75,9 @@ function PlanCard(p: PlanCardProps) {
       <p className={`text-sm mb-6 ${dark ? 'text-blue-100' : 'text-slate-600'}`}>{p.tagline}</p>
 
       <div className={`rounded-2xl p-5 mb-6 ${dark ? 'bg-white/10' : 'bg-brand-surface'}`}>
-        <p className={`text-xs font-medium mb-1 ${dark ? 'text-blue-200' : 'text-slate-500'}`}>{p.priceLabel}</p>
+        <p className={`text-xs font-medium mb-1 ${dark ? 'text-blue-200' : 'text-slate-500'}`}>
+          {p.priceLabel}
+        </p>
         <p className="flex items-baseline gap-1">
           <span className="text-sm font-semibold">Rp</span>
           <span className="text-5xl font-extrabold tracking-tight">{p.price}</span>
@@ -108,21 +116,28 @@ function PlanCard(p: PlanCardProps) {
   )
 }
 
+/**
+ * Section "Program Belajar" (dua kartu program) di beranda.
+ *
+ * Label & tombol disunting dari panel admin (tabel `konten`), daftar fitur
+ * dari `konten_item` (grup `fitur-hki` / `fitur-kias`). Nominal & status
+ * pendaftaran tetap dari data PSB.
+ */
 export async function ProgramPricingSection() {
-  const [hki, kias, jenis] = await Promise.all([
+  const [hki, kias, jenis, konten, tag, fiturHki, fiturKias] = await Promise.all([
     prisma.infoPsb.findFirst({ orderBy: { tahunAjaran: 'desc' } }),
     getActiveKiasInfo(),
     getKiasJenisPrograms(),
+    getKontenMap(),
+    getKontenTag(),
+    getKontenItems('fitur-hki', { hanyaTampil: true }),
+    getKontenItems('fitur-kias', { hanyaTampil: true }),
   ])
 
-  const hkiDaftar = hki?.biayaPendaftaran ?? 150000
-  const hkiPangkal = hki?.biayaPangkal ?? 5250000
   const hkiSemester = hki?.biayaKuliahSemester ?? 3000000
   const hkiCicilan = hki?.biayaCicilanBulanan ?? 500000
   const hkiStatus = hki?.statusPsb === 'Buka' ? 'Buka' : hki ? 'Tutup' : 'Buka'
 
-  const kiasDaftar = kias?.biayaPendaftaran ?? 150000
-  const kiasSarana = kias?.biayaSaranaPrasarana ?? 300000
   const kiasSpp = kias?.biayaSppBulanan ?? 250000
   const kiasStatus = isKiasPsbOpen(kias) ? 'Buka' : 'Tutup'
   const kelasBuka = jenis.flatMap((j) => j.programs).filter((p) => p.statusPsb === 'Buka').length
@@ -131,56 +146,62 @@ export async function ProgramPricingSection() {
     <section id="pilih-program" className="scroll-mt-24 py-20 px-4 bg-gradient-to-b from-brand-surface to-white">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-14">
-          <p className="text-sm font-semibold tracking-widest text-brand-secondary uppercase mb-2">Program Belajar</p>
-          <h2 className="text-3xl md:text-4xl font-bold text-brand-primary mb-3">Program di Asy-Syathiby</h2>
-          <p className="text-slate-600 max-w-2xl mx-auto">
-            Jenjang S1 bergelar untuk yang sudah berbahasa Arab, atau kursus bertahap dari tajwid hingga ilmu syar&apos;i.
+          <p className="text-sm font-semibold tracking-widest text-brand-secondary uppercase mb-2">
+            {konten['pricing.label']}
           </p>
+          <h2 className="text-3xl md:text-4xl font-bold text-brand-primary mb-3">
+            {konten['pricing.judul']}
+          </h2>
+          <p className="text-slate-600 max-w-2xl mx-auto">{konten['pricing.deskripsi']}</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-8 items-stretch">
           <PlanCard
             featured
             icon={GraduationCap}
-            badge="Berijazah S1"
-            code="PROGRAM 1 · HKI"
-            name="Hukum Keluarga Islam"
-            tagline="Ma'had Aly — S1 Ahwal Syakhsiyyah, 4 tahun. Untuk yang sudah bisa berbahasa Arab pasif."
-            priceLabel="Biaya kuliah, bisa dicicil"
+            badge={konten['pricing.hki.badge']}
+            code={konten['pricing.hki.code']}
+            name={konten['pricing.hki.nama']}
+            tagline={konten['pricing.hki.tagline']}
+            priceLabel={konten['pricing.hki.labelHarga']}
             price={formatRupiahShort(hkiCicilan)}
-            priceUnit="bulan"
-            priceNote={`atau ${formatRupiah(hkiSemester)} per semester`}
+            priceUnit={konten['pricing.hki.satuan']}
+            priceNote={applyTag(konten['pricing.hki.catatanHarga'], {
+              ...tag,
+              biayaSemester: formatRupiah(hkiSemester),
+            })}
             status={hkiStatus}
-            features={[
-              `Pendaftaran ${formatRupiah(hkiDaftar)}`,
-              `Uang pangkal ${formatRupiah(hkiPangkal)}`,
-              '8 semester (4 tahun), ijazah S1',
-              "Jum'at online 20:00 WIB · Sabtu offline 07:30–15:30",
-              "Fokus ilmu-ilmu syar'i",
-            ]}
-            primary={{ href: '/program/hki', label: 'Lihat Program HKI' }}
-            secondary={{ href: '/psb', label: 'Daftar sekarang' }}
+            features={fiturHki.map((f) => applyTag(f.judul, tag))}
+            primary={{ href: '/program/hki', label: konten['pricing.hki.tombol1'] }}
+            secondary={{ href: '/psb', label: konten['pricing.hki.tombol2'] }}
           />
 
           <PlanCard
             icon={BookOpenText}
-            badge="Kursus Bertahap"
-            code="PROGRAM 2 · KIAS"
-            name="Kursus Ilmu bahasa Arab & Syar'i"
-            tagline="Dari belajar baca Al-Qur'an sampai membaca kitab ulama. Tanpa syarat ijazah, untuk ikhwan & akhwat."
-            priceLabel="SPP mulai dari"
+            badge={konten['pricing.kias.badge']}
+            code={konten['pricing.kias.code']}
+            name={konten['pricing.kias.nama']}
+            tagline={konten['pricing.kias.tagline']}
+            priceLabel={konten['pricing.kias.labelHarga']}
             price={formatRupiahShort(kiasSpp)}
-            priceUnit="bulan"
-            priceNote={kias ? `Tahun ajaran ${kias.tahunAjaran}` : 'Tahun ajaran berjalan'}
+            priceUnit={konten['pricing.kias.satuan']}
+            priceNote={
+              kias
+                ? applyTag(konten['pricing.kias.catatanHarga'], tag)
+                : 'Tahun ajaran berjalan'
+            }
             status={kiasStatus}
             features={[
-              `Pendaftaran ${formatRupiah(kiasDaftar)}`,
-              `Sarana & prasarana ${formatRupiah(kiasSarana)} (sekali)`,
-              `${jenis.length} jenjang: ${jenis.map((j) => j.namaJenis).join(', ')}`,
-              kiasStatus === 'Buka' ? `${kelasBuka} kelas sedang menerima santri baru` : `${kelasBuka} kelas tersedia untuk angkatan berikutnya`,
+              ...fiturKias.map((f) => applyTag(f.judul, tag)),
+              applyTag(
+                kiasStatus === 'Buka'
+                  ? konten['pricing.kias.statusBuka']
+                  : konten['pricing.kias.statusTutup'],
+                { ...tag, jumlahKelas: String(kelasBuka) },
+              ),
             ]}
-            primary={{ href: '/program/kias', label: 'Lihat Program KIAS' }}
-            secondary={{ href: '/psb', label: 'Daftar sekarang' }}
+            primary={{ href: '/program/kias', label: konten['pricing.kias.tombol1'] }}
+            secondary={{ href: '/psb', label: konten['pricing.kias.tombol2'] }}
           />
         </div>
       </div>

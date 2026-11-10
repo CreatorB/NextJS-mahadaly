@@ -3,6 +3,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { YouTubeEmbed } from '@/components/YouTubeEmbed'
 import { getProfil, sanitizeProfilKonten } from '@/lib/profil'
+import { getKontenMap } from '@/lib/konten'
 import { youtubeEmbedUrl } from '@/lib/youtube'
 
 export const dynamic = 'force-dynamic'
@@ -28,6 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ProfilPage() {
   const profil = await getProfil()
+  const konten = await getKontenMap()
   const embed = youtubeEmbedUrl(profil.videoUrl)
 
   return (
@@ -39,11 +41,13 @@ export default async function ProfilPage() {
           <div className="absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-brand-accent/20 blur-3xl" />
           <div className="relative max-w-3xl mx-auto text-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-brand-accent/40 bg-white/5 px-4 py-1.5 text-xs font-semibold text-brand-accent mb-4">
-              Tentang Kami
+              {konten['profil.hero.badge']}
             </span>
-            <h1 className="text-3xl md:text-4xl font-bold leading-tight">Profil Ma&apos;had Aly</h1>
+            <h1 className="text-3xl md:text-4xl font-bold leading-tight">
+              {konten['profil.hero.judul']}
+            </h1>
             <p className="mt-3 text-sm md:text-base text-blue-100 max-w-2xl mx-auto">
-              Ma&apos;had Aly Al-Imam Asy-Syathiby — Cileungsi, Bogor
+              {konten['profil.hero.subjudul']}
             </p>
           </div>
         </section>

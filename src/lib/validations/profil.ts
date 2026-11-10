@@ -6,6 +6,16 @@ export const profilSchema = z.object({
     .string()
     .min(1, 'Konten profil wajib diisi')
     .max(500_000, 'Konten profil terlalu besar'),
+  visi: z
+    .string()
+    .max(200_000, 'Isi visi terlalu besar')
+    .optional()
+    .nullable(),
+  misi: z
+    .string()
+    .max(200_000, 'Isi misi terlalu besar')
+    .optional()
+    .nullable(),
   videoUrl: z
     .string()
     .trim()

@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import prisma from '@/lib/prisma'
 import { getCatalogSlugs } from '@/lib/program-catalog'
+import { KATEGORI_KIAS } from '@/lib/halaman-info-shared'
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mahadaly.syathiby.id'
 
@@ -19,6 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/`, lastModified: now, changeFrequency: 'weekly', priority: 1 },
     { url: `${BASE_URL}/psb`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
     { url: `${BASE_URL}/profil`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${BASE_URL}/visi-misi`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE_URL}/berita`, lastModified: now, changeFrequency: 'daily', priority: 0.8 },
     { url: `${BASE_URL}/events`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     // CATATAN: /kias tidak ikut karena sudah 308-redirect ke /program/kias.
@@ -74,5 +76,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // database belum siap
   }
 
-  return [...statis, ...programUrls, ...beritaUrls, ...eventUrls]
+  let infoUrls: MetadataRoute.Sitemap = []
+  try {
+    const halPages = await prisma.halamanInfo.findMany({
+      where: { kategori: KATEGORI_KIAS, tampil: true },
+      select: { slug: true, updatedAt: true },
+      orderBy: { updatedAt: 'desc' },
+      take: 200,
+    })
+    infoUrls = halPages.map((h) => ({
+      url: `${BASE_URL}/program/kias/${h.slug}`,
+      lastModified: h.updatedAt,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    }))
+  } catch {
+    // database belum siap
+  }
+
+  return [...statis, ...programUrls, ...beritaUrls, ...eventUrls, ...infoUrls]
 }

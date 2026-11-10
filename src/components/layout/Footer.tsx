@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import { MapPin, Phone, Globe, AtSign } from 'lucide-react'
 
 export function Footer() {
@@ -18,7 +19,7 @@ export function Footer() {
               />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-brand-accent text-sm sm:text-base lg:text-lg mb-1">Ma'had Aly Al-Imam Asy-Syathiby</h3>
+              <h3 className="font-bold text-brand-accent text-sm sm:text-base lg:text-lg mb-1">Ma&apos;had Aly Al-Imam Asy-Syathiby</h3>
               <p className="text-xs sm:text-sm text-blue-200 leading-tight">Program Studi Hukum Keluarga Islam (HKI) / Ahwal Syakhsiyyah S1</p>
               <p className="text-xs sm:text-sm text-blue-200 mt-0.5 leading-tight">Penyelenggara: Yayasan Cahaya Sunnah</p>
             </div>
@@ -42,24 +43,30 @@ export function Footer() {
           <div className="md:w-1/3">
             <h4 className="font-semibold mb-3">Program</h4>
             <div className="flex flex-col gap-2 text-sm text-blue-200">
-              <a href="/program/hki" className="hover:text-white">
+              <Link href="/program/hki" className="hover:text-white">
                 Ma&apos;had Aly — Hukum Keluarga Islam (HKI) S1
-              </a>
-              <a href="/program/kias" className="hover:text-white">
+              </Link>
+              <Link href="/program/kias" className="hover:text-white">
                 KIAS — Kursus Ilmu Bahasa Arab &amp; Syar&apos;i
-              </a>
-              <a href="/psb" className="hover:text-white">
+              </Link>
+              <Link href="/program/kias#info-kias" className="hover:text-white">
+                Info &amp; Panduan KIAS
+              </Link>
+              <Link href="/visi-misi" className="hover:text-white">
+                Visi &amp; Misi
+              </Link>
+              <Link href="/psb" className="hover:text-white">
                 Pendaftaran Santri &amp; Mahasiswa Baru
-              </a>
-              <a href="/profil" className="hover:text-white">
+              </Link>
+              <Link href="/profil" className="hover:text-white">
                 Profil Ma&apos;had Aly
-              </a>
-              <a href="/berita" className="hover:text-white">
+              </Link>
+              <Link href="/berita" className="hover:text-white">
                 Berita &amp; Kabar Kegiatan
-              </a>
-              <a href="/events" className="hover:text-white">
+              </Link>
+              <Link href="/events" className="hover:text-white">
                 Event &amp; Kajian
-              </a>
+              </Link>
             </div>
           </div>
           {/* Alamat Section */}

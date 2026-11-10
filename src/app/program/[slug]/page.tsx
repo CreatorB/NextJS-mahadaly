@@ -1,9 +1,8 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { HkiProgramDetail } from '@/components/program/HkiProgramDetail'
-import { KiasProgramDetail } from '@/components/program/KiasProgramDetail'
 import { getCatalogProgram } from '@/lib/program-catalog'
 
 export const dynamic = 'force-dynamic'
@@ -62,6 +61,13 @@ export default async function ProgramPage({ params, searchParams }: Params & {
   const program = await getCatalogProgram(slug)
   if (!program) notFound()
 
+  // KIAS punya halaman statis sendiri (/program/kias) sekaligus sub-halaman
+  // informasinya (/program/kias/[slug]). Kalau URL ini tetap sampai ke route
+  // dinamis, arahkan ke versi kanonik agar tidak ada dua alamat untuk isi sama.
+  if (program.jenisSistem === 'kias') {
+    redirect('/program/kias')
+  }
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Course',
@@ -84,11 +90,7 @@ export default async function ProgramPage({ params, searchParams }: Params & {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        {program.jenisSistem === 'kias' ? (
-          <KiasProgramDetail />
-        ) : (
-          <HkiProgramDetail searchParams={searchParams} />
-        )}
+        <HkiProgramDetail searchParams={searchParams} />
       </main>
       <Footer />
     </>

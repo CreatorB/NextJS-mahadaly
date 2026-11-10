@@ -17,7 +17,8 @@ export default async function AdminProfilPage() {
           <p className="text-sm text-gray-500 mt-1 max-w-2xl">
             Isi halaman <span className="font-mono">/profil</span> yang tampil di website. Gunakan editor
             WYSIWYG di bawah, dan taipkan tautan YouTube pada field video utama untuk memuat video
-            profil di bagian atas halaman.
+            profil di bagian atas halaman. Bagian Visi &amp; Misi dipakai beranda dan halaman{' '}
+            <span className="font-mono">/visi-misi</span>.
           </p>
         </div>
         <Link
@@ -32,6 +33,8 @@ export default async function AdminProfilPage() {
       <ProfilForm
         initial={{
           konten: profil.konten,
+          visi: profil.visi,
+          misi: profil.misi,
           videoUrl: profil.videoUrl,
           updatedAt: profil.updatedAt ? profil.updatedAt.toISOString() : null,
         }}

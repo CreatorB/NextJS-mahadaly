@@ -71,3 +71,11 @@ body {
 .prose-berita iframe { width: 100%; aspect-ratio: 16 / 9; height: auto; border: 0; border-radius: 0.75rem; background: #000; }
 .prose-berita figure { margin: 0; }
 .prose-berita figcaption { font-size: 0.875rem; color: #64748b; margin-top: 0.5rem; }
+/* Visi & Misi (isi dari admin) — varian kartu gelap */
+.prose-kartu-gelap { color: #dbeafe; }
+.prose-kartu-gelap h2, .prose-kartu-gelap h3, .prose-kartu-gelap h4, .prose-kartu-gelap strong { color: #ffffff; }
+.prose-kartu-gelap a { color: #fbbf24; }
+.prose-kartu-gelap ul, .prose-kartu-gelap ol { padding-left: 1.25rem; }
+.prose-kartu-gelap ul { list-style: disc; }
+.prose-kartu-gelap ol { list-style: decimal; }
+.prose-kartu-gelap blockquote { border-left: 4px solid var(--color-brand-accent); color: #e0ecff; }

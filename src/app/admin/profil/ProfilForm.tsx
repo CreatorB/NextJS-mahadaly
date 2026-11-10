@@ -8,6 +8,8 @@ import { youtubeEmbedUrl, youtubeThumbnail } from '@/lib/youtube'
 
 interface InitialData {
   konten: string
+  visi: string | null
+  misi: string | null
   videoUrl: string | null
   updatedAt: string | null
 }
@@ -17,6 +19,8 @@ export function ProfilForm({ initial }: { initial: InitialData }) {
   const [, startTransition] = useTransition()
   const [submitting, setSubmitting] = useState(false)
   const [konten, setKonten] = useState(initial.konten)
+  const [visi, setVisi] = useState(initial.visi ?? '')
+  const [misi, setMisi] = useState(initial.misi ?? '')
   const [videoUrl, setVideoUrl] = useState(initial.videoUrl ?? '')
   const [errors, setErrors] = useState<Record<string, string[]>>({})
   const [savedAt, setSavedAt] = useState<string | null>(initial.updatedAt)
@@ -32,7 +36,12 @@ export function ProfilForm({ initial }: { initial: InitialData }) {
       const res = await fetch('/api/admin/profil', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ konten, videoUrl: videoUrl.trim() || null }),
+        body: JSON.stringify({
+          konten,
+          visi: visi.trim() ? visi : null,
+          misi: misi.trim() ? misi : null,
+          videoUrl: videoUrl.trim() || null,
+        }),
       })
       const json = await res.json()
       if (!res.ok || !json.success) {
@@ -61,6 +70,15 @@ export function ProfilForm({ initial }: { initial: InitialData }) {
     blockquote{border-left:4px solid #35a2c9;padding-left:1rem;font-style:italic}
   </style></head><body>${konten}</body></html>`
 
+  const previewVisiMisi = `<!doctype html><html><head><meta charset="utf-8"><style>
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#334155;line-height:1.8;padding:16px;margin:0;font-size:15px}
+    h2{color:#00367c;margin:0 0 .5rem}h3{color:#00367c;margin:1.25rem 0 .5rem;font-size:1.05rem}
+    img{max-width:100%;height:auto;border-radius:.75rem}
+    iframe{width:100%;aspect-ratio:16/9;height:auto;border:0;border-radius:.75rem}
+    a{color:#00709f}ul{list-style:disc;padding-left:1.5rem}ol{list-style:decimal;padding-left:1.5rem}
+    blockquote{border-left:4px solid #35a2c9;padding-left:1rem;font-style:italic}
+  </style></head><body><h3>Visi</h3>${visi}<h3>Misi</h3>${misi}</body></html>`
+
   return (
     <form onSubmit={onSubmit} className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_360px]">
       <div className="space-y-5 rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
@@ -68,12 +86,40 @@ export function ProfilForm({ initial }: { initial: InitialData }) {
           <label className="mb-1 block text-sm font-medium text-gray-700">
             Isi Halaman Profil <span className="text-red-500">*</span>
           </label>
-          <RichTextEditor value={konten} onChange={setKonten} allowVideo />
+          <div data-editor="konten">
+            <RichTextEditor value={konten} onChange={setKonten} allowVideo />
+          </div>
           <p className="mt-1 text-xs text-gray-500">
             Tombol <span className="font-medium">video</span> pada toolbar menyisipkan video YouTube
             langsung di dalam isi. Hanya video YouTube yang diizinkan demi keamanan.
           </p>
           {errors.konten && <p className="mt-1 text-xs text-red-600">{errors.konten[0]}</p>}
+        </div>
+
+        <div className="rounded-xl border border-brand-secondary/30 bg-brand-surface/40 p-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-1">Visi &amp; Misi Ma&apos;had Aly</h3>
+          <p className="text-xs text-gray-500 mb-4">
+            Isi di bawah dipakai di dua tempat sekaligus: section Visi &amp; Misi di beranda dan
+            halaman penuh <span className="font-mono">/visi-misi</span>. Satu sumber, satu penyuntingan.
+          </p>
+
+          <div className="space-y-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Visi</label>
+              <div data-editor="visi">
+                <RichTextEditor value={visi} onChange={setVisi} allowVideo />
+              </div>
+              {errors.visi && <p className="mt-1 text-xs text-red-600">{errors.visi[0]}</p>}
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Misi</label>
+              <div data-editor="misi">
+                <RichTextEditor value={misi} onChange={setMisi} allowVideo />
+              </div>
+              {errors.misi && <p className="mt-1 text-xs text-red-600">{errors.misi[0]}</p>}
+            </div>
+          </div>
         </div>
 
         <div>
@@ -118,6 +164,17 @@ export function ProfilForm({ initial }: { initial: InitialData }) {
           />
           <p className="text-xs text-gray-500">
             Pratinjau sandbox (tanpa script). Tampilan final mengikuti tema website.
+          </p>
+
+          <h2 className="pt-2 text-sm font-semibold text-gray-700">Pratinjau Visi &amp; Misi</h2>
+          <iframe
+            title="Pratinjau visi misi"
+            sandbox=""
+            srcDoc={previewVisiMisi}
+            className="h-72 w-full rounded-lg border border-gray-200 bg-white"
+          />
+          <p className="text-xs text-gray-500">
+            Tampil di beranda (section Visi &amp; Misi) dan halaman <span className="font-mono">/visi-misi</span>.
           </p>
         </div>
 

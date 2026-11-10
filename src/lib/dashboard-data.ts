@@ -69,6 +69,14 @@ function hitung(values: string[], labels: Record<string, string> = {}): Namelabe
     .sort((a, b) => b.value - a.value)
 }
 
+/** Normalisasi nilai jenis kelamin dari berbagai penulisan di DB. */
+function kodeJk(v: string | null | undefined): string {
+  const s = (v ?? '').trim().toLowerCase()
+  if (['l', 'lk', 'laki', 'laki-laki', 'lakilaki', 'm'].includes(s)) return 'L'
+  if (['p', 'pr', 'perempuan', 'wanita', 'f'].includes(s)) return 'P'
+  return v || '(kosong)'
+}
+
 /** Batasi jumlah baris grafik; sisanya digabung ke "Lainnya". */
 function potongTop(values: Namelabel[], maks: number): Namelabel[] {
   if (values.length <= maks) return values
@@ -148,7 +156,7 @@ async function ambilHki(): Promise<DataHki> {
     pendaftar.map((e) => e.statusTransfer),
     { pending: 'Menunggu', approved: 'Diterima', rejected: 'Ditolak' },
   )
-  const perJk = hitung(pendaftar.map((e) => e.jk), { L: 'Laki-laki', P: 'Perempuan' })
+  const perJk = hitung(pendaftar.map((e) => kodeJk(e.jk)), { L: 'Laki-laki', P: 'Perempuan' })
   const perPendidikan = hitung(pendaftar.map((e) => e.pendidikan)).slice(0, 8)
   const perTahunPsb = hitung(pendaftar.map((e) => e.tahunPsb)).sort((a, b) =>
     b.label.localeCompare(a.label),
@@ -234,8 +242,8 @@ async function ambilHki(): Promise<DataHki> {
     tahun: i.tahunAjaran,
     ikhwan: i.quotaIkhwan ?? 0,
     akhwat: i.quotaAkhwat ?? 0,
-    terpakaiIkhwan: pendaftar.filter((e) => e.tahunPsb === i.tahunAjaran && e.jk === 'L').length,
-    terpakaiAkhwat: pendaftar.filter((e) => e.tahunPsb === i.tahunAjaran && e.jk === 'P').length,
+    terpakaiIkhwan: pendaftar.filter((e) => e.tahunPsb === i.tahunAjaran && kodeJk(e.jk) === 'L').length,
+    terpakaiAkhwat: pendaftar.filter((e) => e.tahunPsb === i.tahunAjaran && kodeJk(e.jk) === 'P').length,
   }))
 
   const totalTransfer = pendaftar
@@ -340,7 +348,7 @@ async function ambilKias(): Promise<DataKias> {
     Valid: 'Valid',
     Invalid: 'Tidak Valid',
   })
-  const perJk = hitung(peserta.map((p) => p.jk), { L: 'Ikhwan', P: 'Akhwat' })
+  const perJk = hitung(peserta.map((p) => kodeJk(p.jk)), { L: 'Ikhwan', P: 'Akhwat' })
   const perTahunPsb = hitung(peserta.map((p) => p.tahunPsb)).sort((a, b) =>
     b.label.localeCompare(a.label),
   )
@@ -370,14 +378,14 @@ async function ambilKias(): Promise<DataKias> {
         p.program &&
         p.programId != null &&
         programKeJenis.get(p.programId) === j.id &&
-        p.jk === 'L',
+        kodeJk(p.jk) === 'L',
     ).length,
     akhwat: peserta.filter(
       (p) =>
         p.program &&
         p.programId != null &&
         programKeJenis.get(p.programId) === j.id &&
-        p.jk === 'P',
+        kodeJk(p.jk) === 'P',
     ).length,
   }))
 
@@ -426,8 +434,8 @@ async function ambilKias(): Promise<DataKias> {
     tahun: i.tahunAjaran,
     ikhwan: i.quotaIkhwan ?? 0,
     akhwat: i.quotaAkhwat ?? 0,
-    terpakaiIkhwan: peserta.filter((p) => p.tahunPsb === i.tahunAjaran && p.jk === 'L').length,
-    terpakaiAkhwat: peserta.filter((p) => p.tahunPsb === i.tahunAjaran && p.jk === 'P').length,
+    terpakaiIkhwan: peserta.filter((p) => p.tahunPsb === i.tahunAjaran && kodeJk(p.jk) === 'L').length,
+    terpakaiAkhwat: peserta.filter((p) => p.tahunPsb === i.tahunAjaran && kodeJk(p.jk) === 'P').length,
   }))
 
   const pengajar = await prisma.kiasPengajar.groupBy({
@@ -545,7 +553,7 @@ async function ambilKaryawan(periode: Periode): Promise<DataKaryawan> {
   const perTahunBergabung = hitung(pegawai.map((p) => p.tahunBergabung ?? '-')).sort((a, b) =>
     b.label.localeCompare(a.label),
   )
-  const perJenisKelamin = hitung(pegawai.map((p) => p.jk ?? '-'), { L: 'Laki-laki', P: 'Perempuan' })
+  const perJenisKelamin = hitung(pegawai.map((p) => kodeJk(p.jk)), { L: 'Laki-laki', P: 'Perempuan' })
   const rekapStatus = hitung(
     absensi.map((a) => a.status),
     LABEL_STATUS,

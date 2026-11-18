@@ -1,16 +1,16 @@
 import Link from 'next/link'
 import { BookOpen, Users, Award, Compass } from 'lucide-react'
 import { getCatalogRekap } from '@/lib/program-catalog'
+import { getKontenMap } from '@/lib/konten'
 
 /**
- * Kartu informasi program — PUNYA DARI HERO LANDING PAGE (30 Okt 2026).
+ * Kartu informasi program — dipakai di halaman /program/hki.
  *
- * Dipindahkan ke halaman /program/hki karena isinya didominasi info Ma'had Aly
- * (jadwal belajar, jumlah pendaftar, kontak). Landing page sekarang memakai
- * video YouTube autoplay di kolom kanan.
+ * Label kartu diambil dari panel admin (tabel `konten`); angka pendaftar
+ * dan jumlah program tetap dihitung dari data.
  */
 export async function ProgramInfoCards() {
-  const rekap = await getCatalogRekap()
+  const [rekap, konten] = await Promise.all([getCatalogRekap(), getKontenMap()])
   const programs = rekap.programs
 
   const card =
@@ -23,7 +23,7 @@ export async function ProgramInfoCards() {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/10">
             <Compass className="h-5 w-5 text-brand-primary" />
           </span>
-          <span className="font-semibold text-brand-primary">Program Belajar</span>
+          <span className="font-semibold text-brand-primary">{konten['hki.kartu.programLabel']}</span>
         </div>
         <ul className="space-y-1.5 text-sm text-gray-600">
           {programs.map((p) => (
@@ -45,15 +45,11 @@ export async function ProgramInfoCards() {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-secondary/10">
             <BookOpen className="h-5 w-5 text-brand-secondary" />
           </span>
-          <span className="font-semibold text-brand-primary">Waktu Pembelajaran</span>
+          <span className="font-semibold text-brand-primary">{konten['hki.kartu.jadwalLabel']}</span>
         </div>
         <div className="space-y-1 text-sm text-gray-600">
-          <p>
-            📱 <strong className="text-gray-800">Jum&apos;at Online</strong> — 20:00 WIB – Selesai
-          </p>
-          <p>
-            🏫 <strong className="text-gray-800">Sabtu Offline</strong> — 07:30 – 15:30 WIB
-          </p>
+          <p>{konten['hki.kartu.jumat']}</p>
+          <p>{konten['hki.kartu.sabtu']}</p>
         </div>
       </div>
 
@@ -62,15 +58,18 @@ export async function ProgramInfoCards() {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-light/15">
             <Users className="h-5 w-5 text-brand-light" />
           </span>
-          <span className="font-semibold text-brand-primary">Santri &amp; Mahasiswa</span>
+          <span className="font-semibold text-brand-primary">{konten['hki.kartu.santriLabel']}</span>
         </div>
         <div className="space-y-1 text-sm text-gray-600">
           <p>
-            Total terdaftar:{' '}
-            <strong className="text-brand-primary">{rekap.totalPendaftar.toLocaleString('id-ID')} orang</strong>
+            {konten['hki.kartu.totalPendaftaran']}{' '}
+            <strong className="text-brand-primary">
+              {rekap.totalPendaftar.toLocaleString('id-ID')} orang
+            </strong>
           </p>
           <p>
-            Tersedia: <strong className="text-brand-primary">{programs.length} program belajar</strong>
+            {konten['hki.kartu.tersediaProgram']}{' '}
+            <strong className="text-brand-primary">{programs.length} program belajar</strong>
           </p>
         </div>
       </div>
@@ -80,7 +79,7 @@ export async function ProgramInfoCards() {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-accent/40">
             <Award className="h-5 w-5 text-brand-primary" />
           </span>
-          <span className="font-semibold text-brand-primary">Kontak</span>
+          <span className="font-semibold text-brand-primary">{konten['hki.kartu.kontakLabel']}</span>
         </div>
         <a
           href="https://api.whatsapp.com/send?phone=628111516756"
@@ -88,9 +87,9 @@ export async function ProgramInfoCards() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          📞 0811-1516-756
+          {konten['hki.kartu.kontakWa']}
         </a>
-        <p className="text-sm text-gray-600">🌐 www.mahadaly.syathiby.id</p>
+        <p className="text-sm text-gray-600">{konten['hki.kartu.kontakWeb']}</p>
       </div>
     </div>
   )

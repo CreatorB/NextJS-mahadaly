@@ -1,26 +1,40 @@
-import { Phone, MapPin, Globe, AtSign } from 'lucide-react'
+import { getKontenItems, getKontenMap } from '@/lib/konten'
+import { getIkon } from '@/lib/konten-ikon'
 
-export function ContactSection() {
+/**
+ * Section "Hubungi Kami" di beranda.
+ *
+ * Kartu kontak diambil dari panel admin
+ * (tabel `konten` + `konten_item` grup `kontak`).
+ */
+export async function ContactSection() {
+  const [konten, kontak] = await Promise.all([
+    getKontenMap(),
+    getKontenItems('kontak', { hanyaTampil: true }),
+  ])
+
   return (
     <section id="kontak" className="py-16 px-4 bg-brand-primary text-white">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-brand-accent mb-3">Hubungi Kami</h2>
-          <p className="text-blue-200">Informasi lebih lanjut tentang pendaftaran dan program</p>
+          <h2 className="text-3xl font-bold text-brand-accent mb-3">{konten['kontak.judul']}</h2>
+          <p className="text-blue-200">{konten['kontak.subjudul']}</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            { icon: Phone, label: 'Telepon / WA', value: '0811-1516-756', href: 'https://api.whatsapp.com/send?phone=628111516756' },
-            { icon: Globe, label: 'Website', value: 'www.mahadaly.syathiby.id', href: 'https://www.mahadaly.syathiby.id' },
-            { icon: AtSign, label: 'Instagram', value: '@mahadalysyathiby', href: 'https://www.instagram.com/mahadalysyathiby' },
-            { icon: MapPin, label: 'Alamat', value: 'Kp. Tengah, Cileungsi, Bogor 16820', href: '#' },
-          ].map((c, i) => (
-            <a key={i} href={c.href} className="bg-white/10 hover:bg-white/20 rounded-xl p-5 transition-colors border border-white/20">
-              <c.icon className="h-6 w-6 text-brand-accent mb-3" />
-              <p className="text-blue-200 text-xs mb-1">{c.label}</p>
-              <p className="font-medium text-sm">{c.value}</p>
-            </a>
-          ))}
+          {kontak.map((c) => {
+            const Icon = getIkon(c.ikon)
+            return (
+              <a
+                key={c.id}
+                href={c.url || '#'}
+                className="bg-white/10 hover:bg-white/20 rounded-xl p-5 transition-colors border border-white/20"
+              >
+                <Icon className="h-6 w-6 text-brand-accent mb-3" />
+                <p className="text-blue-200 text-xs mb-1">{c.judul}</p>
+                <p className="font-medium text-sm">{c.deskripsi}</p>
+              </a>
+            )
+          })}
         </div>
       </div>
     </section>

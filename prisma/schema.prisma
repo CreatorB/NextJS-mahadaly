@@ -32,8 +32,12 @@ model User {
   createdLinks RegistrationLink[]
   cardUpdates  CrossAppCardSetting[]
   posts        Post[]
+  updatedPosts Post[]        @relation("PostUpdatedBy")
+  postRevisions PostRevision[] @relation("PostRevisionCreatedBy")
   profil       Profil[]
   halamanInfos HalamanInfo[]
+  kontens      Konten[]
+  kontenItems  KontenItem[]
   pegawai      Pegawai?
   passwordChangedAt DateTime? @map("password_changed_at")
   resetTokens       PasswordResetToken[] @relation("UserResetTokens")
@@ -564,14 +568,20 @@ model KiasInfoPsb {
 // ============================================================
 
 model PostKategori {
-  id          Int                @id @default(autoincrement())
-  slug        String             @unique
-  nama        String
-  posts       Post[]
-  instagram   InstagramAccount[]
-  createdAt   DateTime           @default(now()) @map("created_at")
-  updatedAt   DateTime           @updatedAt @map("updated_at")
+  id             Int                @id @default(autoincrement())
+  slug           String             @unique
+  nama           String
+  deskripsi      String?            @db.Text @map("deskripsi")
+  seoTitle       String?            @db.VarChar(255) @map("seo_title")
+  seoDescription String?            @db.VarChar(320) @map("seo_description")
+  urutan         Int                @default(0) @map("urutan")
+  tampil         Boolean            @default(true) @map("tampil")
+  posts          Post[]
+  instagram      InstagramAccount[]
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
 
+  @@index([tampil, urutan])
   @@map("post_kategori")
 }
 
@@ -582,17 +592,91 @@ model Post {
   ringkasan   String?      @db.Text
   konten      String       @db.LongText
   coverImage  String?      @map("cover_image")
+  coverAlt    String?      @db.VarChar(255) @map("cover_alt")
   status      String       @default("draft")
   publishedAt DateTime?    @map("published_at")
   kategoriId  Int          @map("kategori_id")
   kategori    PostKategori @relation(fields: [kategoriId], references: [id])
   authorId    Int?         @map("author_id")
   author      User?        @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  createdAt   DateTime     @default(now()) @map("created_at")
-  updatedAt   DateTime     @updatedAt @map("updated_at")
+  updatedById Int?         @map("updated_by_id")
+  updatedBy   User?        @relation("PostUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  // --- SEO ---
+  metaTitle       String? @db.VarChar(255) @map("meta_title")
+  metaDescription String? @db.VarChar(320) @map("meta_description")
+  focusKeyword    String? @db.VarChar(100) @map("focus_keyword")
+  seoKeywords     String? @db.VarChar(255) @map("seo_keywords")
+  canonicalUrl    String? @db.VarChar(255) @map("canonical_url")
+  noindex         Boolean @default(false) @map("noindex")
+  nofollow        Boolean @default(false) @map("nofollow")
+  ogImage         String? @db.VarChar(255) @map("og_image")
+  twitterImage    String? @db.VarChar(255) @map("twitter_image")
+  schemaJsonLd    Boolean @default(true) @map("schema_jsonld")
+
+  // --- Manajemen ---
+  sticky Boolean @default(false) @map("sticky")
+  views  Int     @default(0)
+
+  tags      PostTagOnPost[]
+  revisions PostRevision[]
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
 
   @@index([kategoriId, status, publishedAt])
+  @@index([status, publishedAt])
+  @@index([sticky, publishedAt])
+  @@index([updatedById])
   @@map("posts")
+}
+
+/// Tag artikel (dipakai bareng keyword & arsip publik /berita/tag/[slug]).
+model PostTag {
+  id             Int      @id @default(autoincrement())
+  slug           String   @unique
+  nama           String
+  deskripsi      String?  @db.Text @map("deskripsi")
+  seoTitle       String?  @db.VarChar(255) @map("seo_title")
+  seoDescription String?  @db.VarChar(320) @map("seo_description")
+  posts          PostTagOnPost[]
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("post_tags")
+}
+
+/// Junction Post <-> PostTag. Eksplisit (bukan m2m implisit Prisma) supaya
+/// nama tabel/indeksnya pasti dan cascade delete saat post/tag dihapus.
+model PostTagOnPost {
+  postId Int      @map("post_id")
+  tagId  Int      @map("tag_id")
+  post   Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    PostTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@index([tagId])
+  @@map("post_tags_on_posts")
+}
+
+/// Riwayat revisi ala WordPress: snapshot isi post sebelum disimpan ulang.
+model PostRevision {
+  id          Int      @id @default(autoincrement())
+  postId      Int      @map("post_id")
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  judul       String   @db.VarChar(255)
+  slug        String   @db.VarChar(191)
+  ringkasan   String?  @db.Text
+  konten      String   @db.LongText
+  coverImage  String?  @map("cover_image")
+  status      String
+  kategoriId  Int      @map("kategori_id")
+  note        String?  @db.VarChar(255) @map("note")
+  createdById Int?     @map("created_by_id")
+  createdBy   User?    @relation("PostRevisionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([postId, createdAt])
+  @@map("post_revisions")
 }
 
 model InstagramAccount {
@@ -862,4 +946,61 @@ model HalamanInfo {
 
   @@index([kategori, urutan])
   @@map("halaman_info")
+}
+
+/// Teks statis situs publik yang disunting dari panel admin.
+///
+/// Satu baris = satu "key" (mis. `hero.judul1`, `footer.alamat`). Nilai disimpan
+/// apa adanya supaya halaman publik cukup membaca key-nya — tidak ada teks
+/// naratif yang tertanam di komponen.
+///
+/// `grup` dipakai untuk mengelompokkan di panel admin (Beranda, Program HKI,
+/// Program KIAS, PSB, Profil, Footer). `tipe` menentukan jenis form yang
+/// dipakai admin: teks | textarea | wysiwyg | url.
+model Konten {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique @map("kunci")
+  label       String
+  tipe        String   @default("teks")
+  grup        String
+  nilai       String   @db.LongText
+  urutan      Int      @default(0)
+  tampil      Boolean  @default(true)
+  updatedById Int?     @map("updated_by_id")
+  updatedBy   User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([grup, urutan])
+  @@map("konten")
+}
+
+/// Baris daftar pada halaman publik (pengajar, profil lulusan, kontak, materi,
+/// fitur kartu program).
+///
+/// Satu tabel untuk semua daftar supaya panel admin cukup satu CRUD generik.
+/// Field yang dipakai tiap daftar berbeda, diatur di `src/lib/konten-shared.ts`:
+/// - pengajar : judul = nama
+/// - lulusan  : judul = nama profesi, deskripsi = keterangan
+/// - kontak   : judul = label, deskripsi = nilai, url = tautan
+/// - materi   : judul = judul dokumen, deskripsi = keterangan, fileUrl = berkas
+/// - fitur-*  : judul = butir fitur kartu program
+model KontenItem {
+  id          Int      @id @default(autoincrement())
+  grup        String
+  judul       String
+  deskripsi   String?  @db.Text
+  url         String?
+  ikon        String?
+  fileUrl     String?  @map("file_url")
+  fileName    String?  @map("file_name")
+  urutan      Int      @default(0)
+  tampil      Boolean  @default(true)
+  updatedById Int?     @map("updated_by_id")
+  updatedBy   User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([grup, urutan])
+  @@map("konten_item")
 }

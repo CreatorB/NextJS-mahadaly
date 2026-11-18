@@ -1,0 +1,257 @@
+{
+  "grup": [
+    { "id": "beranda", "label": "Beranda" },
+    { "id": "hki", "label": "Program HKI" },
+    { "id": "kias", "label": "Program KIAS" },
+    { "id": "psb", "label": "Pendaftaran (PSB)" },
+    { "id": "profil", "label": "Halaman Profil" },
+    { "id": "footer", "label": "Footer" }
+  ],
+  "tipe": [
+    { "id": "teks", "label": "Teks pendek" },
+    { "id": "textarea", "label": "Teks panjang" },
+    { "id": "wysiwyg", "label": "Rich text (WYSIWYG)" },
+    { "id": "url", "label": "Tautan (URL)" }
+  ],
+  "konten": [
+    { "key": "hero.badge", "label": "Hero - Label atas", "tipe": "teks", "grup": "beranda", "nilai": "MA'HAD ALY AL-IMAM ASY-SYATHIBY" },
+    { "key": "hero.judul1", "label": "Hero - Baris judul 1", "tipe": "teks", "grup": "beranda", "nilai": "Ma'had Aly" },
+    { "key": "hero.judul2", "label": "Hero - Baris judul 2 (warna aksen)", "tipe": "teks", "grup": "beranda", "nilai": "Al-Imam Asy-Syathiby" },
+    { "key": "hero.subjudul", "label": "Hero - Sub judul", "tipe": "teks", "grup": "beranda", "nilai": "Belajar 4 Tahun & Berijazah S1" },
+    { "key": "hero.deskripsi", "label": "Hero - Deskripsi", "tipe": "wysiwyg", "grup": "beranda", "nilai": "<p>Hukum Keluarga Islam (HKI) S1 — program belajar ilmu-ilmu syar'i <em>(bagi yang sudah bisa berbahasa arab pasif)</em></p>" },
+    { "key": "hero.tombol1", "label": "Hero - Tombol utama", "tipe": "teks", "grup": "beranda", "nilai": "Program" },
+    { "key": "hero.tombol2", "label": "Hero - Tombol kedua", "tipe": "teks", "grup": "beranda", "nilai": "Pendaftaran" },
+    { "key": "hero.linkProfil", "label": "Hero - Link \"Lihat Profil\"", "tipe": "teks", "grup": "beranda", "nilai": "Lihat Profil" },
+    { "key": "hero.teksAudio", "label": "Hero - Petunjuk aktifkan suara", "tipe": "teks", "grup": "beranda", "nilai": "Silahkan aktifkan suara pada menu video" },
+    { "key": "hero.videoTitle", "label": "Hero - Judul video (aksesibilitas)", "tipe": "teks", "grup": "beranda", "nilai": "Video Profil Ma'had Aly Al-Imam Asy-Syathiby" },
+
+    { "key": "modal.salam", "label": "Modal sambutan - Salam (Arab)", "tipe": "teks", "grup": "beranda", "nilai": "مَرْحَبًا بِكُمْ فِي مَوْقِعِنَا الرَّسْمِيِّ" },
+    { "key": "modal.teks", "label": "Modal sambutan - Teks Indonesia", "tipe": "textarea", "grup": "beranda", "nilai": "Assalamualaikum, welcome di official website Ma'had Aly Syathiby (MAISy) dan sekedar himbauan kami tidak bertanggung jawab atas informasi lain diluar sana yang tidak tercantum di situs ini." },
+    { "key": "modal.doa", "label": "Modal sambutan - Doa (Arab)", "tipe": "teks", "grup": "beranda", "nilai": "وَفَّقَنَا اللَّهُ جَمِيعًا" },
+    { "key": "modal.catatan", "label": "Modal sambutan - Catatan bawah", "tipe": "textarea", "grup": "beranda", "nilai": "Klik ikon × di pojok kanan atas untuk menutup jendela ini dan memutar video profil dengan suara." },
+
+    { "key": "pricing.label", "label": "Kartu Program - Label atas", "tipe": "teks", "grup": "beranda", "nilai": "Program Belajar" },
+    { "key": "pricing.judul", "label": "Kartu Program - Judul", "tipe": "teks", "grup": "beranda", "nilai": "Program di Asy-Syathiby" },
+    { "key": "pricing.deskripsi", "label": "Kartu Program - Deskripsi", "tipe": "textarea", "grup": "beranda", "nilai": "Jenjang S1 bergelar untuk yang sudah berbahasa Arab, atau kursus bertahap dari tajwid hingga ilmu syar'i." },
+    { "key": "pricing.hki.badge", "label": "Kartu HKI - Badge", "tipe": "teks", "grup": "beranda", "nilai": "Berijazah S1" },
+    { "key": "pricing.hki.code", "label": "Kartu HKI - Kode program", "tipe": "teks", "grup": "beranda", "nilai": "PROGRAM 1 · HKI" },
+    { "key": "pricing.hki.nama", "label": "Kartu HKI - Nama program", "tipe": "teks", "grup": "beranda", "nilai": "Hukum Keluarga Islam" },
+    { "key": "pricing.hki.tagline", "label": "Kartu HKI - Tagline", "tipe": "textarea", "grup": "beranda", "nilai": "Ma'had Aly — S1 Ahwal Syakhsiyyah, 4 tahun. Untuk yang sudah bisa berbahasa Arab pasif." },
+    { "key": "pricing.hki.labelHarga", "label": "Kartu HKI - Label harga", "tipe": "teks", "grup": "beranda", "nilai": "Biaya kuliah, bisa dicicil" },
+    { "key": "pricing.hki.satuan", "label": "Kartu HKI - Satuan harga", "tipe": "teks", "grup": "beranda", "nilai": "bulan" },
+    { "key": "pricing.hki.catatanHarga", "label": "Kartu HKI - Catatan harga", "tipe": "teks", "grup": "beranda", "nilai": "atau {biayaSemester} per semester" },
+    { "key": "pricing.hki.tombol1", "label": "Kartu HKI - Tombol utama", "tipe": "teks", "grup": "beranda", "nilai": "Lihat Program HKI" },
+    { "key": "pricing.hki.tombol2", "label": "Kartu HKI - Tombol kedua", "tipe": "teks", "grup": "beranda", "nilai": "Daftar sekarang" },
+    { "key": "pricing.kias.badge", "label": "Kartu KIAS - Badge", "tipe": "teks", "grup": "beranda", "nilai": "Kursus Bertahap" },
+    { "key": "pricing.kias.code", "label": "Kartu KIAS - Kode program", "tipe": "teks", "grup": "beranda", "nilai": "PROGRAM 2 · KIAS" },
+    { "key": "pricing.kias.nama", "label": "Kartu KIAS - Nama program", "tipe": "teks", "grup": "beranda", "nilai": "Kursus Ilmu bahasa Arab & Syar'i" },
+    { "key": "pricing.kias.tagline", "label": "Kartu KIAS - Tagline", "tipe": "textarea", "grup": "beranda", "nilai": "Dari belajar baca Al-Qur'an sampai membaca kitab ulama. Tanpa syarat ijazah, untuk ikhwan & akhwat." },
+    { "key": "pricing.kias.labelHarga", "label": "Kartu KIAS - Label harga", "tipe": "teks", "grup": "beranda", "nilai": "SPP mulai dari" },
+    { "key": "pricing.kias.satuan", "label": "Kartu KIAS - Satuan harga", "tipe": "teks", "grup": "beranda", "nilai": "bulan" },
+    { "key": "pricing.kias.catatanHarga", "label": "Kartu KIAS - Catatan harga", "tipe": "teks", "grup": "beranda", "nilai": "Tahun ajaran {tahunAjaran}" },
+    { "key": "pricing.kias.tombol1", "label": "Kartu KIAS - Tombol utama", "tipe": "teks", "grup": "beranda", "nilai": "Lihat Program KIAS" },
+    { "key": "pricing.kias.tombol2", "label": "Kartu KIAS - Tombol kedua", "tipe": "teks", "grup": "beranda", "nilai": "Daftar sekarang" },
+    { "key": "pricing.kias.statusBuka", "label": "Kartu KIAS - Baris status saat pendaftaran dibuka", "tipe": "teks", "grup": "beranda", "nilai": "{jumlahKelas} kelas sedang menerima santri baru" },
+    { "key": "pricing.kias.statusTutup", "label": "Kartu KIAS - Baris status saat pendaftaran ditutup", "tipe": "teks", "grup": "beranda", "nilai": "{jumlahKelas} kelas tersedia untuk angkatan berikutnya" },
+
+    { "key": "pengajar.judul", "label": "Pengajar - Judul", "tipe": "teks", "grup": "beranda", "nilai": "Pembina & Tenaga Pengajar" },
+    { "key": "pengajar.subjudul", "label": "Pengajar - Sub judul", "tipe": "textarea", "grup": "beranda", "nilai": "Dibimbing oleh para ulama dan akademisi kompeten" },
+    { "key": "pengajar.pembinaLabel", "label": "Pengajar - Label pembina", "tipe": "teks", "grup": "beranda", "nilai": "Pembina" },
+    { "key": "pengajar.pembinaNama", "label": "Pengajar - Nama pembina", "tipe": "teks", "grup": "beranda", "nilai": "Ustadz Badru Salam, Lc." },
+    { "key": "pengajar.tambahan", "label": "Pengajar - Teks \"dan pengajar lainnya\"", "tipe": "teks", "grup": "beranda", "nilai": "Dan pengajar lainnya" },
+
+    { "key": "lulusan.judul", "label": "Profil Lulusan - Judul", "tipe": "teks", "grup": "beranda", "nilai": "Profil Lulusan" },
+    { "key": "lulusan.subjudul", "label": "Profil Lulusan - Sub judul", "tipe": "textarea", "grup": "beranda", "nilai": "Lulusan disiapkan untuk berkarier sebagai profesional hukum Islam" },
+
+    { "key": "kontak.judul", "label": "Hubungi Kami - Judul", "tipe": "teks", "grup": "beranda", "nilai": "Hubungi Kami" },
+    { "key": "kontak.subjudul", "label": "Hubungi Kami - Sub judul", "tipe": "textarea", "grup": "beranda", "nilai": "Informasi lebih lanjut tentang pendaftaran dan program" },
+
+    { "key": "hki.hero.badge", "label": "Hero HKI - Badge", "tipe": "teks", "grup": "hki", "nilai": "Program 1 · Hukum Keluarga Islam (HKI)" },
+    { "key": "hki.hero.subjudul", "label": "Hero HKI - Sub judul", "tipe": "teks", "grup": "hki", "nilai": "Ma'had Aly Al-Imam Asy-Syathiby" },
+    { "key": "hki.hero.deskripsi", "label": "Hero HKI - Deskripsi", "tipe": "textarea", "grup": "hki", "nilai": "Ma'had Aly — S1 Ahwal Syakhsiyyah: belajar ilmu-ilmu syar'i selama 4 tahun (8 semester) untuk Santri & mahasiswa/i yang sudah bisa berbahasa Arab pasif, dengan ijazah S1." },
+    { "key": "hki.hero.tombol1", "label": "Hero HKI - Tombol utama", "tipe": "teks", "grup": "hki", "nilai": "Daftar Program HKI" },
+    { "key": "hki.hero.tombol2", "label": "Hero HKI - Tombol kedua", "tipe": "teks", "grup": "hki", "nilai": "Unduh Panduan & Kalender" },
+    { "key": "hki.info.judul", "label": "Info Penting - Judul", "tipe": "teks", "grup": "hki", "nilai": "Informasi Penting" },
+    { "key": "hki.info.subjudul", "label": "Info Penting - Sub judul", "tipe": "teks", "grup": "hki", "nilai": "Jadwal & ketentuan pendaftaran" },
+    { "key": "hki.info.tesMasuk", "label": "Info Penting - Tanggal tes masuk", "tipe": "teks", "grup": "hki", "nilai": "Sabtu, 22 Agustus 2026" },
+    { "key": "hki.info.narahubung", "label": "Info Penting - Narahubung", "tipe": "teks", "grup": "hki", "nilai": "0811-1516-756" },
+    { "key": "hki.info.kosong", "label": "Info Penting - Teks saat PSB belum tersedia", "tipe": "textarea", "grup": "hki", "nilai": "Informasi PSB belum tersedia. Hubungi panitia di {narahubung}." },
+    { "key": "hki.kartu.judul", "label": "Informasi Program - Judul", "tipe": "teks", "grup": "hki", "nilai": "Informasi Program" },
+    { "key": "hki.kartu.subjudul", "label": "Informasi Program - Sub judul", "tipe": "teks", "grup": "hki", "nilai": "Program belajar, jadwal, jumlah pendaftar & kontak" },
+    { "key": "hki.kartu.jadwalLabel", "label": "Kartu jadwal - Judul", "tipe": "teks", "grup": "hki", "nilai": "Waktu Pembelajaran" },
+    { "key": "hki.kartu.programLabel", "label": "Kartu program - Judul", "tipe": "teks", "grup": "hki", "nilai": "Program Belajar" },
+    { "key": "hki.kartu.totalPendaftaran", "label": "KartuSantri - Label total pendaftar", "tipe": "teks", "grup": "hki", "nilai": "Total terdaftar:" },
+    { "key": "hki.kartu.tersediaProgram", "label": "Kartu Santri - Label program tersedia", "tipe": "teks", "grup": "hki", "nilai": "Tersedia:" },
+    { "key": "hki.kartu.jumat", "label": "Kartu jadwal - Jadwal Jumat", "tipe": "teks", "grup": "hki", "nilai": "📱 Jum'at Online — 20:00 WIB – Selesai" },
+    { "key": "hki.kartu.sabtu", "label": "Kartu jadwal - Jadwal Sabtu", "tipe": "teks", "grup": "hki", "nilai": "🏫 Sabtu Offline — 07:30 – 15:30 WIB" },
+    { "key": "hki.kartu.santriLabel", "label": "Kartu Santri - Judul", "tipe": "teks", "grup": "hki", "nilai": "Santri & Mahasiswa" },
+    { "key": "hki.kartu.kontakLabel", "label": "Kartu kontak - Judul", "tipe": "teks", "grup": "hki", "nilai": "Kontak" },
+    { "key": "hki.kartu.kontakWa", "label": "Kartu kontak - Nomor WA", "tipe": "teks", "grup": "hki", "nilai": "📞 0811-1516-756" },
+    { "key": "hki.kartu.kontakWeb", "label": "Kartu kontak - Website", "tipe": "teks", "grup": "hki", "nilai": "🌐 www.mahadaly.syathiby.id" },
+    { "key": "materi.label", "label": "Materi - Label atas", "tipe": "teks", "grup": "hki", "nilai": "Materi Panduan" },
+    { "key": "materi.judul", "label": "Materi - Judul", "tipe": "teks", "grup": "hki", "nilai": "Unduh Panduan & Kalender Akademik" },
+    { "key": "materi.deskripsi", "label": "Materi - Deskripsi", "tipe": "textarea", "grup": "hki", "nilai": "Pelajari lebih lanjut tentang program studi melalui dokumen resmi Ma'had Aly Al-Imam Asy-Syathiby." },
+    { "key": "jadwal.judul", "label": "Jadwal & Biaya - Judul", "tipe": "teks", "grup": "hki", "nilai": "Jadwal & Biaya PMB {tahunPsb}" },
+    { "key": "jadwal.subjudul", "label": "Jadwal & Biaya - Sub judul", "tipe": "teks", "grup": "hki", "nilai": "Tahun Ajaran {tahunAjaran}" },
+    { "key": "jadwal.labelBuka", "label": "Jadwal - Label pendaftaran dibuka", "tipe": "teks", "grup": "hki", "nilai": "Pendaftaran Dibuka" },
+    { "key": "jadwal.judulTabel", "label": "Jadwal - Judul tabel jadwal", "tipe": "teks", "grup": "hki", "nilai": "Jadwal PMB" },
+    { "key": "jadwal.labelTutup", "label": "Jadwal - Label pendaftaran ditutup", "tipe": "teks", "grup": "hki", "nilai": "Pendaftaran Ditutup" },
+    { "key": "jadwal.labelTes", "label": "Jadwal - Label tes masuk", "tipe": "teks", "grup": "hki", "nilai": "Tes Masuk" },
+    { "key": "jadwal.tesMasuk", "label": "Jadwal - Tanggal tes masuk", "tipe": "teks", "grup": "hki", "nilai": "Sabtu, 22 Agustus 2026" },
+    { "key": "jadwal.biayaJudul", "label": "Biaya - Judul", "tipe": "teks", "grup": "hki", "nilai": "Biaya" },
+    { "key": "jadwal.biayaDaftar", "label": "Biaya - Uang Pendaftaran", "tipe": "teks", "grup": "hki", "nilai": "Uang Pendaftaran" },
+    { "key": "jadwal.biayaPangkal", "label": "Biaya - Uang Pangkal", "tipe": "teks", "grup": "hki", "nilai": "Uang Pangkal" },
+    { "key": "jadwal.biayaSemester", "label": "Biaya - Biaya Kuliah/Semester", "tipe": "teks", "grup": "hki", "nilai": "Biaya Kuliah/Semester" },
+    { "key": "jadwal.biayaCicilan", "label": "Biaya - Cicilan/Bulan", "tipe": "teks", "grup": "hki", "nilai": "Cicilan/Bulan" },
+    { "key": "jadwal.catatanBiaya", "label": "Biaya - Catatan cicilan", "tipe": "teks", "grup": "hki", "nilai": "*Biaya kuliah bisa dicicil Rp {biayaCicilan}/bulan" },
+    { "key": "jadwal.cta", "label": "Jadwal - Tombol daftar", "tipe": "teks", "grup": "hki", "nilai": "Daftar Sekarang" },
+
+    { "key": "kias.hero.bukaBadge", "label": "Hero KIAS - Badge saat dibuka", "tipe": "teks", "grup": "kias", "nilai": "PENDAFTARAN {tahunAjaran} DIBUKA" },
+    { "key": "kias.hero.tutupBadge", "label": "Hero KIAS - Badge saat ditutup", "tipe": "teks", "grup": "kias", "nilai": "PENDAFTARAN BELUM DIBUKA" },
+    { "key": "kias.hero.judul1", "label": "Hero KIAS - Judul", "tipe": "teks", "grup": "kias", "nilai": "KIAS" },
+    { "key": "kias.hero.judul2", "label": "Hero KIAS - Judul aksen", "tipe": "teks", "grup": "kias", "nilai": "Asy-Syathiby" },
+    { "key": "kias.hero.deskripsi", "label": "Hero KIAS - Deskripsi", "tipe": "textarea", "grup": "kias", "nilai": "Kursus Ilmu bahasa Arab & Syar'i — belajar bertahap dari tajwid hingga membaca kitab ulama." },
+    { "key": "kias.hero.tombol1", "label": "Hero KIAS - Tombol utama", "tipe": "teks", "grup": "kias", "nilai": "Daftar KIAS" },
+    { "key": "kias.hero.tombol2", "label": "Hero KIAS - Tombol kedua", "tipe": "teks", "grup": "kias", "nilai": "Lihat Jadwal Kelas" },
+    { "key": "kias.jenjang.judul", "label": "Jenjang Program - Judul", "tipe": "teks", "grup": "kias", "nilai": "Jenjang Program" },
+    { "key": "kias.jenjang.subjudul", "label": "Jenjang Program - Sub judul", "tipe": "textarea", "grup": "kias", "nilai": "Pilih jenjang sesuai kemampuan Anda saat ini." },
+    { "key": "kias.biaya.judul", "label": "Biaya KIAS - Judul", "tipe": "teks", "grup": "kias", "nilai": "Biaya KIAS" },    { "key": "kias.biaya.subjudul", "label": "Biaya KIAS - Sub judul", "tipe": "teks", "grup": "kias", "nilai": "Tahun ajaran {tahunAjaran}" },
+    { "key": "kias.kelas.judul", "label": "Jadwal Kelas - Judul", "tipe": "teks", "grup": "kias", "nilai": "Jadwal Kelas" },
+    { "key": "kias.kelas.subjudul", "label": "Jadwal Kelas - Sub judul", "tipe": "textarea", "grup": "kias", "nilai": "Daftar kelas yang tersedia untuk setiap jenjang KIAS." },
+    { "key": "kias.info.judul", "label": "Info KIAS - Judul", "tipe": "teks", "grup": "kias", "nilai": "Info & Panduan KIAS" },
+    { "key": "kias.info.subjudul", "label": "Info KIAS - Sub judul", "tipe": "textarea", "grup": "kias", "nilai": "Profil, panduan, dan informasi pendaftaran KIAS." },
+
+    { "key": "psb.hero.badge", "label": "Hero PSB - Badge", "tipe": "teks", "grup": "psb", "nilai": "Penerimaan Santri & Mahasiswa/Mahasiswi Baru" },
+    { "key": "psb.hero.judul", "label": "Hero PSB - Judul", "tipe": "teks", "grup": "psb", "nilai": "Ma'had Aly Al-Imam Asy-Syathiby" },
+    { "key": "psb.hero.deskripsi", "label": "Hero PSB - Deskripsi", "tipe": "textarea", "grup": "psb", "nilai": "Pilih program yang sesuai dengan kebutuhan belajar Anda. Setiap program punya kurikulum, jadwal, dan biaya sendiri." },
+    { "key": "psb.daftarLabel", "label": "PSB - Teks \"Sudah mendaftar?\"", "tipe": "teks", "grup": "psb", "nilai": "Sudah mendaftar?" },
+    { "key": "psb.daftarLink", "label": "PSB - Link dashboard", "tipe": "teks", "grup": "psb", "nilai": "Login ke Dashboard" },
+
+    { "key": "profil.hero.badge", "label": "Hero Profil - Badge", "tipe": "teks", "grup": "profil", "nilai": "Tentang Kami" },
+    { "key": "profil.hero.judul", "label": "Hero Profil - Judul", "tipe": "teks", "grup": "profil", "nilai": "Profil Ma'had Aly" },
+    { "key": "profil.hero.subjudul", "label": "Hero Profil - Sub judul", "tipe": "teks", "grup": "profil", "nilai": "Ma'had Aly Al-Imam Asy-Syathiby — Cileungsi, Bogor" },
+
+    { "key": "footer.judulProgram", "label": "Footer - Judul kolom Program", "tipe": "teks", "grup": "footer", "nilai": "Program" },
+    { "key": "footer.judulKontak", "label": "Footer - Judul kolom Kontak", "tipe": "teks", "grup": "footer", "nilai": "Kontak" },
+    { "key": "footer.judulAlamat", "label": "Footer - Judul kolom Alamat", "tipe": "teks", "grup": "footer", "nilai": "Alamat" },
+    { "key": "footer.programLabel", "label": "Footer - Keterangan program", "tipe": "textarea", "grup": "footer", "nilai": "Program Studi Hukum Keluarga Islam (HKI) / Ahwal Syakhsiyyah S1" },
+    { "key": "footer.penyelenggara", "label": "Footer - Pencilenjaga", "tipe": "teks", "grup": "footer", "nilai": "Penyelenggara: Yayasan Cahaya Sunnah" },
+    { "key": "footer.alamat", "label": "Footer - Alamat", "tipe": "textarea", "grup": "footer", "nilai": "Kp. Tengah RT 001 RW 005 (Komplek Mahad Imam Syathiby), Kel. Cileungsi, Kec. Cileungsi, Kab. Bogor, Jawa Barat 16820" },
+    { "key": "footer.wa", "label": "Footer - Nomor WA", "tipe": "teks", "grup": "footer", "nilai": "0811-1516-756" },
+    { "key": "footer.waUrl", "label": "Footer - Tautan WA", "tipe": "url", "grup": "footer", "nilai": "https://api.whatsapp.com/send?phone=628111516756" },
+    { "key": "footer.website", "label": "Footer - Website", "tipe": "teks", "grup": "footer", "nilai": "www.mahadaly.syathiby.id" },
+    { "key": "footer.websiteUrl", "label": "Footer - Tautan website", "tipe": "url", "grup": "footer", "nilai": "https://www.mahadaly.syathiby.id" },
+    { "key": "footer.instagram", "label": "Footer - Instagram", "tipe": "teks", "grup": "footer", "nilai": "@mahadalysyathiby" },
+    { "key": "footer.instagramUrl", "label": "Footer - Tautan Instagram", "tipe": "url", "grup": "footer", "nilai": "https://www.instagram.com/mahadalysyathiby" },
+    { "key": "footer.linkHki", "label": "Footer - Link HKI", "tipe": "teks", "grup": "footer", "nilai": "Ma'had Aly — Hukum Keluarga Islam (HKI) S1" },
+    { "key": "footer.linkKias", "label": "Footer - Link KIAS", "tipe": "teks", "grup": "footer", "nilai": "KIAS — Kursus Ilmu Bahasa Arab & Syar'i" },
+    { "key": "footer.linkKiasInfo", "label": "Footer - Link Info KIAS", "tipe": "teks", "grup": "footer", "nilai": "Info & Panduan KIAS" },
+    { "key": "footer.linkVisiMisi", "label": "Footer - Link Visi & Misi", "tipe": "teks", "grup": "footer", "nilai": "Visi & Misi" },
+    { "key": "footer.linkPsb", "label": "Footer - Link PSB", "tipe": "teks", "grup": "footer", "nilai": "Pendaftaran Santri & Mahasiswa Baru" },
+    { "key": "footer.linkProfil", "label": "Footer - Link Profil", "tipe": "teks", "grup": "footer", "nilai": "Profil Ma'had Aly" },
+    { "key": "footer.linkBerita", "label": "Footer - Link Berita", "tipe": "teks", "grup": "footer", "nilai": "Berita & Kabar Kegiatan" },
+    { "key": "footer.linkEvents", "label": "Footer - Link Event", "tipe": "teks", "grup": "footer", "nilai": "Event & Kajian" },
+    { "key": "footer.tahun", "label": "Footer - Tahun hak cipta", "tipe": "teks", "grup": "footer", "nilai": "2024" }
+  ],
+  "daftar": [
+    {
+      "grup": "pengajar",
+      "label": "Pengajar",
+      "itemLabel": "Nama Pengajar",
+      "helper": "Nama ustadz/ustadzah yang tampil di beranda.",
+      "fields": [
+        { "name": "judul", "label": "Nama", "tipe": "teks", "required": true }
+      ]
+    },
+    {
+      "grup": "lulusan",
+      "label": "Profil Lulusan",
+      "itemLabel": "Profesi Lulusan",
+      "helper": "Profesi yang disiapkan untuk alumni program HKI.",
+      "fields": [
+        { "name": "judul", "label": "Profesi", "tipe": "teks", "required": true },
+        { "name": "deskripsi", "label": "Keterangan", "tipe": "textarea" },
+        { "name": "ikon", "label": "Ikon", "tipe": "ikon", "opsi": ["scale", "file-text", "briefcase", "flask", "gavel", "book-open", "users", "award"] }
+      ]
+    },
+    {
+      "grup": "kontak",
+      "label": "Kontak",
+      "itemLabel": "Kontak",
+      "helper": "Kartu di section \"Hubungi Kami\".",
+      "fields": [
+        { "name": "judul", "label": "Label", "tipe": "teks", "required": true },
+        { "name": "deskripsi", "label": "Nilai yang ditampilkan", "tipe": "teks", "required": true },
+        { "name": "url", "label": "Tautan", "tipe": "url" },
+        { "name": "ikon", "label": "Ikon", "tipe": "ikon", "opsi": ["phone", "globe", "at-sign", "map-pin", "mail", "message-circle"] }
+      ]
+    },
+    {
+      "grup": "materi",
+      "label": "Materi Panduan",
+      "itemLabel": "Dokumen",
+      "helper": "Berkas panduan/kalender yang bisa diunduh pengunjung. Berkas diunggah dari panel ini (otomatis diubah namanya dengan prefix mahadaly-).",
+      "fields": [
+        { "name": "judul", "label": "Judul dokumen", "tipe": "teks", "required": true },
+        { "name": "deskripsi", "label": "Keterangan", "tipe": "textarea" },
+        { "name": "fileUrl", "label": "Berkas", "tipe": "file" },
+        { "name": "fileName", "label": "Nama file saat diunduh", "tipe": "teks" },
+        { "name": "ikon", "label": "Ikon", "tipe": "ikon", "opsi": ["book-open", "calendar", "clock", "file-text", "download"] }
+      ]
+    },
+    {
+      "grup": "fitur-hki",
+      "label": "Fitur Kartu HKI",
+      "itemLabel": "Butir",
+      "helper": "Daftar unchecked di kartu \"Hukum Keluarga Islam\" (beranda).",
+      "fields": [
+        { "name": "judul", "label": "Butir fitur", "tipe": "teks", "required": true }
+      ]
+    },
+    {
+      "grup": "fitur-kias",
+      "label": "Fitur Kartu KIAS",
+      "itemLabel": "Butir",
+      "helper": "Daftar unchecked di kartu \"Kursus Ilmu Bahasa Arab & Syar'i\" (beranda).",
+      "fields": [
+        { "name": "judul", "label": "Butir fitur", "tipe": "teks", "required": true }
+      ]
+    }
+  ],
+  "seedItem": [
+    { "grup": "pengajar", "judul": "Ust. Dr. Muhammad Yasir, M.A.", "urutan": 1 },
+    { "grup": "pengajar", "judul": "Ust. Mukhadasin, M.Pd.", "urutan": 2 },
+    { "grup": "pengajar", "judul": "Ust. Rahmat H. Bachtiar, B.A., M.Pd.", "urutan": 3 },
+    { "grup": "pengajar", "judul": "Ust. Muhammad Irfandi, B.A., M.A.", "urutan": 4 },
+    { "grup": "pengajar", "judul": "Ust. Dr. Cecep Rahmat, Lc., M.Ag.", "urutan": 5 },
+    { "grup": "pengajar", "judul": "Ust. Cecep Nurrohman, B.A., M.A.", "urutan": 6 },
+    { "grup": "pengajar", "judul": "Ust. Irham Maulana, B.A., M.H.", "urutan": 7 },
+    { "grup": "pengajar", "judul": "Ust. Derma Permana, B.A.", "urutan": 8 },
+    { "grup": "pengajar", "judul": "Ust. Zahir Al-Minangkabawi", "urutan": 9 },
+
+    { "grup": "lulusan", "judul": "Hakim", "deskripsi": "Praktisi peradilan agama di lingkungan Mahkamah Agung RI", "ikon": "scale", "urutan": 1 },
+    { "grup": "lulusan", "judul": "Notaris Syariah", "deskripsi": "Pejabat pembuat akta berbasis prinsip syariah", "ikon": "file-text", "urutan": 2 },
+    { "grup": "lulusan", "judul": "Advokat Syariah", "deskripsi": "Konsultan dan pendamping hukum berbasis hukum Islam", "ikon": "briefcase", "urutan": 3 },
+    { "grup": "lulusan", "judul": "Asisten Peneliti", "deskripsi": "Tenaga peneliti di lembaga kajian hukum Islam & perguruan tinggi", "ikon": "flask", "urutan": 4 },
+
+    { "grup": "kontak", "judul": "Telepon / WA", "deskripsi": "0811-1516-756", "url": "https://api.whatsapp.com/send?phone=628111516756", "ikon": "phone", "urutan": 1 },
+    { "grup": "kontak", "judul": "Website", "deskripsi": "www.mahadaly.syathiby.id", "url": "https://www.mahadaly.syathiby.id", "ikon": "globe", "urutan": 2 },
+    { "grup": "kontak", "judul": "Instagram", "deskripsi": "@mahadalysyathiby", "url": "https://www.instagram.com/mahadalysyathiby", "ikon": "at-sign", "urutan": 3 },
+    { "grup": "kontak", "judul": "Alamat", "deskripsi": "Kp. Tengah, Cileungsi, Bogor 16820", "ikon": "map-pin", "urutan": 4 },
+
+    { "grup": "materi", "judul": "Buku Panduan Akademik", "deskripsi": "Buku panduan lengkap Mahasiswa Ma'had Aly — visi misi, kurikulum, peraturan akademik, dan informasi penting lainnya.", "fileUrl": "/materials/buku-panduan-akademik-hki.pdf", "fileName": "Buku-Panduan-Akademik-HKI.pdf", "ikon": "book-open", "urutan": 1 },
+    { "grup": "materi", "judul": "Panduan Akademik", "deskripsi": "Pedoman singkat mahasiswa baru Ma'had Aly — ringkasan kurikulum, alur pendaftaran, dan kontak narahubung.", "fileUrl": "/materials/panduan-akademik-hki.pdf", "fileName": "Panduan-Akademik-HKI.pdf", "ikon": "book-open", "urutan": 2 },
+    { "grup": "materi", "judul": "Kalender Pendidikan (KALDIK)", "deskripsi": "Kalender akademik tahun ajaran 2026/2027 — jadwal perkuliahan, ujian, libur, dan kegiatan kemahasiswaan.", "fileUrl": "/materials/kaldik-mahad-aly-2026-2027.pdf", "fileName": "KALDIK-MA-2026-2027.pdf", "ikon": "calendar", "urutan": 3 },
+    { "grup": "materi", "judul": "Jadwal dan Pengajar", "deskripsi": "Jadwal pelajaran Ma'had Aly tahun ajaran 2026/2027 beserta daftar pengajar untuk masing-masing mata kuliah.", "fileUrl": "/materials/jadwal-pelajaran-pengajar-maisy-2026-2027.pdf", "fileName": "Jadwal-Pelajaran-Pengajar-MAISy-2026-2027.pdf", "ikon": "clock", "urutan": 4 },
+
+    { "grup": "fitur-hki", "judul": "Pendaftaran {biayaDaftar}", "urutan": 1 },
+    { "grup": "fitur-hki", "judul": "Uang pangkal {biayaPangkal}", "urutan": 2 },
+    { "grup": "fitur-hki", "judul": "8 semester (4 tahun), ijazah S1", "urutan": 3 },
+    { "grup": "fitur-hki", "judul": "Jum'at online 20:00 WIB · Sabtu offline 07:30–15:30", "urutan": 4 },
+    { "grup": "fitur-hki", "judul": "Fokus ilmu-ilmu syar'i", "urutan": 5 },
+
+    { "grup": "fitur-kias", "judul": "Pendaftaran {biayaKiasDaftar}", "urutan": 1 },
+    { "grup": "fitur-kias", "judul": "Sarana & prasarana {biayaKiasSarana} (sekali)", "urutan": 2 },
+    { "grup": "fitur-kias", "judul": "{jumlahJenjang} jenjang: {namaJenjang}", "urutan": 3 }
+  ]
+}

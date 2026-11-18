@@ -43,7 +43,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let beritaUrls: MetadataRoute.Sitemap = []
   try {
     const posts = await prisma.post.findMany({
-      where: { status: 'published' },
+      // Artikel terjadwal belum boleh masuk sitemap; yang "tanpa index" juga.
+      where: { status: 'published', publishedAt: { lte: now }, noindex: false },
       select: { slug: true, updatedAt: true },
       orderBy: { updatedAt: 'desc' },
       take: 500,
@@ -53,6 +54,42 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: p.updatedAt,
       changeFrequency: 'monthly',
       priority: 0.6,
+    }))
+  } catch {
+    // database belum siap
+  }
+
+  let arsipKategoriUrls: MetadataRoute.Sitemap = []
+  try {
+    const kategori = await prisma.postKategori.findMany({
+      where: { tampil: true },
+      select: { slug: true, updatedAt: true },
+      orderBy: { updatedAt: 'desc' },
+      take: 100,
+    })
+    arsipKategoriUrls = kategori.map((k) => ({
+      url: `${BASE_URL}/berita/kategori/${k.slug}`,
+      lastModified: k.updatedAt,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    }))
+  } catch {
+    // database belum siap
+  }
+
+  let arsipTagUrls: MetadataRoute.Sitemap = []
+  try {
+    const tag = await prisma.postTag.findMany({
+      where: { posts: { some: { post: { status: 'published', publishedAt: { lte: now }, noindex: false } } } },
+      select: { slug: true, updatedAt: true },
+      orderBy: { updatedAt: 'desc' },
+      take: 200,
+    })
+    arsipTagUrls = tag.map((t) => ({
+      url: `${BASE_URL}/berita/tag/${t.slug}`,
+      lastModified: t.updatedAt,
+      changeFrequency: 'monthly',
+      priority: 0.5,
     }))
   } catch {
     // database belum siap
@@ -94,5 +131,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // database belum siap
   }
 
-  return [...statis, ...programUrls, ...beritaUrls, ...eventUrls, ...infoUrls]
+  return [...statis, ...programUrls, ...beritaUrls, ...arsipKategoriUrls, ...arsipTagUrls, ...eventUrls, ...infoUrls]
 }

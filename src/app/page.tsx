@@ -1,7 +1,7 @@
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { HeroSection } from '@/components/landing/HeroSection'
-import { WelcomeModal } from '@/components/landing/WelcomeModal'
+import { WelcomeModalSection } from '@/components/landing/WelcomeModalSection'
 import { VisiMisiSection } from '@/components/landing/VisiMisiSection'
 import { PengajarSection } from '@/components/landing/PengajarSection'
 import { ProfilLulusanSection } from '@/components/landing/ProfilLulusanSection'
@@ -110,7 +110,7 @@ export default async function Home() {
         <ProfilLulusanSection />
         <ContactSection />
         {/* Modal sambutan: salam + ucapan selamat datang; menutupnya menyalakan suara video hero. */}
-        <WelcomeModal />
+        <WelcomeModalSection />
       </main>
       <Footer />
     </>

@@ -41,9 +41,13 @@ export const UPLOAD_MIME: Record<string, string> = {
   pdf: 'application/pdf',
 }
 
-/** Folder yang boleh diakses publik: gambar artikel berita dan poster event. */
+/** Folder yang boleh diakses publik: gambar artikel berita, poster event, materi panduan. */
 export function isPublicUpload(parts: string[]) {
-  return parts[0] === 'berita' || (parts[0] === 'events' && parts[1] === 'images')
+  return (
+    parts[0] === 'berita' ||
+    parts[0] === 'materi' ||
+    (parts[0] === 'events' && parts[1] === 'images')
+  )
 }
 
 /**

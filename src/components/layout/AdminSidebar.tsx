@@ -6,6 +6,7 @@ import {
   LayoutDashboard, Users, Settings, LogOut, Shield, BookOpen, Menu, X, MapPin, Link2,
   Newspaper, BookOpenText, ListChecks, SlidersHorizontal, CalendarDays, KeyRound, UserRound,
   ClipboardCheck, Briefcase, FileText, Type, HardDrive, ChevronDown, Search, UsersRound,
+  FolderTree, Tags, Camera,
   type LucideIcon,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -70,7 +71,10 @@ export function AdminSidebar({ nama, roleId }: Props) {
           { href: '/admin/profil', label: 'Profil', icon: UserRound },
           { href: '/admin/info', label: 'Info & Panduan', icon: FileText },
           { href: '/admin/konten', label: 'Konten Website', icon: Type },
-          { href: '/admin/berita', label: 'Berita', icon: Newspaper },
+          { href: '/admin/berita', label: 'Berita', icon: Newspaper, exact: true },
+          { href: '/admin/berita/kategori', label: 'Kategori Berita', icon: FolderTree },
+          { href: '/admin/berita/tag', label: 'Tag Berita', icon: Tags },
+          { href: '/admin/berita/instagram', label: 'Instagram Berita', icon: Camera, exact: true },
           { href: '/admin/berkas', label: 'Manajemen Berkas', icon: HardDrive },
         ],
       },

@@ -32,6 +32,8 @@ model User {
   createdLinks RegistrationLink[]
   cardUpdates  CrossAppCardSetting[]
   posts        Post[]
+  updatedPosts Post[]        @relation("PostUpdatedBy")
+  postRevisions PostRevision[] @relation("PostRevisionCreatedBy")
   profil       Profil[]
   halamanInfos HalamanInfo[]
   kontens      Konten[]
@@ -566,14 +568,20 @@ model KiasInfoPsb {
 // ============================================================
 
 model PostKategori {
-  id          Int                @id @default(autoincrement())
-  slug        String             @unique
-  nama        String
-  posts       Post[]
-  instagram   InstagramAccount[]
-  createdAt   DateTime           @default(now()) @map("created_at")
-  updatedAt   DateTime           @updatedAt @map("updated_at")
+  id             Int                @id @default(autoincrement())
+  slug           String             @unique
+  nama           String
+  deskripsi      String?            @db.Text @map("deskripsi")
+  seoTitle       String?            @db.VarChar(255) @map("seo_title")
+  seoDescription String?            @db.VarChar(320) @map("seo_description")
+  urutan         Int                @default(0) @map("urutan")
+  tampil         Boolean            @default(true) @map("tampil")
+  posts          Post[]
+  instagram      InstagramAccount[]
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
 
+  @@index([tampil, urutan])
   @@map("post_kategori")
 }
 
@@ -584,17 +592,91 @@ model Post {
   ringkasan   String?      @db.Text
   konten      String       @db.LongText
   coverImage  String?      @map("cover_image")
+  coverAlt    String?      @db.VarChar(255) @map("cover_alt")
   status      String       @default("draft")
   publishedAt DateTime?    @map("published_at")
   kategoriId  Int          @map("kategori_id")
   kategori    PostKategori @relation(fields: [kategoriId], references: [id])
   authorId    Int?         @map("author_id")
   author      User?        @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  createdAt   DateTime     @default(now()) @map("created_at")
-  updatedAt   DateTime     @updatedAt @map("updated_at")
+  updatedById Int?         @map("updated_by_id")
+  updatedBy   User?        @relation("PostUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  // --- SEO ---
+  metaTitle       String? @db.VarChar(255) @map("meta_title")
+  metaDescription String? @db.VarChar(320) @map("meta_description")
+  focusKeyword    String? @db.VarChar(100) @map("focus_keyword")
+  seoKeywords     String? @db.VarChar(255) @map("seo_keywords")
+  canonicalUrl    String? @db.VarChar(255) @map("canonical_url")
+  noindex         Boolean @default(false) @map("noindex")
+  nofollow        Boolean @default(false) @map("nofollow")
+  ogImage         String? @db.VarChar(255) @map("og_image")
+  twitterImage    String? @db.VarChar(255) @map("twitter_image")
+  schemaJsonLd    Boolean @default(true) @map("schema_jsonld")
+
+  // --- Manajemen ---
+  sticky Boolean @default(false) @map("sticky")
+  views  Int     @default(0)
+
+  tags      PostTagOnPost[]
+  revisions PostRevision[]
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
 
   @@index([kategoriId, status, publishedAt])
+  @@index([status, publishedAt])
+  @@index([sticky, publishedAt])
+  @@index([updatedById])
   @@map("posts")
+}
+
+/// Tag artikel (dipakai bareng keyword & arsip publik /berita/tag/[slug]).
+model PostTag {
+  id             Int      @id @default(autoincrement())
+  slug           String   @unique
+  nama           String
+  deskripsi      String?  @db.Text @map("deskripsi")
+  seoTitle       String?  @db.VarChar(255) @map("seo_title")
+  seoDescription String?  @db.VarChar(320) @map("seo_description")
+  posts          PostTagOnPost[]
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("post_tags")
+}
+
+/// Junction Post <-> PostTag. Eksplisit (bukan m2m implisit Prisma) supaya
+/// nama tabel/indeksnya pasti dan cascade delete saat post/tag dihapus.
+model PostTagOnPost {
+  postId Int      @map("post_id")
+  tagId  Int      @map("tag_id")
+  post   Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    PostTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@index([tagId])
+  @@map("post_tags_on_posts")
+}
+
+/// Riwayat revisi ala WordPress: snapshot isi post sebelum disimpan ulang.
+model PostRevision {
+  id          Int      @id @default(autoincrement())
+  postId      Int      @map("post_id")
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  judul       String   @db.VarChar(255)
+  slug        String   @db.VarChar(191)
+  ringkasan   String?  @db.Text
+  konten      String   @db.LongText
+  coverImage  String?  @map("cover_image")
+  status      String
+  kategoriId  Int      @map("kategori_id")
+  note        String?  @db.VarChar(255) @map("note")
+  createdById Int?     @map("created_by_id")
+  createdBy   User?    @relation("PostRevisionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([postId, createdAt])
+  @@map("post_revisions")
 }
 
 model InstagramAccount {

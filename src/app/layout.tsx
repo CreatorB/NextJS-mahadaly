@@ -37,7 +37,10 @@ export const metadata: Metadata = {
   authors: [{ name: 'Yayasan Cahaya Sunnah' }],
   creator: 'Yayasan Cahaya Sunnah',
   publisher: 'Yayasan Cahaya Sunnah',
-  alternates: { canonical: '/' },
+  alternates: {
+    canonical: '/',
+    types: { 'application/rss+xml': '/berita/feed.xml' },
+  },
   openGraph: {
     type: 'website',
     locale: 'id_ID',

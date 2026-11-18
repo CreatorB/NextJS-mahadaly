@@ -1,123 +1,120 @@
 import Link from 'next/link'
-import { Plus, Camera, ExternalLink } from 'lucide-react'
-import { format } from 'date-fns'
-import { id as idLocale } from 'date-fns/locale'
-import prisma from '@/lib/prisma'
-import { DeletePostButton } from './DeletePostButton'
+import { Plus, Camera, ExternalLink, FolderTree, Tags, Download } from 'lucide-react'
+import { listBerita, getBeritaFacets, type BeritaListQuery } from '@/lib/berita-admin'
+import { BeritaFilters } from './BeritaFilters'
+import { BeritaManager } from './BeritaManager'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Berita — Admin' }
 
-function statusOf(p: { status: string; publishedAt: Date | null }) {
-  if (p.status !== 'published') return { label: 'Draft', color: 'bg-gray-200 text-gray-700' }
-  if (p.publishedAt && p.publishedAt > new Date()) return { label: 'Terjadwal', color: 'bg-amber-100 text-amber-800' }
-  return { label: 'Terbit', color: 'bg-green-100 text-green-800' }
-}
+const PARAMETER = [
+  'q', 'status', 'kategori', 'tag', 'dari', 'sampai', 'urutkan', 'arah', 'halaman', 'per',
+] as const
 
-export default async function AdminBeritaPage({ searchParams }: { searchParams: Promise<{ kategori?: string }> }) {
-  const { kategori } = await searchParams
-  const [kategoriList, posts] = await Promise.all([
-    prisma.postKategori.findMany({ orderBy: { id: 'asc' } }),
-    prisma.post.findMany({
-      where: kategori ? { kategori: { slug: kategori } } : {},
-      orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
-      include: { kategori: true, author: { select: { nama: true } } },
-    }),
-  ])
+export default async function AdminBeritaPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const params = await searchParams
+  const get = (k: string) => {
+    const v = params[k]
+    return Array.isArray(v) ? v[0] : v
+  }
+
+  const query: BeritaListQuery = {}
+  for (const k of PARAMETER) {
+    const v = get(k)
+    if (v) query[k] = v
+  }
+
+  const [daftar, facets] = await Promise.all([listBerita(query), getBeritaFacets()])
+
+  const queryRingkas = Object.fromEntries(
+    Object.entries(query).filter(([, v]) => v !== undefined && v !== ''),
+  ) as Record<string, string | undefined>
+
+  const kartu = [
+    { label: 'Total berita', nilai: facets.kategori.reduce((n, k) => n + k.count, 0), href: '/admin/berita' },
+    { label: 'Terbit', nilai: facets.status.published, href: '/admin/berita?status=published' },
+    { label: 'Terjadwal', nilai: facets.status.scheduled, href: '/admin/berita?status=scheduled' },
+    { label: 'Draft', nilai: facets.status.draft, href: '/admin/berita?status=draft' },
+    { label: 'Perlu SEO', nilai: facets.seoRendah, href: '/admin/berita?status=published' },
+  ]
 
   return (
-    <div className="p-6 sm:p-8 space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+    <div className="space-y-6 p-6 sm:p-8">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-brand-primary">Berita</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Artikel tampil di Berita Terbaru (beranda untuk kategori Ma&apos;had Aly, halaman /kias untuk KIAS), digabung dengan postingan Instagram.
+          <p className="mt-1 text-sm text-gray-500">
+            Kelola artikel blog: kategori, tag, SEO meta, dan URL. Artikel tampil di Berita Terbaru
+            (beranda untuk kategori Ma&apos;had Aly, halaman KIAS untuk KIAS), digabung dengan postingan Instagram.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/berita/export?format=csv"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <Download className="h-4 w-4" /> Ekspor
+          </Link>
+          <Link
+            href="/admin/berita/tag"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <Tags className="h-4 w-4" /> Tag
+          </Link>
+          <Link
+            href="/admin/berita/kategori"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <FolderTree className="h-4 w-4" /> Kategori
+          </Link>
           <Link
             href="/admin/berita/instagram"
-            className="inline-flex items-center gap-2 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             <Camera className="h-4 w-4" /> Instagram
           </Link>
           <Link
             href="/admin/berita/create"
-            className="inline-flex items-center gap-2 bg-brand-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90"
+            className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90"
           >
             <Plus className="h-4 w-4" /> Tulis Berita
           </Link>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {[{ slug: undefined as string | undefined, nama: 'Semua' }, ...kategoriList].map((k) => (
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {kartu.map((k) => (
           <Link
-            key={k.slug ?? 'semua'}
-            href={k.slug ? `/admin/berita?kategori=${k.slug}` : '/admin/berita'}
-            className={`rounded-full px-3 py-1 text-sm font-medium ${
-              kategori === k.slug ? 'bg-brand-primary text-white' : 'bg-white border border-gray-200 text-gray-600'
-            }`}
+            key={k.label}
+            href={k.href}
+            className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition hover:border-brand-primary"
           >
-            {k.nama}
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{k.label}</p>
+            <p className="mt-1 text-2xl font-bold text-brand-primary tabular-nums">{k.nilai}</p>
           </Link>
         ))}
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-brand-surface border-b border-gray-200">
-            <tr>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">Judul</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">Kategori</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">Status</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">Tanggal Terbit</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700">Penulis</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {posts.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-gray-400">
-                  Belum ada berita. Klik <strong>Tulis Berita</strong> untuk membuat.
-                </td>
-              </tr>
-            )}
-            {posts.map((p) => {
-              const st = statusOf(p)
-              return (
-                <tr key={p.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <Link href={`/admin/berita/${p.id}`} className="font-medium text-brand-primary hover:underline">
-                      {p.judul}
-                    </Link>
-                    <div className="font-mono text-xs text-gray-400">/berita/{p.slug}</div>
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">{p.kategori.nama}</td>
-                  <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>{st.label}</span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">
-                    {p.publishedAt ? format(p.publishedAt, 'd MMM yyyy HH:mm', { locale: idLocale }) : '-'}
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">{p.author?.nama ?? '-'}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-2">
-                      {st.label === 'Terbit' && (
-                        <a href={`/berita/${p.slug}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-brand-primary" title="Lihat">
-                          <ExternalLink className="h-4 w-4" />
-                        </a>
-                      )}
-                      <DeletePostButton id={p.id} judul={p.judul} />
-                    </div>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+      <BeritaFilters facets={facets} />
+
+      <BeritaManager
+        rows={daftar.rows}
+        total={daftar.total}
+        page={daftar.page}
+        perPage={daftar.perPage}
+        totalPages={daftar.totalPages}
+        facets={facets}
+        query={queryRingkas}
+      />
+
+      <p className="flex items-center gap-2 text-xs text-gray-400">
+        <ExternalLink className="h-3.5 w-3.5" />
+        Artikel yang terbit otomatis masuk sitemap &amp; RSS. Yang ditandai “tanpa index” tidak ikut keduanya.
+      </p>
     </div>
   )
 }

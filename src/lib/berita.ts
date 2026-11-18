@@ -5,6 +5,9 @@ import prisma from '@/lib/prisma'
 
 import { UPLOAD_BASE } from '@/lib/storage'
 import { fetchProfilePosts, igEmbedUrl, igPostUrl } from '@/lib/instagram'
+import { slugify } from '@/lib/slug'
+
+export { slugify } from '@/lib/slug'
 
 const IG_SYNC_INTERVAL_MS = 60 * 60 * 1000
 
@@ -22,7 +25,7 @@ export function uploadUrl(relPath: string | null | undefined) {
   return `/uploads/${relPath.replace(/\\/g, '/')}`
 }
 
-export async function saveBeritaImage(file: File, folder: 'posts', name?: string) {
+export async function saveBeritaImage(file: File, folder: 'posts' | 'og' | 'twitter', name?: string) {
   const ext = BERITA_IMAGE_TYPES[file.type]
   if (!ext) throw new Error('Format gambar harus JPG, PNG, WEBP, atau GIF')
   if (file.size > 3 * 1024 * 1024) throw new Error('Ukuran gambar maksimal 3 MB')
@@ -43,6 +46,9 @@ export function sanitizeKonten(html: string) {
     allowedAttributes: {
       a: ['href', 'target', 'rel'],
       img: ['src', 'alt', 'title'],
+      // id dipakai untuk anchor daftar isi (lihat lib/toc.ts)
+      h2: ['id'],
+      h3: ['id'],
     },
     allowedSchemes: ['https', 'http', 'mailto'],
     allowedSchemesByTag: { img: ['https'] },
@@ -56,16 +62,6 @@ export function sanitizeKonten(html: string) {
 export function toPlainText(html: string) {
   const spaced = html.replace(/<(?:\/?(?:p|h[1-6]|li|ul|ol|blockquote|pre|div)|br|hr)[^>]*>/gi, ' ')
   return sanitize(spaced, { allowedTags: [], allowedAttributes: {} }).replace(/\s+/g, ' ').trim()
-}
-
-export function slugify(text: string) {
-  return text
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 80) || 'berita'
 }
 
 export async function uniquePostSlug(base: string, excludeId?: number) {
@@ -102,28 +98,36 @@ export type BeritaItem =
     }
 
 /** Feed gabungan artikel (terbit) + postingan Instagram, terbaru dulu. */
-export async function getBeritaFeed(opts: { kategori?: string | string[]; limit?: number } = {}): Promise<BeritaItem[]> {
+export async function getBeritaFeed(
+  opts: { kategori?: string | string[]; limit?: number; sumber?: 'semua' | 'artikel' | 'instagram' } = {},
+): Promise<BeritaItem[]> {
   const limit = opts.limit ?? 9
+  const sumber = opts.sumber ?? 'semua'
   const kategoriList = opts.kategori
     ? (Array.isArray(opts.kategori) ? opts.kategori : [opts.kategori])
     : []
+  // Kategori yang disembunyikan admin tidak muncul di feed publik mana pun.
   const kategoriFilter = kategoriList.length
-    ? { kategori: { slug: { in: kategoriList } } }
-    : {}
+    ? { kategori: { slug: { in: kategoriList }, tampil: true } }
+    : { kategori: { tampil: true } }
 
   const [posts, igPosts] = await Promise.all([
-    prisma.post.findMany({
-      where: { status: 'published', publishedAt: { lte: new Date() }, ...kategoriFilter },
-      orderBy: { publishedAt: 'desc' },
-      take: limit,
-      include: { kategori: true },
-    }),
-    prisma.instagramPost.findMany({
-      where: { isHidden: false, account: { isActive: true, ...kategoriFilter } },
-      orderBy: { postedAt: 'desc' },
-      take: limit,
-      include: { account: { include: { kategori: true } } },
-    }),
+    sumber === 'instagram'
+      ? Promise.resolve([])
+      : prisma.post.findMany({
+          where: { status: 'published', publishedAt: { lte: new Date() }, ...kategoriFilter },
+          orderBy: [{ sticky: 'desc' }, { publishedAt: 'desc' }],
+          take: limit,
+          include: { kategori: true },
+        }),
+    sumber === 'artikel'
+      ? Promise.resolve([])
+      : prisma.instagramPost.findMany({
+          where: { isHidden: false, account: { isActive: true, ...kategoriFilter } },
+          orderBy: { postedAt: 'desc' },
+          take: limit,
+          include: { account: { include: { kategori: true } } },
+        }),
   ])
 
   const items: BeritaItem[] = [

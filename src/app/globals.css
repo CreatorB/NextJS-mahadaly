@@ -71,6 +71,13 @@ body {
 .prose-berita iframe { width: 100%; aspect-ratio: 16 / 9; height: auto; border: 0; border-radius: 0.75rem; background: #000; }
 .prose-berita figure { margin: 0; }
 .prose-berita figcaption { font-size: 0.875rem; color: #64748b; margin-top: 0.5rem; }
+/* Tabel hasil tes & dokumen dari WordPress (isi impor) */
+.prose-berita table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+.prose-berita thead { background: #f1f5f9; }
+.prose-berita th, .prose-berita td { border: 1px solid #e2e8f0; padding: 0.5rem 0.75rem; text-align: left; }
+.prose-berita th { font-weight: 600; color: #0f172a; }
+.prose-berita tbody tr:nth-child(even) { background: #f8fafc; }
+.prose-berita .table-wrapper { overflow-x: auto; }
 /* Visi & Misi (isi dari admin) — varian kartu gelap */
 .prose-kartu-gelap { color: #dbeafe; }
 .prose-kartu-gelap h2, .prose-kartu-gelap h3, .prose-kartu-gelap h4, .prose-kartu-gelap strong { color: #ffffff; }

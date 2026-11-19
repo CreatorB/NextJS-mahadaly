@@ -17,10 +17,11 @@ interface Props {
 export function BulkActionBar({ terpilih, facets, onClear }: Props) {
   const router = useRouter()
   const [bekerja, setBekerja] = useState<string | null>(null)
-  const [panel, setPanel] = useState<'kategori' | 'tag' | 'jadwal' | null>(null)
+  const [panel, setPanel] = useState<'kategori' | 'tag' | 'jadwal' | 'hapus' | null>(null)
   const [kategoriId, setKategoriId] = useState('')
   const [tag, setTag] = useState('')
   const [tanggal, setTanggal] = useState('')
+  const [ketikHapus, setKetikHapus] = useState('')
 
   if (terpilih.length === 0) return null
 
@@ -42,6 +43,7 @@ export function BulkActionBar({ terpilih, facets, onClear }: Props) {
       setKategoriId('')
       setTag('')
       setTanggal('')
+      setKetikHapus('')
       onClear()
       router.refresh()
     } catch {
@@ -54,6 +56,8 @@ export function BulkActionBar({ terpilih, facets, onClear }: Props) {
   const btn =
     'inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50'
   const aktif = (nama: string) => bekerja === nama
+
+  const konfirmasiHapus = ketikHapus.trim().toUpperCase() === 'HAPUS'
 
   return (
     <div className="rounded-xl border border-brand-primary/30 bg-brand-surface p-4">
@@ -87,11 +91,7 @@ export function BulkActionBar({ terpilih, facets, onClear }: Props) {
         <button
           type="button"
           disabled={!!bekerja}
-          onClick={() => {
-            if (confirm(`Hapus ${terpilih.length} berita terpilih? Tindakan ini tidak bisa dibatalkan.`)) {
-              jalankan('hapus')
-            }
-          }}
+          onClick={() => setPanel(panel === 'hapus' ? null : 'hapus')}
           className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
         >
           {aktif('hapus') ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />} Hapus
@@ -159,6 +159,33 @@ export function BulkActionBar({ terpilih, facets, onClear }: Props) {
             className="rounded-lg bg-brand-primary px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50"
           >
             Tambahkan tag
+          </button>
+        </div>
+      )}
+
+      {panel === 'hapus' && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-red-300 bg-red-50 p-3">
+          <p className="text-xs text-red-800">
+            Hapus <strong>{terpilih.length}</strong> berita terpilih? Tindakan ini tidak bisa dibatalkan. Ketik{' '}
+            <strong>HAPUS</strong> untuk melanjutkan.
+          </p>
+          <input
+            value={ketikHapus}
+            onChange={(e) => setKetikHapus(e.target.value)}
+            placeholder="HAPUS"
+            aria-label="Konfirmasi ketik HAPUS"
+            className="rounded-lg border border-red-300 bg-white px-3 py-1.5 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
+          />
+          <button
+            type="button"
+            disabled={!konfirmasiHapus || !!bekerja}
+            onClick={() => {
+              setKetikHapus('')
+              void jalankan('hapus')
+            }}
+            className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            Hapus permanen
           </button>
         </div>
       )}

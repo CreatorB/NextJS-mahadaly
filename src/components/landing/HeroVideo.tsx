@@ -34,6 +34,7 @@ type Player = {
   mute?: () => void
   playVideo?: () => void
   getPlayerState?: () => number
+  destroy?: () => void
 }
 
 /**
@@ -112,7 +113,19 @@ export function HeroVideo({
         const YT = (window as unknown as {
           YT: { Player: new (el: HTMLElement, opts: unknown) => Player }
         }).YT
-        playerRef.current = new YT.Player(mountRef.current, {
+        // YouTube IFrame API MENGGANTI elemen target dengan <iframe>. Kalau
+        // target-nya div yang dirender React, saat React melepas halaman ini
+        // (navigasi keluar / tombol back) React memanggil removeChild pada
+        // div yang sudah tidak lagi anak -> "Failed to execute 'removeChild'"
+        // -> halaman jadi "This page couldn't load".
+        // Karena itu target dibuat imperatif di dalam holder milik React:
+        // React hanya melepas holder (masih anak), iframe-nya ikut hilang.
+        const holder = mountRef.current
+        const target = document.createElement('div')
+        target.style.width = '100%'
+        target.style.height = '100%'
+        holder.appendChild(target)
+        playerRef.current = new YT.Player(target, {
           videoId: id,
           playerVars: {
             autoplay: 1,
@@ -182,6 +195,14 @@ export function HeroVideo({
 
     return () => {
       cancelled = true
+      // YouTube player harus dibongkar sendiri; kalau tidak, iframe-nya
+      // tinggal di DOM dan React jadi tidak sinkron saat halaman dilepas.
+      try {
+        playerRef.current?.destroy?.()
+      } catch {
+        /* abaikan */
+      }
+      playerRef.current = null
     }
   }, [id, videoUrl, welcome])
 

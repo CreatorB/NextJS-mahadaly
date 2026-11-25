@@ -54,7 +54,7 @@ export default async function AdminBeritaPage({
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
-            href="/admin/berita/export?format=csv"
+            href="/api/admin/berita/export?format=csv"
             className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             <Download className="h-4 w-4" /> Ekspor
